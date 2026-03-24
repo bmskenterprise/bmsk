@@ -4,7 +4,7 @@ export default {
   init: (server) => {
     io = new Server(server, {
       cors: {
-        origin: ['http://localhost:5173','http://localhost:3000']/*process.env.CLIENT_URL*/,
+        origin: ['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com']/*process.env.CLIENT_URL*/,
         methods: ['GET','POST','PATCH','PUT','DELETE' ],
         credentials: true
       },
