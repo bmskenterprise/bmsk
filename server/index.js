@@ -44,9 +44,9 @@ setRoutes(app)
     //next(error);
 })*/
 socketController(io)
-/*app.use((req,res,next)=>{
+app.use((req,res,next)=>{
     res.header('Access-Control-Allow-Headers','Content-Type, x-admin-pin')
-})*/
+})
 app.use((req, res, next) => {
     class HttpError extends Error {
         constructor(message, status) {
