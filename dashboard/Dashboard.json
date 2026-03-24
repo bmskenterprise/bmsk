@@ -1,0 +1,13 @@
+{
+    "Pending Request": "/pending",
+    "Recharge History": [{"text":"All","url": ""},{"text":"All","url": ""},{"text":"All","url": ""}],
+    "Message Inbox": [],
+    "Offer Settings": [{"text":"Operator Add","url": "/operator-add"},{"text":"Regular Package","url": "/regular-package"},{"text":"Drive Package","url": "/drive-package"}],
+    "Banking": [],
+    "Payment History": "",
+    "Reports": [{"text":"Balance Report","url": "/balance-report"},{"text":"Operator Report","url": "/operator-report"},{"text":"Daily Report","url":"daily"},{"text":"Transaction Report","url": "/transaction-report"},{"text":"Txn ID","url": "/tx-report","fields":["Tnx","Amount","User","Date","Status","Message"]}],
+    "Administration": [{"text":"service Modual","url": "/service-modual"},{"text":"Rate Modual","url": "/Rate-modual"},{"text":"Payment Gateway","url": "/payment-gateways"},{"text":"Recharge Block List","url": "/block-list"},{"text":"API Settings","url": "/api-settings"},{"text": "Security Settings","url": "/security-settings"},{"text": "Deleted Accounts","url": "/deleted-accounts"}],
+    "Tools": [{"text": "UI","url": "ui"},{"text":"Device Logs","url":"/logs"},{"text":"Reseller Notice","url":"/notice"},{"text":"Login Notice","url":"login-notice"}],
+    "Complain": "/complain",
+    "Admin Account": [{"text": "Profile", "url": "/profile"},{"text": "Change Pin","url":"/change-pin"},{"text": "Change Password","url":"/change-password"},{"text": "Appearance ","url":"/appearance-setting"}]
+}

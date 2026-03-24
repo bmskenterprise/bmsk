@@ -1,0 +1,38 @@
+{
+    "navs":[
+        {"text":"Dashboatrd","path":"/dashboard","access":"index"},
+        {"text":"Drive","path":"/dashboard/drive","access":"drive-request"},
+        {"text":"Bill","path":"/dashboard/utility-bill","access":"bill-request"},
+        {"text":"Bank","path":"/dashboard/bank","access":"bank-request"},
+        {"text":"Deposit","path":"/dashboard/deposit/history","access":"deposit-history"},
+        {"text":"Topup","path":"/dashboard/topup/history","access":"topup-history"},
+        {"text":"TXN","path":"/dashboard/deposit-init","access":"deposit-init"},
+        {"text":"Manage Drive","path":"/dashboard/manage-package/drive","access":"manage-drive"},
+        {"text":"Manage Regular","path":"/dashboard/manage-package/regular","access":"manage-regular"},
+        {"text":"Users","path":"/dashboard/manage-users","access":"manage-user"},
+        {"text":"Admins","path":"/dashboard/manage-admins","access":"manage-admin"},
+        {"text":"Deposit Setup","path":"/dashboard/deposit-setup","access":"deposit-setup"},
+        {"text":"Setup","path":"/dashboard/setup","access":"setup"},
+        {"text":"Notice","path":[{"text":"Manage","path":"/dashboard/notice/manage"},{"text":"Send","path":"/dashboard/notice/send"}],"access":"notice"},
+        {"text":"API","path":[{"text":"Request","path":"/dashboard/manage-api/request"},{"text":"Setup","path":"/dashboard/manage-api/setup"}],"access":"notice"},
+        {"text":"Feedback","path":"/dashboard/feedback","access":"feedback"}
+    ],
+    "adminAccess": ["index","drive-request","bill-request", "bank-request","manage-drive","manage-regular","deposit-history","topup-history","notice","feedback"],
+    "userTypes": ["Distributor", "SR", "Retailer", "Platinum", "Gold", "Silver"],
+    "serviceTypes": ["deposit","payment","withdraw", "topup","drive","regular","bill","bank","bkash","dbbl","nagad","upay","feedback"],
+    "statustypes": ["pending", "Success","cancel"],
+    "accessTypes": ["Web", "Apps", "Allow Oversale", "Allow API", "Active"],
+    "balanceTypes": ["topup", "drive", "bank"],
+    "userDetail": ["Reseller", "Client Type", "Parent"],
+    "MBanks": ["Bkash", "Nagad", "Rocket"],
+    "logsFields": ["User", "Type", "Date", "IP", "Browser + OS", "Two Step", "Device Status", "Action"],
+    "config": {
+        "permission": {
+            "registration system": ["Auto","Manual"],
+            "Drive system": ["Auto","Manual"],
+            "Regular system": ["Auto","Manual"] 
+        }
+    },
+    "themeColors": ["#08599f","#1B3C53","#3164a5","#373463","#4c566a","#682e44","#bd2c49","#1eb253","#ff6600","#e4c3ac"],
+    "themeFonts": ["Inter","Roboto","Open Sans","Lato","Poppins","Montserrat","Nunito","DM Sans","Oswald","Quicksand","Source Sans 3","Oswald"]
+}

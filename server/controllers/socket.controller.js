@@ -1,0 +1,191 @@
+import {ObjectId} from 'mongodb'
+import connectDB from '../config/db.js';
+//import Admin from '../models/admin.model.js'
+let Admin,Notice,SocketResponse
+(async () => {
+    try{
+        let db = await connectDB();
+        Admin = db.collection('admins');
+        Notice = db.collection('notices');
+        SocketResponse = db.collection('socketresponses');
+    }catch(err){console.error(err);}
+})()
+export const initSocketUser=async (username,level,socketId)=>{
+  try{await SocketResponse.insertOne({user:username,level,socketId,failed:{deposit:0,withdraw:0,topup:0,drive:0,regular:0,bill:0,bank:0,bkash:0,dbbl:0,nagad:0,upay:0},optChanged:false,topupOptChanged:false,regularOptChanged:false,driveOptChanged:false,notices:[],countInbox:0,seenNotice:false})}catch(e){throw new Error(e)}
+}
+export const findSocketAdmin =async (username,socketId)=>{
+  try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$set:{socketId}},{returnDocument:'after'});return admin;}catch(e){throw new Error(e)}
+}
+export const findSocketUser =async (username,socketId)=>{
+  try{let user = await SocketResponse.findOneAndUpdate({user:username},{$set:{socketId}},{returnDocument:'after'});return user;}catch(e){throw new Error(e)}
+}
+export const seenPendingByAdmin =async (type)=>{
+  try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'}, {$set:{[`pending.${type}`]:0}});}catch(e){throw new Error(e)}
+}
+let seenFailedByUser=async (user,seenType)=>{
+  await SocketResponse.findOneAndUpdate({user}, {$set:{[`failed.${seenType}`]:0}})
+}
+const seenInbox = async (username)=>{
+  try{await SocketResponse.updateOne({user:username},{$set:{countInbox:0}})}catch(e) {throw new Error(e)}
+}
+const getNotice = async (noticeId) =>{
+  try{
+    return await Notice.findOne({_id:new ObjectId(noticeId)})
+  }catch(err){return {}}
+}
+
+export default (io)=>{
+    const connectedDevices = new Map();
+    const deviceSockets = new Map();
+    const transactions = new Map();
+    
+    io.on('connection', (socket) => {
+      socket.on('admin:join',async(id)=>{
+        let socketAdmin=await findSocketAdmin(id/*.username*/,socket.id);
+        if(socketAdmin){
+          const failed = {};
+          const pending = {};
+          if(socketAdmin.failed.deposit>0) failed.deposit=socketAdmin.failed.deposit
+          if(socketAdmin.failed.topup>0) failed.topup=socketAdmin.failed.topup
+          if(socketAdmin.failed.regular>0) failed.regular=socketAdmin.failed.regular
+          if(socketAdmin.pending.deposit>0) pending.deposit=socketAdmin.pending.deposit
+          if(socketAdmin.pending.withdraw>0) pending.withdraw=socketAdmin.pending.withdraw
+          if(socketAdmin.pending.topup>0) pending.topup=socketAdmin.pending.topup
+          if(socketAdmin.pending.drive>0) pending.drive=socketAdmin.pending.drive
+          if(socketAdmin.pending.mbank>0) pending.mbank=socketAdmin.pending.mbank
+          if(socketAdmin.pending.bill>0) pending.bill=socketAdmin.pending.bill
+          if(Object.keys(failed).length>0) io.to(socket.id).emit('admin:failed',failed);
+          if(Object.keys(pending).length>0) io.to(socket.id).emit('admin:pending',pending);
+        }
+      })
+      socket.on('admin:deposit-history:seen',(obj)=> seenPendingByAdmin('deposit'))
+      socket.on('admin:topup-history:seen',(obj)=> seenPendingByAdmin('topup'))
+      socket.on('admin:withdraw-history:seen',(obj)=> seenPendingByAdmin('withdraw'))
+      socket.on('admin:drive-history:seen',(obj)=> seenPendingByAdmin('drive'))
+      socket.on('admin:mbank-history:seen',(obj)=> seenPendingByAdmin('mbank'))
+      socket.on('admin:bill-history:seen',(obj)=> seenPendingByAdmin('bill'))
+      socket.on('admin:bank-history:seen',(obj)=> seenPendingByAdmin('bank'))
+      socket.on('admin:user-history:seen',(obj)=> seenPendingByAdmin('user'))
+      socket.on('user:join',async ({username,level}) => {     //
+        let socketUser=await findSocketUser(username,socket.id);
+        if(socketUser) {if(socketUser.countInbox>0) io.to(socket.id).emit('user:inbox',socketUser.countInbox)
+          let failed= {}//socketUser.socketId = socket.id;
+          //let targetUser = socketUser
+          /*if(targetUser.failed[0]>0) io.to(targetUser.socketId).emit('deposit-failed',{failedDepositCount:targetUser.failed[0]})
+          if(targetUser.failed[1]>0) io.to(targetUser.socketId).emit('topup-failed',{failedTopupCount:targetUser.failed[1]})
+          if(targetUser.failed[2]>0) io.to(targetUser.socketId).emit('drive-failed',{failedDriveCount:targetUser.failed[2]})
+          if(targetUser.failed[3]>0) io.to(targetUser.socketId).emit('regular-failed',{failedRegularCount:targetUser.failed[3]})
+          if(targetUser.failed[4]>0) io.to(targetUser.socketId).emit('bill-failed',{failedBillCount:targetUser.failed[4]})
+          if(targetUser.failed[5]>0) io.to(targetUser.socketId).emit('bank-failed',{failedBankCount:targetUser.failed[5]})*/
+          if(socketUser.failed.deposit>0) failed.deposit=socketUser.failed.deposit
+          if(socketUser.failed.topup>0) failed.topup=socketUser.failed.topup
+          if(socketUser.failed.drive>0) failed.drive=socketUser.failed.drive
+          if(socketUser.failed.withdraw>0) failed.withdraw=socketUser.failed.withdraw
+          if(socketUser.failed.bill>0) failed.bill=socketUser.failed.bill
+          if(socketUser.failed.bkash>0) failed.bkash=socketUser.failed.bkash
+          if(socketUser.failed.dbbl>0) failed.dbbl=socketUser.failed.dbbl
+          if(socketUser.failed.nagad>0) failed.nagad=socketUser.failed.nagad
+          if(socketUser.failed.upay>0) failed.upay=socketUser.failed.upay
+          if(Object.keys(failed).length>0) io.to(socket.id).emit('user:failed',failed)
+          
+          if(socketUser.optChanged) io.to(socket.id).emit('user:telecoms',true)
+          if(socketUser.topupOptChanged) io.to(socket.id).emit('user:topup-opts',true)
+          if(socketUser.regularOptChanged) io.to(socket.id).emit('user:regular-opts',true)
+          if(socketUser.driveOptChanged) io.to(socket.id).emit('user:drive-opts',true)
+          if(socketUser.notices.length>0) io.to(socket.id).emit('user:notice',getNotice(socketUser.notices.length-1))
+        }
+        //else {usersSocketConnected[userId]={socketId:socket.id, failed:[null,null,null,null,null,null]}}
+        else {initSocketUser(username,level,socket.id )}
+      });
+      /*socket.on('seen-failed-deposit',({userId})=> usersSocketConnected[userId].failed[0]=null)
+      socket.on('seen-failed-bill',({userId})=> usersSocketConnected[userId].failed[4]=null)
+      socket.on('seen-failed-bank',({userId})=> usersSocketConnected[userId].failed[5]=null)*/
+      socket.on('user:failed-deposit:seen',(username)=> seenFailedByUser(username,'deposit'))
+      socket.on('user:failed-withdraw:seen',(username)=> seenFailedByUser(username,'withdraw'))
+      socket.on('user:failed-topup:seen',(username)=> seenFailedByUser(username,'topup'))
+      socket.on('user:failed-drive:seen',(username)=> seenFailedByUser(username,'drive'))
+      socket.on('user:failed-mbank:seen',(username)=> seenFailedByUser(username,'mbank'))
+      socket.on('user:failed-bill:seen',(username)=> seenFailedByUser(username,'bill'))
+      socket.on('user:failed-bank:seen',(username)=> seenFailedByUser(username,'bank'))
+      socket.on('user:inbox:seen',(username)=>seenInbox(username))
+
+    /*socket.on('register-device', (data) => {
+        const { deviceId, deviceName, androidVersion } = data;
+        
+        connectedDevices.set(socket.id, {
+            deviceId,
+            deviceName,
+            androidVersion,
+            connectedAt: new Date().toISOString(),
+            lastSeen: new Date().toISOString()
+        });
+
+        deviceSockets.set(deviceId, socket.id);
+
+        console.log(`[Device] Registered: ${deviceId} (${deviceName})`);
+        console.log(`[Devices] Total connected: ${connectedDevices.size}`);
+
+        socket.emit('registration-success', {
+            success: true,
+            message: 'Device registered successfully',
+            deviceId
+        });
+
+        // Broadcast to all admin clients
+        io.emit('device-status', {
+            type: 'connected',
+            deviceId,
+            totalDevices: connectedDevices.size
+        });
+    });
+
+    // Heartbeat/ping
+    socket.on('ping', (data) => {
+        const device = connectedDevices.get(socket.id);
+        if (device) {
+            device.lastSeen = new Date().toISOString();
+            socket.emit('pong', { timestamp: Date.now() });
+        }
+    });
+
+    // Transaction status update from device
+    socket.on('transaction-status', (data) => {
+        const { transactionId, status, result, timestamp } = data;
+
+        if (transactions.has(transactionId)) {
+            const transaction = transactions.get(transactionId);
+            transaction.status = status;
+            transaction.result = result || '';
+            transaction.completedAt = timestamp || new Date().toISOString();
+            transactions.set(transactionId, transaction);
+
+            console.log(`[Transaction] ${transactionId} updated: ${status}`);
+
+            // Notify admin clients
+            io.emit('transaction-update', {
+                transactionId,
+                status,
+                result,
+                transaction
+            });
+        }
+    });
+
+    // Log from device
+    socket.on('device-log', (data) => {
+        const device = connectedDevices.get(socket.id);
+        console.log(`[Device Log] ${device?.deviceId || 'unknown'}: ${data.message}`);
+    });*/
+
+      socket.on('disconnect', async () =>{
+        /*for (const userId in usersSocketConnected) {
+          if (usersSocketConnected[userId] === socket.id) {
+            delete usersSocketConnected[userId];
+            break;
+          }
+        }*/await SocketResponse.findOneAndUpdate({socketId:socket.id},{$set:{socketId:null}});
+        console.log('User disconnected:', socket.id);
+      });
+      console.log('Admin connected');
+    });
+}
