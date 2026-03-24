@@ -19,7 +19,7 @@ import Notice from './models/notice.model.js'   */
 import socketController from './controllers/socket.controller.js';
 //import Admin from './admin.model.js';
 app.use(cors({
-    origin: ['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com'],
+    origin: '*',
     credentials: true,
     optionsSuccessStatus: 200
 }))
