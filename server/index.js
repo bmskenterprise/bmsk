@@ -33,7 +33,7 @@ const corsOptions={
 }
 app.use(cors(corsOptions))
 //for preflight request
-app.options('*',cors(corsOptions);
+app.options('*',cors(corsOptions));
 const io = socket.init(server);
 app.use(express.json({limit:'50mb'})); 
 
