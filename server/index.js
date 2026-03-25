@@ -18,7 +18,7 @@ import {initSocketUser,findSocketUser} from './controllers/socket.controller.js'
 import Notice from './models/notice.model.js'   */
 import socketController from './controllers/socket.controller.js';
 //import Admin from './admin.model.js';
-const corsOptions={
+/*const corsOptions={
     origin: function(origin,callback) {
         allowedOrigins=['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com']
         if(!origins||allowedOrigins.includes(origin)){
@@ -30,16 +30,25 @@ const corsOptions={
     optionsSuccessStatus: 200,
     methods:['GET','POST','PATCH','DELETE','OPTIONS'],
     allowedHeaders:['Content-Type','Authorization','x-user-agent','x-admin-pin','x-user-pin']
-}
-app.use(cors(corsOptions))
+}*/
+app.use(cors({
+    origin: ['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com'],
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods:['GET','POST','PATCH','DELETE','OPTIONS'],
+    allowedHeaders:['Content-Type','Authorization','x-user-agent','x-admin-pin','x-user-pin']
+}))
 //for preflight request
-app.options('*',cors(corsOptions));
+app.options('*',cors());
 const io = socket.init(server);
 app.use(express.json({limit:'50mb'})); 
 
 app.use(express.urlencoded({limit:'50mb', extended:true}));// );
 app.use(cookieParser());
-c app.use(helmet() );
+//app.use(helmet());
+app.get('/', function (req,res){
+    res.json({success:'ok'})
+})
 setRoutes(app)
 
 /*app.use((req, res, next) => {
