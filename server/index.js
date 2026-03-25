@@ -21,13 +21,16 @@ import socketController from './controllers/socket.controller.js';
 app.use(cors({
     origin: ['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com'],
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
+    methods:['GET','POST','PATCH','DELETE','OPTIONS'],
+    allowedHeaders:['Content-Type','Authorization','x-admin-pin','x-user-pin']
 }))
+//for preflight request
+app.options('*',cors();
 const io = socket.init(server);
-/*app.use(require('./middlewares/middleware'));*/
 app.use(express.json({limit:'50mb'})); 
 app.use(express.urlencoded({limit:'50mb', extended:true}));// );
- app.use(cookieParser());// );
+ app.use(cookieParser());
  app.use(helmet() );
 setRoutes(app)
 
@@ -71,6 +74,5 @@ connectDB()
     /*server*/server.listen(process.env.SERVER_PORT, ()=>{
         console.log(`running on http://localhost:${process.env.SERVER_PORT}`)
     })
-    //mongoose.connection.close();
 })
 .catch(e =>{console.log(e);process.exit(1)}) 
