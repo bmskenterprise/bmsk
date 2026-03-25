@@ -19,7 +19,7 @@ import Notice from './models/notice.model.js'   */
 import socketController from './controllers/socket.controller.js';
 //import Admin from './admin.model.js';
 app.use(cors({
-    origin: '*',
+    origin: ['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com'],
     credentials: true,
     optionsSuccessStatus: 200
 }))
@@ -44,9 +44,9 @@ setRoutes(app)
     //next(error);
 })*/
 socketController(io)
-app.use((req,res,next)=>{
+/*app.use((req,res,next)=>{
     res.header('Access-Control-Allow-Headers','Content-Type, x-admin-pin')
-})
+})*/
 app.use((req, res, next) => {
     class HttpError extends Error {
         constructor(message, status) {
