@@ -29,7 +29,7 @@ const corsOptions={
     credentials: true,
     optionsSuccessStatus: 200,
     methods:['GET','POST','PATCH','DELETE','OPTIONS'],
-    allowedHeaders:['Content-Type','Authorization','x-admin-pin','x-user-pin']
+    allowedHeaders:['Content-Type','Authorization','x-user-agent','x-admin-pin','x-user-pin']
 }
 app.use(cors(corsOptions))
 //for preflight request
