@@ -18,22 +18,29 @@ import {initSocketUser,findSocketUser} from './controllers/socket.controller.js'
 import Notice from './models/notice.model.js'   */
 import socketController from './controllers/socket.controller.js';
 //import Admin from './admin.model.js';
-app.use(cors({
-    origin: ['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com'],
+const corsOptions={
+    origin: function(origin,callback) {
+        allowedOrigins=['https://bmsk-admin-dashboard.onrender.com','https://bmsk-user.onrender.com']
+        if(!origins||allowedOrigins.includes(origin)){
+            callback(null,true)
+        }
+        else{callback(new Error('Not Allowed by Cors'))}
+    },
     credentials: true,
     optionsSuccessStatus: 200,
     methods:['GET','POST','PATCH','DELETE','OPTIONS'],
     allowedHeaders:['Content-Type','Authorization','x-admin-pin','x-user-pin']
-}))
+}
+app.use(cors(corsOptions))
 //for preflight request
-app.options('*',cors();
+app.options('*',cors(corsOptions);
 const io = socket.init(server);
 app.use(express.json({limit:'50mb'})); 
-app.use(express.urlencoded({limit:'50mb', extended:true}));// );
- app.use(cookieParser());
- app.use(helmet() );
-setRoutes(app)
 
+app.use(express.urlencoded({limit:'50mb', extended:true}));// );
+app.use(cookieParser());
+c app.use(helmet() );
+setRoutes(app)
 
 /*app.use((req, res, next) => {
     class HttpError extends Error {
