@@ -51,7 +51,7 @@ let Admin,User,DepositInit,Drive,Regular,DriveHit,Feedback,Bill,Bank,APIUser,API
       
 export const authenticateAdmin =async (req, res, next) =>{
     try{//console.log('req.admin')
-        let appData = await Admin.findOne({role:'admin'},{projection:{_id:0,username:0,password:0,pin:0,email:0,role:0,notices:0,__v:0}})
+        let appData = await Admin.findOne({role:'admin'},{projection:{avatar:1,mbanks:1,userLevels:0,pin:0,email:0,role:0,notices:0,__v:0}})
         if(!appData) throw new Error('Server Issue')
         res.status(200).json({admin:req.admin,appData})
     }catch(err) {next(err)}
@@ -112,7 +112,7 @@ export const getSubAdmins = async (req,res,next) =>{
 }
 
 export const addSubAdmin = async (req,res,next) =>{
-    const {username,password,pin,accesses} = req.body;
+    const {username,phone,email,nid,password,pin,accesses} = req.body;
     let errors = validationResult(req)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})
     try{
@@ -120,15 +120,15 @@ export const addSubAdmin = async (req,res,next) =>{
         if(exist) return res.status(409).json({error:'username already exist'})
         const hashedPIN = await bcrypt.hash(pin,11)
         const hashedPassword = await bcrypt.hash(password,11)
-        await Admin.insertOne({username,password:hashedPassword,pin:hashedPIN,role:'subadmin',accesses,device:['',''],status:false,loginStatus:false,createdAt:new Date(),updatedAt:new Date()})
+        await Admin.insertOne({username,phone,email,nid,password:hashedPassword,pin:hashedPIN,role:'subadmin',accesses,device:['',''],status:false,loginStatus:false,createdAt:new Date(),updatedAt:new Date()})
         const admins = await Admin.find({role:'subadmin'}).toArray();
         res.status(201).json({admins,message:'subadmin added'});
     }catch(err) {next(err)}
 }
 
 export const editSubAdmin = async (req,res,next) =>{
-    const {username,password,pin} = req.body
-    if(!username&&!password&&!pin) return res.status(400).json({error:'No data to update'})
+    const {username,phone,email,nid,password,pin} = req.body
+    if(!username&&!phone&&!email&&!nid&&!password&&!pin) return res.status(400).json({error:'No data to update'})
     const updated={};
     try{
         let admin= await Admin.findOne({_id:new ObjectId(req.params.id)});
@@ -310,6 +310,19 @@ export const resetUserPIN = async (req,res,next) =>{
         res.status(200).json({message:'Pin reset successfully'})
     }catch(err) {next(err)}
 }
+
+export const toggleUserNewDevice = async (req,res,next) =>{
+    try{
+        let {user,domain,apiType} = await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{'device.lock':req.body.isDeviceLock}});
+        res.status(200).json({message:'API Denied'});
+    }catch(err) {next(err)} 
+}
+export const removeUserDevice = async (req,res,next) =>{
+    try{
+        await User.UpdateOne({_id:new ObjectId(req.params.id)},{$pull:{'device.allowed':req.body.deviceId}})
+        res.status(200).json(message:'device removed')
+    }catch(err) {next(err)} 
+}
 export const deleteUserByAdmin = async (req,res,next) =>{
     try{
         let user = await User.findOneAndDelete({_id:new ObjectId(req.params.id)})
@@ -431,21 +444,22 @@ export const updateDepositRates= async (req, res,next) => {
 export const addUser = async (req, res,next) => {
     let errors = validationResult(req)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=>err.msg).mapped()});
-    const {level,username,fullname,password,pin,nid,accesses} = req.body;
+    const {level,username,phone,fullname,email,password,pin,nid,accesses} = req.body;
     try {
         const exist = await User.findOne({username})
         if(exist) return res.status(409).json({error:'user already exist '})
         let hashedPassword = await bcrypt.hash(password,11)
         let hashedPIN = await bcrypt.hash(pin,11)
-        await User.insertOne({level,username,fullname,password:hashedPassword,pin:hashedPIN,nid,accesses,balance:{main:{bkash:0,dbbl:0,nagad:0,upay:0},topup:0,drive:0,mbank:0},status:accesses.length>0?'ACTIVE':'INACTIVE',lastActiveAt:null,lockUntil:null,failedLoginAttempts:0,createdAt:new Date(),updatedAt:new Date()})
+        await User.insertOne({level,username,phone,fullname,email,password:hashedPassword,pin:hashedPIN,nid,accesses,balance:{main:{bkash:0,dbbl:0,nagad:0,upay:0},topup:0,drive:0,mbank:0},status:accesses.length>0?'ACTIVE':'INACTIVE',lastActiveAt:null,lockUntil:null,failedLoginAttempts:0,createdAt:new Date(),updatedAt:new Date()})
         res.status(201).json({message:'user created'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
-/*export const updateRegularTelecomAccess = async (req,res,next) =>{
+export const toggleUserStatus = async (req,res,next) =>{
     try{
+        await User.UpdateOne({_id:new ObjectId(req.params.id)},{$set:{verified:req.params.verified}})
         res.status(200).json({message:'updated successfully'})
     }catch(err) {next(err)}
-}*/
+}
 //admin
 export const getUsersByAdmin = async (req, res, next) => {
     const {user,status,from,to,limit,page} = req.query;
@@ -671,21 +685,41 @@ export const editPGW = async (req, res, next) => {
     const {name,merchantID,apiKey,apiPassword,active} = req.body
     let gateway = {};
     try {
-        /*if (!admin) return res.status(404).json({ error: 'Admin not found' });
-        const gateway = admin.pgws.find(pgw => pgw.name === name);
-        if(!gateway) return res.status(404).json({ error: 'payment gateway not found' });*/
         if(name!==undefined) gateway['pgws.$[elem].name'] = name
         if(merchantID!==undefined) gateway['pgws.$[elem].merchantID'] = merchantID;
         if(apiKey!==undefined) gateway['pgws.$[elem].apiKey'] = apiKey
         if(apiPassword!==undefined) gateway['pgws.$[elem].apiPassword'] = apiPassword;
         if(active!==undefined) gateway['pgws.$[elem].active'] = active
-        /*if (apiKey !== undefined) gateway.apiPassword = apiPassword;
-        if (active !== undefined) gateway.active = active;*/
         const result = await Admin.findOneAndUpdate({role:'admin'},{$set:gateway},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'});
         res.status(200).json({pgws:result.pgws});
     }catch(err) {next(err)}
 }
-
+export const getSMSGateway = async (req,res,next) =>{
+    try{
+        const admin = await Admin.findOne({role:'admin'})
+        res.status(200).json(admin.smsGateway)
+    }catch(e) {next(e)}
+}
+export const addSMSGateway = async (req,res,next) =>{
+    const {name,icon,merchantID,apiKey,apiPassword/*,active*/} = req.body;
+    try{
+        const admin = await Admin.findOne({role:'admin'})
+        if(admin.smsGateways.some(smsg => smsg.name==name)) return res.status(400).json({error:'sms gateway already exist'});
+        const updated = await Admin.findOneAndUpdate({},{$push:{smsGateways:{_id:new ObjectId(),name,icon,merchantID,apiKey,apiPassword,active:true}}})
+        res.status(200).json({smsGateways:updated.smsGateways,message:'sms gateway added'})
+    }catch(e) {next(e)}
+}
+export const editSMSGateway = async (req,res,next) =>{
+    const {name,merchantID,apiKey,apiPassword,active} = req.body
+    let gateway = {};
+    try{
+        if(name!==undefined) gateway['smsGateways.$[elem].name'] = name
+        if(apiKey!==undefined) gateway['smsGateways.$[elem].apiKey'] = apiKey;
+        if(active!==undefined) gateway['smsGateways.$[elem].active'] = active //gateway.active = active;*/
+        /*if (!admin) return res.status(404).json({ error: 'Admin not found' });
+        if(!gateway) return res.status(404).json({ error: 'payment gateway not found' });*/
+    }catch(e) {next(e)}
+}
 export const getUserLevels =async (req, res,next) => {
     try{
         if(!cacheData.levels){
@@ -837,7 +871,7 @@ export const saveBankNames = async (req,res,next) =>{
 }
 
 //call by admin
-export const getRequestAPI = async (req, res,next) => {
+/*export const getRequestAPI = async (req, res,next) => {
     const {user,domain,status} = req.query;
     let query = {};
     if(user) query.user=user
@@ -845,7 +879,6 @@ export const getRequestAPI = async (req, res,next) => {
     if(status) query.status=status
     try{
         const requests = await APIRequest.find(query).sort({updatedAt:-1}).toArray()
-        res.status(200).json(requests)
     }catch(err){next(err)}
 }
 
@@ -854,7 +887,6 @@ export const allowAPIKey = async (req, res,next) => {
         const {user,domain,apiType} = await APIRequest.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{status:'ALLOWED'}})
         const key = uuidv4();
         const {username,email} = await APIUser.findOne({user});
-        await APIUser.findOneAndUpdate({user},{$push:{apis:{date:Date.now,domain,apiType,apiKey:key}}})
         /*if(email){
             try {
                 await emailWithNodemailer({
@@ -870,16 +902,8 @@ export const allowAPIKey = async (req, res,next) => {
                 })
             }catch(err) {}
         }*/
-    }catch(err){next}
-}
-
-export const denyAPIKey = async (req,res,next) =>{
-    try{
-        let {user,domain,apiType} = await APIRequest.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{status:'DENIED'}});
-        await APIRequest.findOneAndUpdate({user},{$push:{apis:{date:Date.now,domain,apiType,apiKey:null}}})
-        res.status(200).json({message:'API Denied'});
-    }catch(err) {next(err)} 
-}
+    /*}catch(err){next}
+}*/
 
 export const logout = async (req, res,next) => {
     try{
@@ -890,7 +914,7 @@ export const logout = async (req, res,next) => {
 }
 export const seed = async (req, res,next) => {
     try{
-        await Admin.insertOne({username:'@bmsk',password:await bcrypt.hash('bmsk@admin',10),pin:await bcrypt.hash('98765',10),role:'admin',status:true,avatar:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1752837562/bitmap_q4lnon.svg',email:'bmskenterprise0@gmail.com',device:['Windows','Chrome'],accesses:['index','drive-history','bill-history','mbank-history','deposit-history','deposit-init','topup-history','manage-drive','manage-regular','manage-admin','manage-user','deposit-setup','setup','notice','feedback','manage-api'],telecoms:[{_id:new ObjectId(),name:'airtel',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/airtel-logo__sygrey.png',active:true},{_id:new ObjectId(),name:'banglalink',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/bl-logo__xphcjx.png',active:true},{_id:new ObjectId(),name:'grameenphone',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/GP_Logo__n5eb7l.png',active:true},{_id:new ObjectId(),name:'robi',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/robi-logo__bz1avh.png',active:true},{_id:new ObjectId(),name:'teletalk',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/teletalk_logo_h9h0kz.png',active:true}],routing:[{_id:new ObjectId(),opt:'airtel',ip:'168.192.',slot:0},{_id:new ObjectId(),opt:'banglalink',ip:'168.192.',slot:0},{_id:new ObjectId(),opt:'grameenphone',ip:'168.192.',slot:0},{_id:new ObjectId(),opt:'robi',ip:'168.192.',slot:0},{_id:new ObjectId(),opt:'teletalk',ip:'168.192.',slot:0}],slideImages:[{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/one_sygkfm.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/two_ixyjca.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504783/three_wttlwu.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/four_hu2nnt.png',active:true}],deposits:[{level:'platinum',topup:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},drive:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},mbank:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},regFee:0,selfReg:true,otp:false},{level:'gold',topup:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},drive:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},mbank:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},regFee:0,selfReg:true,otp:false},{level:'silver',topup:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},drive:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},mbank:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},regFee:0,selfReg:true,otp:false},{level:'distributor',topup:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},drive:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},mbank:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},regFee:0,selfReg:true,otp:false},{level:'sr',topup:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},drive:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},mbank:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},regFee:0,selfReg:true,otp:false},{level:'retailer',topup:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},drive:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},mbank:{commission:{bkash:0,dbbl:0,nagad:0},min:500,max:5000},regFee:0,selfReg:true,otp:false}],userLevels:[{name:'platinum',active:true},{name:'gold',active:true},{name:'silver',active:true},{name:'distributor',active:true},{name:'sr',active:true},{name:'retailer',active:true}],mbanks:[{_id:new ObjectId(),name:'bkash',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576795/bkash_bxyoyp.webp',active:true,account:'017'},{_id:new ObjectId(),name:'dbbl',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576816/DBBL-rocket_zjmdzj.jpg',active:true,account:'017'},{_id:new ObjectId(),name:'nagad',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576817/nogod_essbez.png',active:true,account:'017'}],methods:{deposit:'manual',topup:'manual',mbank:'manual'},topupAccess:['airtel','banglalink','grameenphone','robi','teletalk'],driveAccess:['airtel','banglalink','grameenphone','robi','teletalk'],regularAccess:['airtel','banglalink','grameenphone','robi','teletalk'],contacts:[{_id:new ObjectId(),media:'call',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/telephone-call-logo_wq1wsh.png',contactURL:'tel:01'},{_id:new ObjectId(),media:'whatsapp',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/WhatsApp_Logo_green_ineja8.svg',contactURL:'https://wa.me/01'},{_id:new ObjectId(),media:'telegram',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/Telegram_2019_Logo_kmt1ox.svg',contactURL:'https://t.me/01'},{_id:new ObjectId(),media:'messenger',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/Facebook_Messenger_logo_2025_iigz5y.svg',contactURL:'https://m.me/01'}],socialLinks:[{_id:new ObjectId(),media:'facebook',icon:'',url:'https://www.facebook.com'},{_id:new ObjectId(),media:'youtube',icon:'',url:'https://www.youtube.com'},],pgws:[{_id:new ObjectId(),name:'bkash',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576795/bkash_bxyoyp.webp',active:true,apiKey:'',apiPassword:''},{_id:new ObjectId(),name:'dbbl',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576816/DBBL-rocket_zjmdzj.jpg',active:true,apiKey:'',apiPassword:''},{_id:new ObjectId(),name:'nagad',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576817/nogod_essbez.png',active:true,apiKey:'',apiPassword:''}],   services:['deposit','topup','drive','regular','bill','mbank'],bankNames:'Islami Bank\nDBBL Bank'});
+        await Admin.insertOne({username:'admin',password:await bcrypt.hash('admin',11),pin:await bcrypt.hash('98765',11),role:'admin',status:true,avatar:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1752837562/bitmap_q4lnon.svg',email:'bmskenterprise70@gmail.com',device:['Windows','Chrome'],accesses:['index','drive-history','bill-history','mbank-history','deposit-history','deposit-init','topup-history','manage-drive','manage-regular','manage-admin','manage-user','deposit-setup','setup','notice','feedback','manage-api'],telecoms:[{_id:new ObjectId(),name:'airtel',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/airtel-logo__sygrey.png',active:true},{_id:new ObjectId(),name:'banglalink',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/bl-logo__xphcjx.png',active:true},{_id:new ObjectId(),name:'grameenphone',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1777964343/GP_Logo_hhlgph.png',active:true},{_id:new ObjectId(),name:'robi',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/robi-logo__bz1avh.png',active:true},{_id:new ObjectId(),name:'teletalk',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/teletalk_logo_h9h0kz.png',active:true}],routing:[{_id:new ObjectId(),operator:'airtel',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'banglalink',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'grameenphone',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'robi',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'teletalk',ip:'168.192.',slot:0}],slideImages:[{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/one_sygkfm.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/two_ixyjca.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504783/three_wttlwu.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/four_hu2nnt.png',active:true}],deposits:[{level:'platinum',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0',upay:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'gold',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'silver',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'distributor',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0.0',selfReg:true,otp:false},{level:'sr',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'retailer',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false}],userLevels:[{name:'platinum',active:true},{name:'gold',active:true},{name:'silver',active:true},{name:'distributor',active:true},{name:'sr',active:true},{name:'retailer',active:true}],mbanks:[{_id:new ObjectId(),name:'bkash',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576795/bkash_bxyoyp.webp',active:true,account:'017'},{_id:new ObjectId(),name:'dbbl',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576816/DBBL-rocket_zjmdzj.jpg',active:true,account:'017'},{_id:new ObjectId(),name:'nagad',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576817/nogod_essbez.png',active:true,account:'017'}],methods:{deposit:'manual',topup:'manual',mbank:'manual'},topupAccess:['airtel','banglalink','grameenphone','robi','teletalk'],driveAccess:['airtel','banglalink','grameenphone','robi','teletalk'],regularAccess:['airtel','banglalink','grameenphone','robi','teletalk'],contacts:[{_id:new ObjectId(),media:'call',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/telephone-call-logo_wq1wsh.png',contactURL:'tel:01'},{_id:new ObjectId(),media:'whatsapp',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/WhatsApp_Logo_green_ineja8.svg',contactURL:'https://wa.me/01'},{_id:new ObjectId(),media:'telegram',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/Telegram_2019_Logo_kmt1ox.svg',contactURL:'https://t.me/01'},{_id:new ObjectId(),media:'messenger',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/Facebook_Messenger_logo_2025_iigz5y.svg',contactURL:'https://m.me/01'}],socialLinks:[{_id:new ObjectId(),media:'facebook',icon:'',url:'https://www.facebook.com'},{_id:new ObjectId(),media:'youtube',icon:'',url:'https://www.youtube.com'},{_id:new ObjectId(),media:'instagram',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1777965618/instagram_oteyjy.jpg',url:'httos://instagram.com'},{_id:new ObjectId(),media:'x',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1777965618/x_icon_cyroag.png',url:'httos://x.com'}],pgws:[{_id:new ObjectId(),name:'bkash',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576795/bkash_bxyoyp.webp',active:true,apiKey:'',apiPassword:''},{_id:new ObjectId(),name:'dbbl',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576816/DBBL-rocket_zjmdzj.jpg',active:true,apiKey:'',apiPassword:''},{_id:new ObjectId(),name:'nagad',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576817/nogod_essbez.png',active:true,apiKey:'',apiPassword:''}],smsGateways:[],   services:['deposit','topup','drive','regular','bill','mbank'],bankNames:'Islami Bank\nDBBL Bank'});
         res.status(200).json({message:'seeding success'})
     }catch(err) {next(err)}
 }
