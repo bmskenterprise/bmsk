@@ -33,7 +33,7 @@ export default  () =>{
     const [editedAccesses,setEditedAccesses] = useState([]);
     const [openForm, setOpenForm] = useState(false);
     const [addInit, setAddInit] = useState(false);
-    const [editedData, setEditedData] = useState(null);
+    //const [editedData, setEditedData] = useState(null);
     const [editAccess, setEditAccess] = useState(false);
     const [adminData, setAdminData] = useState({});
     const [authError, setAuthError] = useState(null);
@@ -42,7 +42,7 @@ export default  () =>{
     const {admin,admins,toggleSubAdminStatus,fetchAdmins,addSubAdmin,editSubAdmin,editSubAdminAccess,sendRecoveryEmail,errors,loading} = useAdminAuth()     
 
     useEffect(()=> {fetchAdmins();},[])
-    useEffect(e =>{
+    /*useEffect(e =>{
         const handlePopState = e =>{
             window.history.pushState(null, '', window.location.href);
             if(editedData||editAccess){
@@ -52,7 +52,7 @@ export default  () =>{
         }
         window.addEventListener('popstate',handlePopState)
         return () => window.removeEventListener('popstate',handlePopState)
-    }, [editAccess,editedData])
+    }, [editAccess,editedData])*/
     /*useEffect(()=>{socket.on('device-request',(data)=>{setDeviceRequest(data)});return},[socket])*/
     
     //const allowDevice = ()=> socket.emit('allow-device',deviceRequest.socketId)
@@ -129,25 +129,25 @@ export default  () =>{
         }catch(err) {toast.error(err.message);}
         finally {setLoading(false);}
     }*/
-    const handleChange = (e) =>{
+    /*const handleChange = (e) =>{
         if(e.target.checked) setEditedAccesses(prev=>[...prev,e.target.value])
         else setEditedAccesses(prev=>prev.filter(access=>access!==e.target.value))
-    }
-    const handleForm = (e) =>{
-        e.preventDefault()
-        let formData ={username:e.target.username.value.trim(),password:e.target.password.value.trim(),pin:e.target.pin.value.trim()/*,adminPIN:e.target['admin-pin'].value.trim()*/}
-        if(!editedData?.id && editAccess) {adminPIN(thememode,{cb:addSubAdmin,data:{formData,accesses:editedAccesses,cancelForm}},'ADD');return}
-        if(editAccess) {adminPIN(thememode,{cb:editSubAdminAccess,data:{id:editedData?.id,editedAccesses,cancelForm}},'EDIT');setEditAccess(false);return}
-        if(editedData?.id) {adminPIN(thememode,{cb:editSubAdmin,data:{admin:{id:editedData?.id,username:editedData?.username},formData,cancelForm}},'EDIT');return}
+    }*/
+    //const handleForm = (e) =>{
+        //e.preventDefault()
+        //let formData ={username:e.target.username.value.trim(),password:e.target.password.value.trim(),pin:e.target.pin.value.trim()/*,adminPIN:e.target['admin-pin'].value.trim()*/}
+        //if(!editedData?.id && editAccess) {adminPIN(thememode,{cb:addSubAdmin,data:{formData,accesses:editedAccesses,cancelForm}},'ADD');return}
+        //if(editAccess) {adminPIN(thememode,{cb:editSubAdminAccess,data:{id:editedData?.id,editedAccesses,cancelForm}},'EDIT');setEditAccess(false);return}
+        //if(editedData?.id) {adminPIN(thememode,{cb:editSubAdmin,data:{admin:{id:editedData?.id,username:editedData?.username},formData,cancelForm}},'EDIT');return}
         //cancelForm()
-    }
+    //}
 
-    const formInit = (admin,accesses) =>{
+    //const formInit = (admin,accesses) =>{
         //setOpenForm(true);
-        setEditedData(admin/*{id,username,accesses,accesses}*/)
-        setEditedAccesses(accesses)
-    }
-    const cancelForm = e =>{setEditAccess(false);setOpenForm(false);setEditedData(null)}
+        //setEditedData(admin/*{id,username,accesses,accesses}*/)
+        //setEditedAccesses(accesses)
+    //}
+    //const cancelForm = e =>{setEditAccess(false);setOpenForm(false);setEditedData(null)}
 
                            
                            
@@ -156,63 +156,21 @@ export default  () =>{
                            
     return <div style={{width:'100%',height:'100%',position:'relative'}}>
         <h4 style={{marginBottom:'5rem'}}>Admins</h4>
-            { !(Object.keys(editedData??{}).length)&&!editAccess&& <><FlexH x='flex-end' style={{marginBottom:'3rem'}}><ThemeButton  onClick={e=>{formInit({id:null,username:'admin'},adminAccess);setEditAccess(true)}}>Add Admin</ThemeButton></FlexH>
+              <><FlexH x='flex-end' style={{marginBottom:'3rem'}}><ThemeButton  onClick={e=>{navigate('add',{state:{admin:{id:null,username:'admin'},accesses:adminAccess}})}}>Add Admin</ThemeButton></FlexH>
                 <ScrollViewV style={{width:'100%',height:'80%'}}><ScrollViewH style={{width:'100%'}}>
                     {admins.map(({_id,username,device,loginStatus,status,accesses}, i) => <StripedList key={_id} style={{width:'87rem'}}>
                         <div style={{width:'25%',fontSize:'1.2rem'}}>{username}&nbsp;{loginStatus&&<svg height='8' width='8' xmlns='http://www.w3.org/2000/svg'><circle r='4' cx='4' cy='4' fill='lightgreen'/></svg>}</div>
                         <div style={{color:textPrimary,width:'35%'/*,fontSize:'2rem'*/}}>{systemIcon[device[0].toLowerCase()]} {systemIcon[device[1].toLowerCase()]}</div>
                         {/*<div style={{width:'20%'}}>{format(loginAt,'dd/MM/yyyy hh:mm aa')}</div>*/}
-                        <div style={{width:'20%'}}><SwitchItem  check={status} handleChange={e=>toggleSubAdminStatus(_id,e.target.checked)}/>
-                         <IconButton style={{color:textPrimary}} onClick={e=>{formInit({id:_id,username},accesses)}}><MdEdit/></IconButton>
-                        <IconButton onClick={e=>{setEditAccess(true);formInit(null,accesses)}} style={{color:textPrimary}}><MdAdminPanelSettings/></IconButton><IconButton onClick={e=>navigate('/manage-admins/reset-credential',{state:{id:_id,username,credentialType:'password'}})} ><MdPassword/></IconButton><IconButton onClick={e=>navigate('/manage-admins/reset-credential',{state:{id:_id,username,credentialType:'pin'}})} ><FaLock/></IconButton></div>
+                        <div style={{width:'20%'}}>
+                            <SwitchItem  check={status} handleChange={e=>toggleSubAdminStatus(_id,e.target.checked)}/>
+                         <IconButton style={{color:textPrimary}} onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},accesses:[]}})}}><MdEdit/></IconButton>
+                        <IconButton onClick={e=>{navigate('edit',{state:{admin:null,accesses}})}} style={{color:textPrimary}}><MdAdminPanelSettings/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'password'}})} ><MdPassword/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'pin'}})} ><FaLock/></IconButton>
+                        </div>
                     </StripedList>)}
                 </ScrollViewH></ScrollViewV></>
-            }
-            {((Object.keys(editedData??{}).length)||editAccess)&&<form onSubmit={handleForm} ><div >
-                <FlexH x='flex-start'>
-                {/*<Col xs={12} md={4}>*/}
-                    {(Object.keys(editedData??{}).length>0)&&<Col  ><div /*x='flex-start'*/>
-                        {/*<label>Username</label>*/}
-                        <InputField placeholder='Username' name='username' onChange={e=>setEditedData(prev=>({...prev,username:e.target.value.trim()}))} value={editedData?.username}/>
-                        <ErrorText>{errors?.username}</ErrorText>
-                    </div><GapV x='3'/>
-                    <div /*x='flex-start'*/>
-                        {/*<label>Password</label>*/}
-                        <div style={{position:'relative',width:'100%'}}>  <InputField type={show?'text':'password'} placeholder='Password' /*onChange={e=>setAdminData(data=>({...data,password:e.target.value.trim()}))}*/ name='password'/><IconButton type='button' style={{color:textPrimary,position:'absolute',top:'10%',right:'0%'}} onClick={e=>setShow(prev=>!prev)}>{show?<FaEyeSlash/>:<FaEye/>}</IconButton></div>
-                        <ErrorText>{errors?.password}</ErrorText>
-                    </div><GapV x='3'/>
-                    <div /*x='flex-start'*/>
-                        {/*<label>PIN</label>*/}
-                        <InputField placeholder='PIN' /*onChange={e=>setAdminData(data=>({...data,pin:e.target.value.trim()}))}*/ name='pin'/>
-                        <ErrorText>{errors?.pin}</ErrorText>
-                    </div><GapV x='4'/>
-                    {/*<FlexV x='flex-start'>
-                        <label>Admin PIN</label>
-                        <InputField   type="text" placeholder="Admin PIN" //onChange={e=>setAdminData(data=>({...data,adminPin:e.target.value.trim()}))}// name='admin-pin'/>
-                        <ErrorText >{errors.adminPin && errors.adminPin}</ErrorText>
-                    </FlexV >*/}
-                    {authError&&admin.role=='admin'&&<span onClick={sendRecoveryEmail}>Forgot PIN?</span>}</Col>}
-                {/*</Col>*/}
-                    {editAccess&&<Col  >
-                        <h3></h3>
-                        <div>
-                            <SwitchItem label='Dashboard' check={editedAccesses.includes('index')} v='index' identity='index' handleChange={handleChange}/>  
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Deposit History' check={editedAccesses.includes('deposit-history')} v='deposit-history' identity='deposit' handleChange={handleChange}/>  </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Topup History' check={editedAccesses.includes('topup-history')} v='topup-history' identity='topup' handleChange={handleChange}/>  </FlexH>
-                            <GapV x='2'/><FlexH x='1'><SwitchItem label='Drive History' check={editedAccesses.includes('drive-history')} v='drive-history' identity='drive-history' handleChange={handleChange}/>  </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Manage Drive' check={editedAccesses.includes('manage-drive')} v='manage-drive' identity='manage-drive' handleChange={handleChange}/>  </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Manage Regular' check={editedAccesses.includes('manage-regular')} v='manage-regular' identity='manage-regular' handleChange={handleChange}/>  </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem check={editedAccesses.includes('mbank-history')} label='MBank History' v='mbank-history' identity='mbank' handleChange={handleChange}/></FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Utility Bill History' check={editedAccesses.includes('bill-history')} v='bill-history' identity='utility' handleChange={handleChange}/>   </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Bank History' check={editedAccesses.includes('bank-history')} v='bank-history' identity='bank' handleChange={handleChange}/>   </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Notice' check={editedAccesses.includes('notice')} v='notice' identity='notice' handleChange={handleChange}/> </FlexH>
-                            <GapV x='2'/><FlexH x='flex-start'><SwitchItem label='Feedback' check={editedAccesses.includes('feedback')} v='feedback' identity='feedback' handleChange={handleChange}/> </FlexH>
-                        </div>
-                    </Col>}
-                    <GapV x='4'/><FlexH x='flex-end' y='center' style={{width:'100%'}}><button onClick={e=>{cancelForm()}}>CANCEL</button><ThemeButton style={{marginLeft:'2rem'}} type='submit'>{editedData?.id?'NEXT':'NEXT'}</ThemeButton></FlexH>
-        </FlexH>
-        </div>
-            </form>}
+            
+            
             {/*editInit.admin && <Form onSubmit={editAdmin}>
                 <FlexV x='flex-start'>
                     <label>username</label>
