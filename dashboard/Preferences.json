@@ -17,7 +17,7 @@
         {"text":"API","path":[{"text":"Request","path":"/dashboard/manage-api/request"},{"text":"Setup","path":"/dashboard/manage-api/setup"}],"access":"notice"},
         {"text":"Feedback","path":"/dashboard/feedback","access":"feedback"}
     ],
-    "adminAccess": ["index","drive-request","bill-request", "bank-request","manage-drive","manage-regular","deposit-history","topup-history","notice","feedback"],
+    "adminAccess": ["index","deposit-history","withdraw-history", "topup-history","drive-history","mbank-history","bill-history","bank-history","manage-regular","manage-drive","manage-admin","manage-user","api","notice","feedback"],
     "userTypes": ["Distributor", "SR", "Retailer", "Platinum", "Gold", "Silver"],
     "serviceTypes": ["deposit","payment","withdraw", "topup","drive","regular","bill","bank","bkash","dbbl","nagad","upay","feedback"],
     "statustypes": ["pending", "Success","cancel"],
