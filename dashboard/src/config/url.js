@@ -23,7 +23,8 @@ export default {
  urlResetUserPIN:`${api}/manage-user/reset-pin`,
  urlManageUser:`${api}/manage-user`,
  urlManageUserAccess:`${api}/manage-user/access`,
- urlUserCredential : `${api}/user`,
+ urlUserDeviceAccess:`${api}/manage-user/device`,
+ urlUserVerify : `${api}/manage-user/status`,
  urlDeposit:`${api}/deposit`,
  urlTelecom : `${api}/telecom`,
  urlTelecomBalance:`${api}/telecom/balance`,
@@ -74,6 +75,7 @@ export default {
  urlSocialLinks:`${api}/social-links`,
  urlFeedback:`${api}/feedback`,
  urlPGW:`${api}/pgw`,
+ urlSMSGateway:`${api}/sms-gateway`,
  urlServices:`${api}/services`,
  urlLogout : `${api}/logout`,
 }
