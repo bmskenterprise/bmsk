@@ -1,9 +1,10 @@
-import React,{ useEffect,useState, } from "react"
-import {Accordion,Col,    } from "react-bootstrap"
+import { useEffect,useState, } from 'react'
+//import {Accordion,Col,   
 import {useMediaQuery} from 'react-responsive';
-import { toast } from "react-toastify"
-import {FlexH,Field,ThemeButton,TinyIcon,Spinner} from '../styles/Admin.style';
+import { toast } from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext'
+import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Spinner} from '../styles/Admin.style';
+import Accordion from './Accordion'
 import url from '../../config/url';
 
 export default  () =>{
@@ -55,19 +56,20 @@ export default  () =>{
                     <input type="text" value={contactNumber} />*/}
                 </FlexH>)} 
             </div>
-            <FlexH x='flex-end' y='center'><ThemeButton  type="submit" disabled={loading}>{loading?<Spinner  size="1"></Spinner>:'SAVE'}</ThemeButton></FlexH>
+            <FlexH x='flex-end' y='center'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
         </form>
     </div>
 
     return<>{isMobile ? (
-        <Col xs={12}>
-        <Accordion>
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>Contact Setting</Accordion.Header>
-            <Accordion.Body>{content}</Accordion.Body>
-          </Accordion.Item>
-        </Accordion>
+        <Col /*xs={12}*/>
+        <Accordion title='Contact Sttings' content={content}/>
         </Col>
-      ) : <Col md={6} xl={4}>{content}</Col>
+      ) : <Col /*md={6} xl={4}*/>{content}</Col>
       }</>
 }
+
+        
+          
+            
+             
+        
