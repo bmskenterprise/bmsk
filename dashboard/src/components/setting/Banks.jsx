@@ -1,24 +1,26 @@
 import React,{useEffect,useState} from 'react';
-import {Accordion,Col} from 'react-bootstrap';
 import {useMediaQuery} from 'react-responsive';
 import {toast} from 'react-toastify';
-import {FlexH,ScrollViewV,ThemeButton,ErrorText,TA,Spinner} from '../styles/Admin.style';
-import url from '../../config/url';
 import {useTheme} from '../../contexts/ThemeContext'
+import {ScrollViewV,Col,FlexH,GapV,ThemeButton,ErrorText,TA,Spinner} from '../styles/Admin.style';
+import Accordion from './Accordion';
+import url from '../../config/url';
 
 export default ()=>{
+  const isMobile = useMediaQuery({maxWidth:768})
   const [banks,setBanks] = useState();
   const [error,setError] = useState('');
   const [loading,setLoading] = useState(false);
   const {modeData:{backSecondary,textSecondary}} = useTheme();
-  const {isMobile} =useMediaQuery({maxWidth:768})
-  useEffect(()=>{fetchBanks()},[])
-  const fetchBanks = async e=>{
+  
+  useEffect(()=>{fetchBankNames()},[])
+  
+  const fetchBankNames = async e=>{
     try{
       let res = await fetch(url.urlBankNames,{credentials:'include'});
       let data = await res.json();
       if(!res.ok) throw new Error('')
-      setBanks(data)
+      setBanks(data.bankNames)
     }catch(e) {toast.error(e.message)}
   }
   const saveBankNames = async(e) =>{
@@ -45,22 +47,22 @@ export default ()=>{
     finally{setLoading(false)}
   }
   
-  let content= <div style={{background:backSecondary,color:textSecondary}}>
+  let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
     <h4 style={{marginBottom:'2rem'}}>Bank Names</h4>
     <form onSubmit={saveBankNames}>
-      <ScrollViewV style={{height:'15rem',width:'100%'}}><TA  style={{width:'100%',height:'100%'}} name="bank-names" value={banks} onChange={e=>setBanks(e.target.value)}></TA></ScrollViewV>
-      <ErrorText>{error&&error}</ErrorText>
-      <FlexH x='flex-end' y='center'><ThemeButton  type="submit" disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
-    </form>
+      <ScrollViewV style={{height:'13rem',width:'100%'}}><TA  style={{width:'100%',height:'100%'}} name='bank-names' value={banks} onChange={e=>setBanks(e.target.value)}></TA></ScrollViewV>
+      <ErrorText>{error&&error}</ErrorText><GapV x='2'/>
+      <FlexH x='flex-end' y='center'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
+    </form><GapV x='2'/>
   </div>
   
-  return <>{isMobile?<Col xs={12}>
-              <Accordion>
-                <Accordion.Item eventKey="0">
-                  <Accordion.Header>Banks </Accordion.Header>
-                  <Accordion.Body>{content}</Accordion.Body>
-                </Accordion.Item>
-              </Accordion>
-              </Col>:<Col md={6} xl={4}>{content}</Col>
+  return <>{isMobile?<Col /*xs={12}*/>
+              <Accordion title='Banks' content={content} />
+              </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
       }</>
 }
+              
+                
+                  
+                   
+              
