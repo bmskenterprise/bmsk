@@ -1,13 +1,13 @@
-import React,{useEffect,useState,useRef} from 'react';
+import {useEffect,useState,useRef} from 'react';
 import {useLocation} from 'react-router-dom';
-import {Accordion,Col,} from 'react-bootstrap';
 import {useMediaQuery} from 'react-responsive';
 import {BsPlusLg} from 'react-icons/bs'
 import {FaPen,FaTrash} from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import url from '../../config/url';
-import {FlexH,FlexV,GapV,ScrollViewV,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
 import {useTheme} from '../../contexts/ThemeContext';
+import {Col,FlexH,FlexV,GapV,ScrollViewV,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
+import url from '../../config/url';
+import Accordion from './Accordion';
 import validURL from '../../utils/validURL';
 import SwitchItem from '../Switch'
 
@@ -115,7 +115,7 @@ const [hover,setHover]=useState(false);
             else addImageLink()
         }
 
-        let content= <div style={{background:backSecondary, color:textSecondary}}>
+        let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
             {/*Object.keys(permission).map((p) => {
                 permission[p].map((t,i)=> <div key={i}><input type='radio' name={key.split(' ')[0]} id={t} /><label htmlFor={t}>{t}</label></div>)
             })*/}
@@ -135,7 +135,7 @@ const [hover,setHover]=useState(false);
                 </FlexH>}
                 {editMode && <form onSubmit={handleSubmit}>
                     <div  >
-                        <FlexV x='flex-start' y='flex-start'>  <InputField style={{width:'100%'}} value={image.link} placeholder="image link" onChange={e=>setImage({...image,link:e.target.value})}/><span style={{color:'red'}}>{linkError}</span></FlexV><GapV x='1'/>
+                        <FlexV x='flex-start' y='flex-start'>  <InputField style={{width:'100%'}} value={image.link} placeholder='image link' onChange={e=>setImage({...image,link:e.target.value})}/><span style={{color:'red'}}>{linkError}</span></FlexV><GapV x='1'/>
                         <FlexH x='flex-end'><button type='button' onClick={e=>setEditMode(false)}>CANCEL</button>  <ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
                     </div>
                 </form>}</ScrollViewV>
@@ -143,11 +143,11 @@ const [hover,setHover]=useState(false);
         </div>
 
     return <>{isMobile ? (
-        <Col xs={12}>
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>Slider Setting</Accordion.Header>
-            <Accordion.Body>{content}</Accordion.Body>
-          </Accordion.Item>
+        <Col /*xs={12}*/>
+        <Accordion title=Image Slider content={content}/>
         </Col>
-      ) : <Col md={2} xl={4}>{content}</Col>}</>
+      ) : <Col /*md={2} xl={4}*/>{content}</Col>}</>
 }
+          
+            
+             
