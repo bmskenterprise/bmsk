@@ -2,12 +2,13 @@ import {useEffect,useState} from 'react'
 import {Link,useNavigate,useSearchParams} from 'react-router-dom';
 import {formatDistanceToNow} from 'date-fns'
 import {MdPassword,MdWallet} from 'react-icons/md';
-import {FaHistory,FaLock,FaPen} from 'react-icons/fa'
+import {FaTrash,FaLock,FaPen} from 'react-icons/fa'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {ScrollViewV,ScrollViewH,FlexH,GapV,TR,PaginationBar,ThemeButton,Field,Select,DatePicker,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
+import {ScrollViewV,ScrollViewH,FlexH,GapV,Center,StripedList,PaginationBar,ThemeButton,Field,Select,DatePicker,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useTheme} from '../../contexts/ThemeContext';
+      import {useUser} from '../../contexts/UserContext'
 import {serviceTypes,accessTypes} from '../../../Preferences.json';
 import {launchDate,getCurrentLocalDate} from '../../utils/date';
 import url from '../../config/url'
@@ -15,39 +16,43 @@ import useLongPress from '../../hooks/longPress'
 import UserForm from '../../components/UserForm';
 import useFetch from '../../hooks/useFetch';
 import Pages from '../../components/Pagination'
+import SwitchItem from '../../components/Switch'
+import AdminPIN from '../../components/AdminPIN'
 
 export default () =>{ 
+    const {thememode,themeData:{themeBackground},modeData:{textPrimary}} = useTheme();//const [tooltip,setTooltip] = useState(null);
     const {socket} = useSocket();
     const {pendingCounts:{users},reducePendingCounts} = useNotification();
     const {appData,admin} = useAdminAuth();
     const accesses = admin?.accesses
     const navigate = useNavigate();
+    const [formInit,setFormInit] = useState(false);
+    const [filterData,setFilterData] = useState({status,user,fromDate,toDate,limit,page});// || '';
+    const [userDetail,setUserDetail]= useState(null);
     const [searchParams] = useSearchParams()
-    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||'inactive',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'']  ;
-         
+    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||'not-verified',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'']  ;
          
          
     const getMainBalance = balanceMain => Object.values(balanceMain|| {}).reduce((sum,val)=>sum+val,0)
     const initUser = {username:'', name:'', nid:'', password:'', pin:'', services:serviceTypes, accesses:accessTypes};
-    const fields = ['Username','Main Bal','Topup Bal.','Drive Bal.','MBank Bal.','Last Active','Action'/*,'',''*/];
-    //const formRef=useRef(null)
-    const {modeData} = useTheme();//const [tooltip,setTooltip] = useState(null);
-    const [selected,setSelected] = useState([]);
-    let [formInit,setFormInit] = useState(false);
+    const {toggleVerification,deleteUser} = useUser()
+    const initToggle = (id,verified) => AdminPIN([thememode,themeBackground],{cb:toggleVerification,data:{id,verified}},'VERIFY');
+    const initDelete = id => AdminPIN([thememode,themeBackground],{cb:deleteUser,data:{id}},'DELETE');
     const {/*fetchUsers,initFilterData,addUser,userLevels,*/data,loading} = useFetch(`${url.urlManageUser}?status=${status.toUpperCase()}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`);
-    const [filterData,setFilterData] = useState({status,user,fromDate,toDate,limit,page});// || '';
-    let [userDetail,setUserDetail]= useState(null);
     //let today= (new Date()).toISOString().split('T')[0];
+    
     useEffect(e=>{
         if(socket) {
             socket.emit('admin:user-history:seen',null);
             reducePendingCounts('user')
         }
     },[socket])
+    
     useEffect(e=>{
         setFilterData({status,user,fromDate,toDate,limit,page})
         //fetchUsers() //i!=id))}
     },[status,user,fromDate,toDate,limit,page])
+    
     useEffect(()=>{
         window.history.pushState(null,'',window.location.href)
         const handlePopState = e =>{
@@ -58,12 +63,13 @@ export default () =>{
         window.addEventListener('popstate',handlePopState)
         return ()=> window.removeEventListener('popstate',handlePopState)
     },[formInit])
-    const check = (id)=>{
+    
+    /*const check = (id)=>{
     let i=selected.indexOf(id)
         if(0<=i){setSelected(selected.filter(i=>i!=id))}
       else{setSelected([...selected,String(id)]);}
     };
-    let {start,clear} =useLongPress(check)
+    let {start,clear} =useLongPress(check)*/
     const handleCancel = e => {
         setFormInit(false);setUserDetail(null);
     };
@@ -73,7 +79,7 @@ export default () =>{
     };
     const pageNav = p=> navigate(`/dashboard/manage-user?status=${status}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}));
-    return !accesses?.includes('manage-user')?<Loader/>:<div style={{width:'100%',height:'100%',position:'relative'}}><div>
+    return !accesses?.includes('manage-user')?<Center><p>Don't have manage user permission</p></Center>:<div style={{width:'100%',height:'100%',position:'relative'}}><div>
                 <h4>Manage User</h4><GapV x='4'/>
             {/*<form onSubmit={fetchUsers}>
                 <FlexH x='space-between' y='center'><div>
@@ -106,27 +112,39 @@ export default () =>{
                 <div><DatePicker  type='date' value={filterData.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/><DatePicker  type='date' value={filterData.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/></div>
                 <Select  name='status' value={filterData.status} onChange={filterParams} >
                         {/*<option value="PENDING">Pending</option>*/}
-                        <option value='active'>Active</option>
-                        <option value='inactive'>Inactive</option>
+                        <option value='verified'>Verified</option>
+                        <option value='not-verified'>Not Verified</option>
                 </Select>
-                <button  type='submit' disabled={loading}>{loading?<Spinner />:'filter'}</button>
+                <button  type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'filter'}</button>
                 </FlexH>
             </form>{/*<div><Link to={'user/chat'}><MdMessage/></Link></div>*/}<GapV x='4'/>
-             <ScrollViewV><ScrollViewH><table>
-                <thead><tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead>
-                <tbody >{data?.users?.map(({_id,userid,level,username,fullname,nid,balance,driveBalance,lastActiveAt,createdAt,status,accesses})=> <TR key={_id} onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} >
+             <ScrollViewV style={{width:'100%'}}><ScrollViewH style={{width:'100%'}}><div style={{width:'100%'}}>
+                <FlexH x='flex-start' style={{width:'87rem',marginBottom:'2rem',fontSize:'1.3rem'}}>
+                    <div style={{width:'20%'}}>Username</div>
+                  <div style={{width:'12%'}}>Main Bal.</div>
+                  <div style={{width:'12%'}}>Topup Bal.</div>
+                  <div style={{width:'12%'}}>Drive Bal.</div>
+                  <div style={{width:'12%'}}>MBank Bal.</div>
+                  <div style={{width:'20%'}}>Last Active</div>
+                  <div style={{width:'12%'}}>Action</div>
+                </FlexH>
+                <div style={{width:'100%'}}>{data?.users?.map(({_id,userid,level,username,fullname,nid,balance,verified,lastActiveAt,createdAt,status,accesses})=> <StripedList key={_id} /*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear}*/ style={{width:'87rem',fontSize:'1.2rem'}} >
                     {/*<td>{userid}</td>*/}
-                    <td style={{width:'20%',position:'relative'}}   ><Link to={`${_id}`} state={{ user: {level,username,fullname,nid,createdAt,accesses}}}>{username}</Link> <small>{level}</small></td>
-                    <td style={{width:'12%'}}>{getMainBalance(balance.main)}</td> 
-                    <td style={{width:'12%'}}>{balance.topup}</td>
-                    <td style={{width:'12%'}}>{balance.drive}</td>
-                    <td style={{width:'12%'}}>{balance.mbank}</td>
-                    <td style={{width:'24%'}}>{formatDistanceToNow(lastActiveAt,{addSuffix:true})}</td>
+                    <div style={{width:'20%',position:'relative'}}   ><Link to={`${_id}`} state={{ user: {level,username,fullname,nid,createdAt,accesses}}}>{username}</Link><sub >({level})</sub></td>
+                    <div style={{width:'12%'}}>{getMainBalance(balance.main)}</div> 
+                    <div style={{width:'12%'}}>{balance.topup}</div>
+                    <div style={{width:'12%'}}>{balance.drive}</div>
+                    <div style={{width:'12%'}}>{balance.mbank}</div>
+                    <div style={{width:'20%'}}>{formatDistanceToNow(lastActiveAt,{addSuffix:true})}</div>
                     {/*<td>{status}</td>*/}
-                    <td style={{width:'8%'}}><Link to={`balance/${_id}`} state={{username}}><MdWallet /></Link><IconButton style={{color:modeData.textPrimary}} onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}/*`manage-users/${_id}`*/}><FaPen/></IconButton><Link to='reset-credential' state={{id:_id,username,credentialType:'password'}}><FaLock/></Link>&nbsp;<Link to='reset-credential' state={{id:_id,username,credentialType:'pin'}}><MdPassword/></Link>{/*<Link to=''><FaHistory/></Link>*/}{/*<Link to={}>Message</Link>*/}<Link to=''></Link></td>
+                    <div style={{width:'12%'}}>
+                        <SwitchItem check={verified} handleChange={e=>initToggle(_id,e.target.checked)}/>
+                        <IconButton onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}}><FaPen/></IconButton>
+                        <IconButton onClick={e=>initDelete(_id)}><FaTrash/></IconButton> {/*onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}`manage-users/${_id}`}><FaPen/></IconButton><Link to='reset-credential' state={{id:_id,username,credentialType:'password'}}><FaLock/></Link>&nbsp;<Link to='reset-credential' state={{id:_id,username,credentialType:'pin'}}><MdPassword/></Link>*/}{/*<Link to=''><FaHistory/></Link>*/}{/*<Link to={}>Message</Link>*/}<Link to=''></Link>
+        </div>
                     {/*<td></td>*/}
                     {/* <td><Link to='access'>modify</Link></td> */}
-                </TR>)}</tbody></table>
+                </StripedList>)}</div></div>
             </ScrollViewH></ScrollViewV>
         {data?.pagination?.totalPage>1 && <PaginationBar><Pages currentPage={data?.pagination?.currentPage} totalPage={data?.pagination?.totalPage} changePage={e=>pageNav(e)} /></PaginationBar>}
         </div>}
