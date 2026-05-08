@@ -1,11 +1,13 @@
-import React,{useEffect,useState} from 'react'
-import {Accordion,Container,Row,Col,Form, } from 'react-bootstrap';
-import { useMediaQuery } from 'react-responsive';
+import {useEffect,useState} from 'react'
+//import {Accordion,Container,Row,Col,Form,
+import {useMediaQuery} from 'react-responsive';
 import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
 import url from '../../config/url'
-import {FlexH,ThemeButton,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapV,ThemeButton,Spinner} from '../styles/Admin.style'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import Accordion from './Accordion'
+import RadioItem from '../Radio';
 import SwitchItem from '../Switch'
 const opts = ['airtel','banglalink','grameenphone','robi','teletalk'];
 
@@ -21,7 +23,7 @@ export default   () =>{
     const [modifiedTopupAccess,setModifiedTopupAccess] = useState([])
     const [modifiedDriveAccess,setModifiedDriveAccess] = useState([])
     const [modifiedRegularAccess,setModifiedRegularAccess] = useState([]);
-    const [topupMethod,setTopupMethod] = useState(appData?.topupMethod)     
+    const [topupMethod,setTopupMethod] = useState(appData?.methods.topup)     
 
     useEffect(()=> {
             fetch(url.urlTopupMethod,{credentials:'include'}).then(res=> res.json())
@@ -112,19 +114,19 @@ export default   () =>{
         }catch(err) {toast.error(err.message);setTopupMethod(prev=>prev)}
     }
 
-    let content= <div style={{background:backSecondary, color:textSecondary}}>
-    <Container fluid><Row>
-        <Col xs={12} xl={4}/*{span:6, offset:1}*/>
+    let content= <FlexH x='space-between' style={{background:backSecondary,color:textSecondary,width:'100%',padding:'0.5rem'}}>
+     
+        <Col /*xs={12} xl={4}*//*{span:6, offset:1}*/>
                 <FlexH x='flex-start' y='center'>
                     <h5 style={{marginBottom: '2rem'}}> topup Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchTopup(e.target.checked)}/>*/}
                 </FlexH>
             {/*<FlexH x='flex-start' y='center'>
                 <h5>Topup Method</h5>*/}
                 <FlexH style={{marginBottom:'3rem'}} x='space-between' y='center'>
-                    <div><input type="radio" checked={topupMethod=='manual'} name="method" id="manual" value='manual' onChange={changeTopupMethod}/><label htmlFor="manual">Manual</label></div>
-                    <div><input type="radio" checked={topupMethod=='retail'} name="method" id="retail" value='retail' onChange={changeTopupMethod}/><label htmlFor="retail">Retail</label></div>
-                    <div><input type="radio" checked={topupMethod=='mbank'} name="method" id="mbank" value='mbank' onChange={changeTopupMethod}/><label htmlFor="mbank">MBank</label></div>
-                    <div><input type="radio" checked={topupMethod=='api'} name="method" id="api" value='api' onChange={changeTopupMethod}/><label htmlFor="api">API</label></div>
+                    <div><RadioItem style={{width:'24%'}} check={topupMethod=='manual'} n='method' identity='manual' v='manual' label='Manual' handleChange={changeTopupMethod}/></div>
+                    <div><RadioItem style={{width:'24%'}} check={topupMethod=='retail'} n='method' identity='retail' v='retail' label='Retail' handleChange={changeTopupMethod}/></div>
+                    <div><RadioItem style={{width:'24%'}} check={topupMethod=='mbank'} n='method' identity='mbank' v='mbank' label='MBank' handleChange={changeTopupMethod}/></div>
+                    <div><RadioItem style={{width:'24%'}} check={topupMethod=='api'} n='method' identity='api' v='api' label='API' handleChange={changeTopupMethod}/></div>
                 </FlexH>
             {/*</Col></FlexH>*/}
             <Form onSubmit={modifyTopupTelecomAccess}>
@@ -135,7 +137,7 @@ export default   () =>{
                       <FlexH x='flex-end' y='center'><ThemeButton  type="submit">{loading?<Spinner  size="1"/>:'SAVE'}</ThemeButton></FlexH>
             </Form>
         </Col>
-        <Col xs={12} xl={4}>
+        <Col /*xs={12} xl={4}*/>
             <Form onSubmit={modifyDriveTelecomAccess}>
                 <FlexH x='flex-start' y='center'>
                     <h5 style={{marginBottom: '2rem'}}>Drive Pack Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchDrivePack(e.target.checked)}/>*/}
@@ -144,10 +146,10 @@ export default   () =>{
                     {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedDriveAccess?.includes(opt)} identity={`drive-${opt}`} handleChange={e=>toggleDriveAccess(e.target.checked,opt)}/></FlexH>)}
                     {/*switchDrivePack&& <Stack></Stack>*/}
                 </div>
-                          <FlexH x='flex-end' y='center'><ThemeButton  type="submit">{loading?<Spinner  size="1"></Spinner>: 'SAVE'}</ThemeButton></FlexH>
+                          <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
             </Form>
         </Col>
-        <Col xs={12} xl={4}/*{span:6, offset:1}*/>
+        <Col /*xs={12} xl={4}*//*{span:6, offset:1}*/>
             <Form onSubmit={modifyRegularTelecomAccess}>
                 <FlexH x='flex-start' y='center'>
                     <h5 style={{marginBottom: '2rem'}}>Regular Pack Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchRegularPack(e.target.checked)}/>*/}
@@ -156,18 +158,19 @@ export default   () =>{
                     {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedRegularAccess?.includes(opt)} identity={`regular-${opt}`} handleChange={e=>toggleRegularAccess(e.target.checked,opt)}/></FlexH>)}
                     {/*switchRegularPack&& <Stack/>*/}
                 </div>
-                      <FlexH x='flex-end' y='center'><ThemeButton  type="submit">{loading?<Spinner  size="1"/>: 'SAVE'}</ThemeButton></FlexH>
+                      <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
             </Form>
         </Col>
-    </Row></Container>
+    
     </div>
 
     return <>{isMobile ? (
-        <Col xs={12}>
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>Telecom Setting</Accordion.Header>
-            <Accordion.Body>{content}</Accordion.Body>
-          </Accordion.Item>
+        <Col /*xs={12}*/>
+          <Accordion title='Telecom Settings' content={content}/>
         </Col>
-      ) : <Col md={10} xl={8}>{content}</Col>}</>
+      ) : <div /*md={10} xl={8}*/>{content}</div>}</>
 }
+
+           
+            
+          
