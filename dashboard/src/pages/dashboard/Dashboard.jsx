@@ -1,12 +1,12 @@
-import React,{ useEffect,useState, } from "react"
+import { useEffect,useState, } from 'react'
 import {Navigate} from 'react-router-dom';
 import {Row,Col,} from 'react-bootstrap';
 import {toast} from 'react-toastify';
 //import { formatDistanceToNow } from 'date-fns';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import url from '../../config/url';// from "../lib/url";
 import {useTheme} from '../../contexts/ThemeContext';
-import {FlexH,ScrollViewV,Card,Loader,Spinner} from '../../components/styles/Admin.style';
+import {ScrollViewV,FlexH,GapV,Card,Loader,Spinner} from '../../components/styles/Admin.style';
+import url from '../../config/url';// from "../lib/url";
 
 export default  () =>{
     const {admin} = useAdminAuth()
@@ -100,20 +100,20 @@ export default  () =>{
         </table> */}
         {/*<button ref={bellRef} onClick={e=>{new Audio(audioFile).play()}} hidden></button>*/}
         <FlexH x='space-between' y='flex-start'>
-            <Card /*xs={12} md={3}*/   >
-                <h3 style={{background:backSecondary,padding:'1rem', borderRadius:'1rem 1rem 0 0'}}>Today's Usage</h3>
+            <Card style={{minHeight:'24rem'}} /*md={3}*/   >
+                <h3 style={{background:backSecondary,padding:'1rem',borderRadius:'1rem 1rem 0 0'}}>Today's Usage</h3><GapV x='2'/>
                 <ul>
                     {/*.map( => )*/ }
                 </ul>
             </Card>
-            <Card /*xs={12} md={3}*/   >
-                <h3>Topup Balances</h3>
+            <Card style={{width:'24rem'}} /*md={3}*/   >
+                <h3 style={{background:backSecondary,padding:'1rem',borderRadius:'1rem 1rem 0 0'}}>Topup Balances</h3><GapV x='2'/>
                 <div>
                     {Object.keys(telecomBalances).map((t,i)=> <FlexH x='space-between' y='center' style={{marginTop:'1rem'}} key={i}><span>{t}</span><span>{telecomBalances[t]}</span></FlexH>)}
                 </div>
             </Card>
-            <Card /*xs={12} md={3}*/   >
-                <h3 style={{background:backSecondary,padding:'1rem', borderRadius:'1rem 1rem 0 0'}}>Today's Report</h3>
+            <Card style={{width:'24rem'}} /*md={3}*/   >
+                <h3 style={{background:backSecondary,padding:'1rem',borderRadius:'1rem 1rem 0 0'}}>Today's Report</h3><GapV x='2'/>
                 <div style={{padding:'1rem'}}>
                     {Object.keys(depositSummary).map((f,i) => <div key={i} style={{marginTop:'1rem'}}>{f}<span style={{float:'right'}}>{depositSummary[f] && depositSummary[f]}</span></div>) }
                     {Object.keys(expenseSummary).map((f,i) => <div key={i} style={{marginTop:'1rem'}}>{f}<span style={{float:'right'}}>{expenseSummary[f] && expenseSummary[f]}</span></div>) }
@@ -125,8 +125,8 @@ export default  () =>{
                     {pays.map((pays,i) => <div key={i}><span>{formatDistanceToNow(new Date(date), { addSuffix: true })}</span><br /><span>{user} ({type})</span><span style={{float:'right'}}>{amount}</span></div>) }
                 </div>
             </Col>*/}
-            <Card /*xs={12} md={3}*/   >
-                <h3 style={{background:backSecondary,padding:'1rem', borderRadius:'1rem 1rem 0 0'}}>Total</h3>
+            <Card style={{width:'24rem'}} /*md={3}*/   >
+                <h3 style={{background:backSecondary,padding:'1rem',borderRadius:'1rem 1rem 0 0'}}>Total</h3><GapV x='2'/>
                 <div style={{padding:'1rem'}}>
                     {Object.keys(balanceSummary).map((f,i) => <FlexH key={i} x='space-between' y='center' style={{marginTop:'1rem'}}><span>{f}</span><span>{balanceSummary[f]&& balanceSummary[f]}</span></FlexH>)}
                     {/*<FlexH x='space-between' y='center'><span>Bank Balance</span><span>{h}</span></FlexH>*/}
