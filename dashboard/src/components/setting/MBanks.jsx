@@ -1,16 +1,16 @@
-import React,{useEffect,useState} from 'react'
-import {Accordion,Col} from 'react-bootstrap'
+import {useEffect,useState} from 'react'
 import {useMediaQuery} from 'react-responsive'
 import {toast} from 'react-toastify'
 import {BsPlusLg} from 'react-icons/bs' //
-import {FlexH,GapH,GapV,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
-import url from '../../config/url'
 import {useTheme} from '../../contexts/ThemeContext'
+import {Col,FlexH,GapH,GapV,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
 import {validateMBank} from '../../utils/validate';
+import url from '../../config/url'
+import Accordion from './Accordion'
 import SwitchItem from '../Switch';
 
 export default ()=>{
-    const {isMobile}=useMediaQuery({maxWidth:768})
+    const isMobile = useMediaQuery({maxWidth:768})
     const [mobileBanks,setMobileBanks] = useState([]);
     const [modified,setModified] = useState([]);
     const [errors,setErrors] = useState({});
@@ -109,13 +109,13 @@ export default ()=>{
     </div>}
   </div>
   
-  return <>{isMobile?<Col xs={12}>
-            <Accordion>
-              <Accordion.Item eventKey="0">
-                <Accordion.Header>M Banks</Accordion.Header>
-                <Accordion.Body>{content}</Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
-          </Col>:<Col md={6} xl={4}>{content}</Col>
+  return <>{isMobile?<Col /*xs={12}*/>
+            <Accordion title='Mobile Banks' content={content}/>
+          </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
         }</>
 }
+            
+            
+              
+                
+                 
