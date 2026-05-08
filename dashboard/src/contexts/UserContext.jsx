@@ -10,7 +10,7 @@ const UserContext = createContext();
 export const UserProvider = ({children}) =>{
     const [searchParams] = useSearchParams() 
     const {pendingCounts:{users}} = useNotification();
-    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||users>0?'inactive':'active',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||users>0?'not-verified':'verified',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
          
     //const type = searchParams.get('type') || '';
          
@@ -41,16 +41,6 @@ export const UserProvider = ({children}) =>{
             finally{setLoading(false);}
         }
     const initFilterData = filterData =>{setFilter(filterData)}
-    /*const fetchUserLevels =async ()=> {
-        setLoading(true)
-        try {       
-            let res = await fetch(url.urlUserLevels,{credentials: 'include'});
-            let data = await res.json()
-            if(!res.ok) {throw new Error(data.error || 'fetching failed');}
-            setUserLevels(data)
-        }catch(err) {toast.error(err.message)}
-        finally{setLoading(false)}
-    }*/
     const addUser = async ({formData,accesses},pin) => {
         let validationErrors = validateUser(formData)
         if(Object.keys(validationErrors).length) {setErrors(validationErrors);return} //
@@ -127,6 +117,71 @@ export const UserProvider = ({children}) =>{
         }catch(err) {toast.error(err.message);}
         finally{setLoading(false)}
     }
-  return <UserContext.Provider value={{userData,fetchUsers,initFilterData,addUser,editUserAccess,resetUserPassword,resetUserPIN,authError,errors,loading}}>{children}</UserContext.Provider>;
+    const toggleVerification = async ({id,verified},pin) =>{
+        setLoading(true)
+        try {       
+            let res = await fetch(`${url.urlUserVerify}/${id}`,{
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {'Content-Type':'application/json','x-admin-pin':pin},
+                body: JSON.stringify({verified})
+            });
+            let data = await res.json()
+            if(!res.ok) {throw new Error(data.error||'failed to verify/unverify user');}
+            toast.success(data.message)
+        }catch(e) {toast.error(e.message)}
+        finally{setLoading(false)}
+    }
+    
+    const deleteUser = async ({id},pin) =>{
+        try{
+            let res = await fetch(`${url.urlManageUser}/${id}`,
+                {
+                    method:'DELETE',
+                    credentials:'include',
+                    headers:{'x-admin-pin':pin}
+                }
+            );
+            let data = await res.json();
+            if(!res.ok) throw new Error(data.error||'failed to delete user');
+            toast.success(data.message)
+        }catch(e) {toast.error(e.message)}
+        finally{setLoading(false)}
+    }
+    const deleteUserDevice = async ({id,deviceId},pin) =>{
+        try{
+            let res = await fetch(`${url.urlUserDeviceAccess}/${id}`,
+                {
+                    method:'DELETE',
+                    credentials:'include',
+                    headers:{'Content-Type':'application/json','x-admin-pin':pin},
+                    body:JSON.stringify({deviceId})
+                }
+            );
+            let data = await res.json();
+            if(!res.ok) throw new Error(data.error||'failed to delete device');
+            toast.success(data.message)
+        }catch(e) {toast.error(e.message)}
+        finally{setLoading(false)}
+    }
+    
+    const toggleUserDeviceAccess = async ({id,isDeviceLock},pin) =>{
+        try{
+            let res = await fetch(`${url.urlUserDeviceAccess}/${id}`,
+                {
+                    method:'PATCH',
+                    credentials:'include',
+                    headers:{'x-admin-pin':pin},
+                    body:JSON.stringify({isDeviceLock})
+                }
+            );
+            let data = await res.json();
+            if(!res.ok) throw new Error(data.error||'failed to toggle user device access');
+            toast.success(data.message)
+        }catch(e) {toast.error(e.message)}
+        finally{setLoading(false)}
+    }
+    
+  return <UserContext.Provider value={{userData,fetchUsers,initFilterData,addUser,editUserAccess,resetUserPassword,resetUserPIN,toggleVerification,deleteUser,deleteUserDevice,toggleUserDeviceAccess,authError,errors,loading}}>{children}</UserContext.Provider>;
 }
 export const useUser = () => useContext(UserContext);
