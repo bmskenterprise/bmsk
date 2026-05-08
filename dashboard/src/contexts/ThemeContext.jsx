@@ -1,4 +1,4 @@
-import {createContext,useContext,useState} from "react";
+import {createContext,useContext,useState} from 'react';
 //import { 
 import getComplementaryColor from '../utils/complementaryColor'
 const ThemeContext = createContext();
@@ -14,7 +14,7 @@ export const ThemeProvider = ({children})=>{
             textSecondary:'#D9D9D9',
             glassmorph:{
                 back:'rgba(255,255,255,0.1)',
-                shadow:'0 4px 30px rgba(0, 0, 0, 0.1)'
+                shadow:'0 4px 6px rgba(0,0,0,0.4) 0 1px 3px rgba(0,0,0,0.3)'
             }
         },
         light: {
@@ -30,10 +30,11 @@ export const ThemeProvider = ({children})=>{
     }
     const [themeData, setThemeData] = useState(JSON.parse(localStorage.getItem('theme')) || {themeBackground:'#373463', themeText:getComplementaryColor('#373463')});
     const [modeData, setModeData] = useState(modes[colorMode]);
-    const toggleMode = (selectedMode)=>{
-        localStorage.setItem('mode', JSON.stringify(selectedMode));
-        setThememode(selectedMode);
-        setModeData(modes[selectedMode]);
+    
+    const toggleMode = (isDark)=>{
+        localStorage.setItem('mode', JSON.stringify(isDark?'dark':'light'));
+        setThememode(isDark?'dark':'light');
+        setModeData(modes[isDark?'dark':'light']);
     };
     const toggleTheme = (themeSet) => {
     //const themeSet = (typeof c)=='object' ? c : {background:c, color:getComplementaryColor(c)};
