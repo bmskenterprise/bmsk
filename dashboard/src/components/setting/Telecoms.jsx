@@ -1,30 +1,30 @@
-import React,{ useEffect,useState,useRef } from "react";
-import {Col,Accordion,Form,Button,} from 'react-bootstrap'
+import { useEffect,useState,useRef } from 'react';
 import {useMediaQuery} from 'react-responsive'
 import {MdEdit} from 'react-icons/md'
-import {BsPlusLg} from "react-icons/bs";
+import {BsPlusLg} from 'react-icons/bs';
 import {toast} from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext';
-import url from '../../config/url'
-import {FlexH,FlexV,GapV,TelecomCard,TelecomLogo,TelecomOverlay,AddButton,InputField,ErrorText,ThemeButton,IconButton,Spinner} from "../styles/Admin.style";
-//import validURL from "../../utils/validURL";
 import {useTelecom} from '../../contexts/TelecomContext'
-import {validateTelecom} from "../../utils/validate";
+import {Col,FlexH,GapV,TelecomCard,TelecomLogo,TelecomOverlay,AddButton,InputField,ErrorText,ThemeButton,IconButton,Spinner} from '../styles/Admin.style';
+//import validURL from "../../utils/validURL";
+import {validateTelecom} from '../../utils/validate';
+import Accordion from './Accordion'
+import url from '../../config/url'
 
 export default  () =>{
-const init = {id:null,name:'',icon:''};
+   
+    const init = {id:null,name:'',icon:''}; //const [telecoms, setTelecoms] = useState(JSON.parse(localStorage.getItem('telecoms')) || []);
+    const isMobile = useMediaQuery({maxWidth:768})
     const {modeData:{backSecondary,textSecondary}} = useTheme() 
-    const [errors, setErrors] = useState({});
-       
     const {telecoms,fetchTelecoms} = useTelecom();
+    const [errors, setErrors] = useState({});
     const [modified,setModified] = useState(telecoms);
-        //const [telecoms, setTelecoms] = useState(JSON.parse(localStorage.getItem('telecoms')) || []);
         const [initData, setInitData] = useState(init);
         const [formInit, setFormInit] = useState(false);
         const [loading, setLoading] = useState(false);
-    const isMobile = useMediaQuery({maxWidth:768})
     const [editMode, setEditMode] = useState(false);
     let telecomData = {};  
+       
         /*useEffect(()=>{
             const fetchTelecoms= async ()=>{
                 try{
@@ -100,47 +100,48 @@ const init = {id:null,name:'',icon:''};
     
                                
                                
-let content = <div style={{background:backSecondary,color:textSecondary}}>
-            <h4 style={{marginBottom: '3rem'}}>Telecoms</h4>
+let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
+            <h4 style={{marginBottom: '2rem'}}>Telecoms</h4>
             {/*formInit &&<SimForm stateHandler={config} hideForm={e=>setEditInit(false)} />*/}
             {formInit &&<form onSubmit={handleSubmit}>
-                        <FlexV x='flex-start' y='flex-start'>
+                        <div /*x='flex-start' y='flex-start'*/>
                             {/*<Form.Label>Telecom Name</Form.Label>*/}
                             <InputField type='text' placeholder='telecom name' value={initData.name} onChange={e=>setInitData({...initData,name:e.target.value})}  />
                             <ErrorText>{errors?.name}</ErrorText>
-                        </FlexV><GapV x='1'/>
-                        <FlexV x='flex-start' y='flex-start'>
+                        </div><GapV x='1'/>
+                        <div /*x='flex-start' y='flex-start'*/>
                             {/*<Form.Label>Logo URL</Form.Label>*/}
                             <InputField type='text' placeholder='telecom icon link' value={initData.icon} onChange={e=>setInitData({...initData,icon:e.target.value.trim()})}  />
                             <ErrorText>{errors?.icon}</ErrorText>
-                        </FlexV><GapV x='1'/>
+                        </div><GapV x='1'/>
                         <FlexH x='flex-end' y='center'>
                             <button onClick={e=>setFormInit(false)}>CANCEL</button>
-                            {/*loading?<Button><Spinner animation="border" size="sm"></Spinner></Button>:*/}<FlexH x='flex-end' y='center'><ThemeButton type='submit'  disabled={loading}>{loading?<Spinner  size="1"/>:initData.id?'EDIT':'ADD'}</ThemeButton></FlexH>
+                            {/*loading?<Button><Spinner animation="border" size="sm"></Spinner></Button>:<FlexH x='flex-end' y='center'>*/}<ThemeButton type='submit' style={{marginLeft:'2rem'}} disabled={loading}>{loading?<Spinner  size='1'/>:initData.id?'EDIT':'ADD'}</ThemeButton>{/*</FlexH>*/}
                         </FlexH>
-                    </form>}
-            {!formInit &&<FlexH x='space-between' y='flex-start'>{/*<table>
+                    </form>
+             :<FlexH x='space-between' y='flex-start'>{/*<table>
                 <tr>
                     {fields.map((f,i)=> <th key={i}>{f}</th>)}
                 </tr>
             </table>*/}
-                {modified.map(({_id,icon,name, },i)=> <TelecomCard key={i}>
-                    {/*<h4>{name}</h4>*/}<TelecomLogo src={icon} alt="" />
+                {modified?.map(({_id,icon,name, })=> <TelecomCard key={_id}>
+                    {/*<h4>{name}</h4>*/}<TelecomLogo src={icon} alt='' />
                     <TelecomOverlay><IconButton style={{color:textSecondary}} onClick={e=>{setInitData({id:_id,name,icon});setFormInit(true);}}><MdEdit /></IconButton></TelecomOverlay>
                     {/*<td><span onClick={deleteOperator}><FaDelete /></span></td>*/}
                 </TelecomCard>)}
                 <AddButton onClick={e=>{setInitData(init);setFormInit(true)}}><BsPlusLg/></AddButton>
                 </FlexH>
             }    
+           <GapV x='5'/>
         </div>
+           
         return <>{isMobile ? (
-        <Col xs={12}>
-          <Accordion.Item eventKey="0">
-            <Accordion.Header>Telecom Setting</Accordion.Header>
-            <Accordion.Body>{content}</Accordion.Body>
-          </Accordion.Item>
+        <Col /*xs={12}*/>
+          <Accordion title='Telecom Setting' content={content}/>
         </Col>
       ) : (
-        <Col md={6} xl={4}>{content}</Col>
+        <Col /*md={6} xl={4}*/>{content}</Col>
       )}</>
 }
+
+          
