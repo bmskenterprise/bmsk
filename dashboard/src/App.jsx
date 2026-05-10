@@ -28,6 +28,7 @@ import ChangeSuperAdminCredential from './pages/dashboard/ChangeCredential';
 import ResetSubAdminCredential from './pages/dashboard/ResetAdminCredential';
 import ResetUserCredential from './pages/dashboard/ResetUserCredential';
 import ResetSuperAdminCredential from './pages/ResetSuperAdminCredential'
+import VerifyEmail from './pages/dashboard/VerifyEmail'
 import Setup from './pages/dashboard/Setup';
 import DepositRate from './pages/dashboard/Deposit';
 import TXNID from './pages/dashboard/TxnID'
@@ -36,10 +37,11 @@ import UserDetail from './pages/dashboard/UserDetail';
 import Feedback from './pages/dashboard/Feedback'
 import Balance from './pages/dashboard/Balance';
 import Admins from './pages/dashboard/Admins'
-import APIRequest from './pages/dashboard/APIRequest'
+import AdminForm from './pages/dashboard/AdminForm'
+import APIs from './pages/dashboard/APIs'
 import APISetup from './pages/dashboard/APISetup'
 import NotFound from './pages/dashboard/NotFound';
-import {PackProvider} from './contexts/PackContext';
+import {TelecomProvider} from './contexts/TelecomContext';
 import {useAdminAuth/*,changePassword,changePIN*/} from './contexts/AdminAuthContext';
 import {UserProvider} from './contexts/UserContext';
 import {MessageProvider} from './contexts/MessageContext'
@@ -48,8 +50,7 @@ import DriveForm from './pages/dashboard/DriveForm';
 import RegularList from './pages/dashboard/RegularList';
 import DriveList from './pages/dashboard/DriveList';
 import MbankHistory from './pages/dashboard/MbankHistory'
-import WithdrawHistory from './pages/dashboard/WithdrawHistory'   //
-//import Store from './pages/dashboard/Store'
+import WithdrawHistory from './pages/dashboard/WithdrawHistory'
 //CDK9I7WULV01788353710 
 export default ()=>{
   let {themeData,modeData} = useTheme()
@@ -66,9 +67,10 @@ export default ()=>{
         <Route path='/user/login' element={<APIUserLogin/>}></Route>
         <Route path='/recover-password/:token' element={<ResetSuperAdminCredential/>}/>
         <Route path='/recover-pin/:token' element={<ResetSuperAdminCredential/>}/>
+        <Route path='/reset-credential/:credential' element={<VerifyEmail/>} />
         {/*<Route path='/dashboard' element={<Navigate to={admin?'/dashboard':'/login'} />}></Route>*/}
         <Route path='/login' element={<Login/>}></Route>
-        <Route path='/user/*' element={<UserRoute></UserRoute> }>
+        <Route path='/user/*' element={<UserRoute></UserRoute>}>
           <Route path='topup' element={<TopupAPIs/>} />
           <Route path='drive' element={<DriveAPIs/>} />
           <Route path='regular' element={<RegularAPIs/>}/>
@@ -84,7 +86,7 @@ export default ()=>{
           <Route path='deposit-init' element={<TXNID/>}></Route>
           <Route path='topup/history' element={<TopupHistory/>}></Route>
           <Route path='manage-package/*'
-            element={<PackProvider><Routes>
+            element={<TelecomProvider><Routes>
             <Route path='drive' element={<ManageDrive/>} />
             <Route path='regular' element={<ManageRegular/>}/>
             <Route path='regular/add' element={<RegularForm/>} />
@@ -93,7 +95,7 @@ export default ()=>{
             <Route path='drive/edit/:id' element={<DriveForm/>} />
             <Route path='regular/:opt' element={<RegularList/>} />
             <Route path='drive/:opt' element={<DriveList/>} />
-            </Routes></PackProvider>}/>
+            </Routes></TelecomProvider>}/>
           <Route path='manage-user/*'
             element={<UserProvider><Routes>
             <Route path='' element={<Users/>} />
@@ -103,12 +105,13 @@ export default ()=>{
             </Routes></UserProvider>}/>
           <Route path='change-password' element={<ChangeSuperAdminCredential /*handleSubmit={changePassword}*//>}/>
           <Route path='change-pin' element={<ChangeSuperAdminCredential /*handleSubmit={changePIN}*//>}/>
-          {/*<Route path='manage-users/reset-credential' element={<ResetUserCredential //handleSubmit={changeUserPIN}///>}/>*/}
+          {/*<Route path='manage-users/reset-credential' element={<ResetUserCredential//handleSubmit={changeUserPIN}///>}/>*/}
           <Route path='manage-admins' element={<Admins/>}/>
+          <Route path='manage-admins/add' element={<AdminForm/>}/>
+          <Route path='manage-admins/edit' element={<AdminForm/>}/>
           <Route path='manage-admins/reset-credential' element={<ResetSubAdminCredential/>}/>
           <Route path='setup' element={<Setup/>}></Route>
           <Route path='deposit-setup' element={<DepositRate/>}></Route>
-          {/*<Route path='store' element={<Store/>}/>*/}
           <Route
             path='notice/*'
             element={
@@ -122,8 +125,8 @@ export default ()=>{
             }>
           </Route>
           <Route path='feedback' element={<Feedback/>}></Route>
-          <Route path='api-request' element={<APIRequest/>}></Route>
-          <Route path='api-setup' element={<APISetup/>}></Route>
+          <Route path='gateway-api' element={<APIs/>}></Route>
+          {/*<Route path='api-setup' element={<APISetup/>}></Route>*/}
           <Route path='change-password' element={<ChangeSuperAdminCredential/>}/>
           <Route path='change-pin' element={<ChangeSuperAdminCredential/>}></Route>
         </Route>
