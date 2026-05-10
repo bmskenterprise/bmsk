@@ -1,6 +1,13 @@
 import styled,{keyframes} from 'styled-components';
+
+const GlobalStyle = createGlobalStyle`
+  :root {
+    --accordion-transition: all 0.3s ease;
+  }
+`;
+
 export const ResponsiveLayout = styled.div`
-  position: relative;
+  position: relative;width:100%;
   @media (min-width: 768px){
     position: static;
     display: flex;
@@ -32,11 +39,12 @@ export const CenterCard = styled.div`
   transform:translate(-50%,-50%);
 `;
 
-export const Card=styled.div`
+export const Card = styled.div`
   background: ${({theme})=> theme?.modeData?.backSecondary};
   border-radius:0.5rem;
   box-shadow: ${({theme})=> theme?.modeData?.glassmorph?.shadow};
-  width: 30%;
+  width:100%;
+  @media (min-width:768px){width: 30%;}
 `
 
 
@@ -53,9 +61,10 @@ export const Header = styled.header`
   justify-content: space-between;
   align-items: center;
   height: 4rem;
-  position: relative;
+  position: sticky;top:0;left:0;z-index:9;
 `;
 export const Avatar = styled.img`
+  cursor:pointer;
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
@@ -65,7 +74,7 @@ export const ProfileCard = styled.div`
   box-shadow:${({theme})=> theme?.modeData?.glassmorph.shadow};
   color: ${({theme})=>theme?.modeData?.textPrimary};
   padding:1rem;position:absolute;
-  top:100%; right:0; width:20rem; aspect-ratio:1;  z-index:1000;
+  top:100%; right:0; width:24rem; /*aspect-ratio:1;*/  z-index:8;
 `;
 export const ScrollViewH = styled.div`
   /*background:  rgba(0,0,0,0.3);
@@ -89,7 +98,7 @@ export const ScrollViewV = styled.div`
 export const Col = styled.div`
   width: 100%;
   @media (min-width:768px){
-    width: 40%;
+    width: 32%;
   }
 `
 
@@ -98,7 +107,7 @@ export const FlexH = styled.div`
   flex-flow:row wrap;
   justify-content: ${({x})=>x};
   align-items: ${({y})=>y};
-  gap: 1rem;
+  //gap: 1rem;
 `;
 
 export const FlexV = styled.div`
@@ -106,11 +115,11 @@ export const FlexV = styled.div`
   flex-flow:column nowrap;
   justify-content: ${({y})=>y};
   align-items: ${({x})=>x};
-  gap: 1rem;
+  //gap: 1rem;
 `;
 export const SidebarContainer = styled.div`
   background: ${({theme})=> theme?.themeData?.themeBackground};
-  height: 100vh;width:100%;position:absolute;z-index:3;
+  height: 100vh;width:100%;position:absolute;z-index:6;
   @media (min-width:768px){
     width: 15%;position: static;
   }
@@ -124,7 +133,7 @@ export const PageContent = styled.div`
   //display:flex;flex-flow:column nowrap
 `
 
-export const ThemeButton= styled.button`
+export const ThemeButton = styled.button`
   background:${({theme})=> theme?.themeData?.themeBackground};
   border:0;
   border-radius: 0.25rem;
@@ -140,6 +149,14 @@ export const PrimaryButton = styled.button`
   cursor: pointer;
   padding:0.5rem;
 `
+export const SecondaryButton = styled.button`
+  border: none;
+  background: ${({theme})=> theme?.modeData?.backSecondary};
+  border-radius: 0.25rem;
+  color: ${({theme})=>theme?.modeData?.textPrimary};
+  cursor: pointer;
+  padding:0.5rem;
+`
   //display: ${({sidebarToggler})=> sidebarToggler?'block':'none'};
 
 export const Field = styled.input`
@@ -150,6 +167,16 @@ export const Field = styled.input`
   &:focus{border:1px solid ${({theme})=>theme?.themeData?.themeBackground};}
   width: ${({x})=>x}rem;
 `;
+export const NumberField = styled.input`
+  background: transparent;
+  border: 0;
+  padding: 0.5rem;
+  color: ${({theme})=>theme?.modeData?.textPrimary};
+  outline: none;font-size: 1.3rem;
+  width: ${({x})=>x?`${x}rem`:'100%'};
+  &:focus{border:1px solid ${({theme})=>theme?.themeData?.themeBackground};}
+`;
+
 export const InputField= styled.input`
   background:transparent;
   border: 1px solid ${({theme})=>theme?.modeData?.textPrimary};
@@ -160,7 +187,7 @@ export const InputField= styled.input`
   width: 100%;
 `
 export const Select = styled.select`
-  background: transparent;font-size: 1.3rem;
+  background: transparent;font-size: 1.1rem;
   & >option{
     background: ${({theme})=>theme?.modeData?.backSecondary};
     color: ${({theme})=>theme?.modeData?.textPrimary};
@@ -255,8 +282,8 @@ export const TA = styled.textarea`
 
 
 export const Rotate = styled.span`
-  float: right;
-  transform: rotate(${({collapse})=>collapse?'90deg':'0deg'});
+  margin-left: auto;
+  transform: rotate(${({collapse})=>collapse?'180deg':'0deg'});
   transition: transform 0.2s linear;
 `;
 export const InlineBadge = styled.span`
@@ -290,20 +317,25 @@ export const IconButton = styled.button`
   color:${({theme})=>theme?.modeData?.textPrimary};
   cursor: pointer;font-size:${({size})=>size?`${size}rem`:'1.2rem'};
 `;
+export const MenuTogglerButton = styled.button`
+  background: none;
+  border: none;
+  color:white;
+  cursor: pointer;font-size:${({size})=>size?`${size}rem`:'1.2rem'};
+`;
 
 export const ApproveButton = styled.button`
   background: green;
   border: none;
   border-radius: 4px;
-  color: white;
+  color: white;cursor:pointer;
   padding: 0.5rem 0.8rem;outline: none;
 `
-
 export const RejectButton = styled.button`
   background: tomato;
   border: none;
   border-radius: 4px;
-  color: white;
+  color: white;cursor:pointer;
   padding: 0.5rem 0.8rem;outline: none;
 `
 
@@ -407,8 +439,12 @@ export const DropdownArrow = styled.img`
   transition: transform 0.3s ease;
 `
 
+
+export const Table = styled.table`
+  border-collapse:collapse;
+`
 export const TH = styled.th`
-  font-size: 0.8rem;//font-size: ;
+  font-size: 1.1rem;border: 1px solid ${({theme})=>theme?.modeData?.textPrimary};//font-size: ;
   @media (min-width:768px){font-size: 1.3rem;}
 `
 export const TR = styled.tr`
@@ -426,6 +462,11 @@ export const TR = styled.tr`
     background:${({theme})=>theme?.modeData?.backSecondary};
     color:${({theme})=>theme?.modeData?.textSecondary};
   }
+`
+export const TD = styled.td`
+  border: 1px solid ${({theme})=>theme?.modeData?.textPrimary};
+  font-size: 1.1rem;
+  @media (min-width:768px){font-size: 1.3rem;}
 `
 
 export const StripedList = styled.div`
@@ -471,7 +512,7 @@ export const PaginationBar = styled.div`
 `
 
 export const Loader = styled.div`
-  background:rgba(0,0,0,0.8);
+  background:${({theme})=>theme?.modeData?.backPrimary};opacity:0.8;
   width: 100%;
   height: 100%;
   display: grid;
@@ -490,8 +531,35 @@ export const Spinner = styled.div`
   border: 3px solid ${({theme})=> theme?.themeData?.themeBackground};
   border-top: 3px solid transparent;
   border-radius: 50%;
-  width: ${({size})=> size?size:2}rem;
-  height: ${({size})=> size?size:2}rem;
+  width: ${({size})=> size?size:3}rem;
+  height: ${({size})=> size?size:3}rem;
+`;
+export const AccordionItem = styled.div`
+  & >button{
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1.25rem 0.5rem;
+    font-size: 1.5rem;
+    color: ${({theme})=>theme?.modeData?.textSecondary};
+    text-align: left;
+    background: ${({theme})=>theme?.modeData?.backSecondary};
+    border: 0;
+    border-radius: 0;
+    overflow-anchor: none;
+    transition: var(--accordion-transition);
+    -webkit-transition: var(--accordion-transition);
+    -moz-transition: var(--accordion-transition);
+    -ms-transition: var(--accordion-transition);
+    -o-transition: var(--accordion-transition);
+    &:focus{
+      outline: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+  }
 `;
 export const Center = styled.div`
   width: 100%;
