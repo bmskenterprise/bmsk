@@ -17,7 +17,7 @@ export default  () =>{
     
     const fetchSocialLinks = async e =>{
             fetch(url.urlSocialLinks,{credentials:'include'}).then(res => res.json())
-            .then(data => {setSocialLinks(data);modified = data})
+            .then(data => {setSocialLinks(data);  setModified(data)})
             .catch(e => toast.error(e.message))
             //.finally(()=>{setLoading(false)})
     }
@@ -51,7 +51,7 @@ export default  () =>{
         <h4 style={{marginBottom:'2rem'}}>Social Media</h4>
         <form onSubmit={saveModified}>
             <div>
-                {modified?.map(({media,icon,url},i) => <FlexH x='space-between' y='center' key={i}style={{width:'100%',marginBottom:'1rem'}}><TinyIcon src={icon} alt={media} /*style={{width:'100%',height:'100%'}}*//>  <Field x='20' value={url} onChange={e=>handleChange(e.target.value,media)}/>
+                {modified?.map(({_id,media,icon,url},i) => <FlexH x='space-between' y='center' key={_id} style={{width:'100%',marginBottom:'1rem'}}><TinyIcon src={icon} alt={media}/*style={{width:'100%',height:'100%'}}*//>  <Field x='20' value={url} onChange={e=>handleChange(e.target.value,media)}/>
                     {/*<div style={{width: '4rem',height:'4rem',marginRight:'2rem'}} onClick={e=>fileRef.current.click()}><input ref={fileRef} type="file" name="" hidden /><img style={{width:'100%', height:'100%'}} src={icon} alt={media} /></div>
                     <input type="text" value={contactNumber} />*/}
                 </FlexH>)} 
