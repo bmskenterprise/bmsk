@@ -101,9 +101,9 @@ export default  () =>{
                                
                                
 let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
-            <h4 style={{marginBottom: '2rem'}}>Telecoms</h4>
+            <h4>Telecoms</h4> <GapV x='2'/>
             {/*formInit &&<SimForm stateHandler={config} hideForm={e=>setEditInit(false)} />*/}
-            {formInit &&<form onSubmit={handleSubmit}>
+            {formInit ?<form onSubmit={handleSubmit}>
                         <div /*x='flex-start' y='flex-start'*/>
                             {/*<Form.Label>Telecom Name</Form.Label>*/}
                             <InputField type='text' placeholder='telecom name' value={initData.name} onChange={e=>setInitData({...initData,name:e.target.value})}  />
