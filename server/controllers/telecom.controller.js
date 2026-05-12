@@ -72,14 +72,14 @@ export const topup = async (req, res) => {
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=>err.msg).mapped(),success:false});
     const {operator,recipient,amount} = req.body
     let admin
-    if(!operator||!recipient||!amount) return res.status(400).json({error:"Missing operator, number, or amount",success:false});
+    if(!operator||!recipient||!amount) return res.status(400).json({error:'Missing operator, number, or amount',success:false});
     let io = socket.getIO()
 
     try{
             admin = await Admin.findOne({role:'admin'});
         let user=await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user.accesses.includes('topup')) return res.status(401).json({error:'dont have topup permission'})
-        if(user.balance.topup<amount) return res.status(422).json({error:"Insufficient balance"})
+        if(!user.accesses.includes('topup')) return res.status(401).json({error:'dont have topup permission',success:false})
+        if(user.balance.topup<amount) return res.status(422).json({error:'Insufficient balance',success:false})
         if(admin.methods.topup=='retail'){
         /*const response = await fetch(url);
         if(!response.ok) return res.status(500).json({ error:"Failed to forward USSD request", success:false });
@@ -89,7 +89,7 @@ export const topup = async (req, res) => {
         try{
             routings =admin.routing;
             lastFetchedTime = now;
-        }catch(err) {return res.status(500).json({ error: "MongoDB fetch error"+err,});}
+        }catch(err) {return res.status(500).json({ error: 'MongoDB fetch error'+err,success:false});}
     }
     const opKey = operator.toLowerCase();
     const map = routings.find(r=> r.operator==opKey);
@@ -112,20 +112,20 @@ export const topup = async (req, res) => {
             let socketAdmin = await SocketResponse.findOne({admin:'socket-admin',socketId:{$exists:true,$ne:null}});
             if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{['pending.topup']:1}});
             io.emit('added',{type:'topup'})
-            return res.status(201).json({message:'topup request sent'}); 
+            return res.status(201).json({message:'topup request sent',success:true}); 
         }else if(admin.methods.topup=='mbank'){
             const id = uuidv4()
             const {deviceId,operator,recipient,amount} = req.body;
             const r = emitToDevice(deviceId,'topup',{id,operator,recipient,amount})
-            if(!r.ok) return res.status(400).json({error:r.error})
+            if(!r.ok) return res.status(400).json({error:r.error,success:false})
             await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'SUCCESS'});
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
-            return res.status(201).json({message:'topup request sent',id})
+            return res.status(201).json({message:'topup request sent',success:true})
         }
     }catch(err) {
     return res.status(500).json({
       error: "Failed to forward USSD request",
-      details: err.message
+      details: err.message,success:false
     });
   }
 };
@@ -146,7 +146,6 @@ export const changeTopupStatus = async (req,res,next)=>{
     }catch(e) {next(e)}
 }
 
-
 export const updateTopupTelecomAccess = async (req, res,next) => {
     try {
         await Admin.findOneAndUpdate({role:'admin'},{$set:{topupAccess:req.body}})
@@ -155,6 +154,25 @@ export const updateTopupTelecomAccess = async (req, res,next) => {
     }catch(err) {next(err)}
 }
 
+//admin
+export const getTelecoms = async (req,res,next)=>{
+    try {
+        const admin = await Admin.findOne({role:'admin'});
+        if(!admin || !admin.telecoms)return res.status(404).json({error:'Not Found'})
+        /*const logos = {};
+        for(const element of admin.telecom) logos[element.name] =element.icon*/
+        let telecoms = admin.telecoms.map(t=>({name:t.name,icon:t.icon,active:t.active}))
+        res.status(200).json(telecoms);
+    }catch(err) {next(err)}
+};
+//user
+export const getTelecomOpts = async (req,res) => {
+    try {
+        const admin = await Admin.findOne({role:'admin'});
+        if(!admin) res.status(200).json([]);
+        res.status(200).json(admin.telecoms.map(t=>({name:t.name,icon:t.icon})))
+    } catch(err) {res.status(200).json([]);} 
+}
 
 export const getModemRouting = async (req,res,next) =>{
     try{
@@ -225,9 +243,9 @@ export const getTopupHistoryByUser = async (req,res,next)=>{
   try {
     const total = await Topup.countDocuments(filter);
     const topups = await Topup.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
-    if(!topups) return res.status(404).json({error:'টপ-আপ হিস্টোরি পাওয়া যায়নি', success:false});
+    if(!topups) return res.status(404).json({error:'topup history not found', success:false});
     return res.status(200).json({topups,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
-  }catch(err) {next(err)}
+  }catch(e) {next(e)}
 }
 
 export const getTelecomBalances= async(req,res,next)=>{
@@ -284,7 +302,7 @@ export const hitDrive = async (req, res, next) => {
     const {drive, recipient, price, } = req.body;
     try{
         let user= await User.findOne({_id:new ObjectId(req.user.id)})
-        if(user.balance.drive<price) return res.status(422).json({error:'insufficient balance'})
+        if(user.balance.drive<price) return res.status(422).json({error:'insufficient balance',success:false})
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.drive`]:Number(drive.price-drive.commission)*(-1)}})
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}});
         //const hit = new DriveHit({drive, recipient, user:req.user.username});
@@ -292,7 +310,7 @@ export const hitDrive = async (req, res, next) => {
         io.emit('added', {type:'drive', currentPack });
         await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.drive`]:1}});
 
-        res.status(201).json({message:'ড্রাইভ হিট সফল', success:true});
+        res.status(201).json({message:'drive hit success', success:true});
     }catch(err) {next(err)}
 }
 
@@ -305,7 +323,7 @@ export const getDriveHistoryByUser = async (req,res,next) =>{
     try{
         let total = await DriveHit.countDocuments(filter);
         let drives = await DriveHit.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
-        if(!drives) return res.status(404).json({error:'Drive History Not Found'})
+        if(!drives) return res.status(404).json({error:'Drive History Not Found',success:false})
         res.status(200).json({drives,pagination:{currentPage,totalPage:Math.ceil(total/20)}});
     }catch(err) {next(err)};
 }
@@ -322,9 +340,9 @@ export const getDrivesByUser = async (req,res,next)=>{
     try{
         let user=await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}});
         let total = await Drive.countDocuments(filter);
-        if(!user.accesses.includes('drive')) return res.status(401).json({error:'Access Denied'}) 
+        if(!user.accesses.includes('drive')) return res.status(401).json({error:'Access Denied',success:false}) 
         const drives = await Drive.find(filter,{projection:{active:0,sold:0,expireDate:0,createdAt:0,updatedAt:0,__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
-        if(!drives) return res.status(404).json({error:'ড্রাইভ পাওয়া যায়নি', success:false});
+        if(!drives) return res.status(404).json({error:'drives not found', success:false});
         res.status(200).json({drives,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
     }catch(err) {next(err)}// (err) {
 };
@@ -518,11 +536,11 @@ export const getRegularsByUser = async (req,res,next)=>{
     const queryLimit = 20;
     try{
         let user=await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
-        if(!user.accesses.includes('regular')) return res.status(401).json({error:'Access Denied'})
+        if(!user.accesses.includes('regular')) return res.status(401).json({error:'Access Denied',success:false})
         const total = await Regular.countDocuments(filter)
             /*{$set: {lastActiveAt: new Date()}});*/
         const regulars = await Regular.find(filter,{projection:{active:0,expireDate:0,sold:0,createdAt:0,updatedAt:0,__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
-        if(!regulars) {return res.status(404).json({error:'রেগুলার প্যাক পাওয়া যায়নি', success:false});}  //
+        if(!regulars) {return res.status(404).json({error:'regular packs not found', success:false});}  //
         res.status(200).json({regulars,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
     }catch(err) {next(err)}
 };
