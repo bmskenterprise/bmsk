@@ -1,12 +1,14 @@
 import {useEffect,useState} from 'react';
 import {useLocation,useNavigate,useParams} from 'react-router-dom';
-import {Container,Row,Col,Form,Button,/*Spinner,*/Accordion} from 'react-bootstrap';
 import {toast} from 'react-toastify'
-import {getLocalDateFromUTC} from '../../utils/date';
-import {FlexH,GapH,GapV,RejectButton,Loader,Spinner} from '../../components/styles/Admin.style'
+import {MdPassword,MdWallet} from 'react-icons/md';
+import {FaLock,FaTrash} from 'react-icons/fa';
 import {useTheme} from '../../contexts/ThemeContext'
 import {useUser} from '../../contexts/UserContext'
-import url from '../../config/url' 
+import {getLocalDateFromUTC,getLocalDateTimeFromUTC} from '../../utils/date';
+import {Col,FlexH,GapH,GapV,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
+import url from '../../config/url'
+import SwitchItem from '../../components/Switch'
 import AdminPIN from '../../components/AdminPIN'
 
 export default  () =>{
@@ -78,7 +80,7 @@ export default  () =>{
                             <IconButton onClick={e=>navigate(`balance/${user?._id}`,{state:{username:user?.username}})}><MdWallet/></IconButton>
                             <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'password'}})}><MdPassword/></IconButton>
                             <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
-                            <IconButton variant='danger' onClick={e=>initDelete(_id)}><FaTrash/></Button>
+                            <IconButton  onClick={e=>initDelete(_id)}><FaTrash/></IconButton>
                         </div><GapV x='4.5'/>
                         <SwitchItem label='Device Lock' check={user?.device.lock} identity='lock' handleChange={e=>initToggleDeviceLock(e.target.checked)}/><GapV x='3.5'/>
                         <div>
