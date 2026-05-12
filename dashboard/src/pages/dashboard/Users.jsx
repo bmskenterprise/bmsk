@@ -4,11 +4,11 @@ import {formatDistanceToNow} from 'date-fns'
 import {MdPassword,MdWallet} from 'react-icons/md';
 import {FaTrash,FaLock,FaPen} from 'react-icons/fa'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {ScrollViewV,ScrollViewH,FlexH,GapV,Center,StripedList,PaginationBar,ThemeButton,Field,Select,DatePicker,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useTheme} from '../../contexts/ThemeContext';
       import {useUser} from '../../contexts/UserContext'
+import {ScrollViewV,ScrollViewH,FlexH,GapV,Center,StripedList,PaginationBar,ThemeButton,Field,Select,DatePicker,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {serviceTypes,accessTypes} from '../../../Preferences.json';
 import {launchDate,getCurrentLocalDate} from '../../utils/date';
 import url from '../../config/url'
@@ -130,7 +130,7 @@ export default () =>{
                 </FlexH>
                 <div style={{width:'100%'}}>{data?.users?.map(({_id,userid,level,username,fullname,nid,balance,verified,lastActiveAt,createdAt,status,accesses})=> <StripedList key={_id} /*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear}*/ style={{width:'87rem',fontSize:'1.2rem'}} >
                     {/*<td>{userid}</td>*/}
-                    <div style={{width:'20%',position:'relative'}}   ><Link to={`${_id}`} state={{ user: {level,username,fullname,nid,createdAt,accesses}}}>{username}</Link><sub >({level})</sub></td>
+                    <div style={{width:'20%',position:'relative'}}   ><Link to={`${_id}`} state={{ user: {level,username,fullname,nid,createdAt,accesses}}}>{username}</Link><sub >({level})</sub></div>
                     <div style={{width:'12%'}}>{getMainBalance(balance.main)}</div> 
                     <div style={{width:'12%'}}>{balance.topup}</div>
                     <div style={{width:'12%'}}>{balance.drive}</div>
