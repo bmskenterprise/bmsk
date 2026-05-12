@@ -3,9 +3,9 @@ import {useEffect,useState} from 'react'
 import {useMediaQuery} from 'react-responsive';
 import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
-import url from '../../config/url'
-import {Col,FlexH,GapV,ThemeButton,Spinner} from '../styles/Admin.style'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {Col,FlexH,GapV,ThemeButton,Spinner} from '../styles/Admin.style'
+import url from '../../config/url'
 import Accordion from './Accordion'
 import RadioItem from '../Radio';
 import SwitchItem from '../Switch'
@@ -161,8 +161,8 @@ export default   () =>{
                       <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
             </Form>
         </Col>
+    </FlexH>
     
-    </div>
 
     return <>{isMobile ? (
         <Col /*xs={12}*/>
