@@ -2,10 +2,10 @@ import {useEffect,useState} from 'react'
 //import {Container,Row,Col,} from 'react-bootstrap';
 import {serviceTypes} from '../../Preferences.json';
 import {FaEye,FaEyeSlash} from 'react-icons/fa';
-import {ScrollViewV,FlexH,Col,GapV,ThemeButton,Select,InputField,ErrorText,Loader,Spinner } from '../components/styles/Admin.style'
 import {useAdminAuth} from '../contexts/AdminAuthContext';
 import {useTheme} from '../contexts/ThemeContext';
 import {useUser} from '../contexts/UserContext';
+import {ScrollViewV,FlexH,Col,GapV,ThemeButton,Select,InputField,ErrorText,Loader,Spinner } from '../components/styles/Admin.style'
 import url from '../config/url';
 import AdminPIN from './AdminPIN';
 import SwitchItem from '../components/Switch'
@@ -13,7 +13,7 @@ import SwitchItem from '../components/Switch'
 export default ({user,handleCancel}) =>{
     const {thememode,themeData:{themeBackground}, modeData} = useTheme()
     const {admin,appData,sendRecoveryEmail} = useAdminAuth()
-    const [loading,setLoading] = useState(false)
+    //const [loading,setLoading] = useState(false)
     const {addUser,editUserAccess,authError,errors,loading} = useUser()
     const [show,setShow] = useState(false)
     //let [services,accesses] = [[],['deposit','topup','drive','regular','bill','bank']]
