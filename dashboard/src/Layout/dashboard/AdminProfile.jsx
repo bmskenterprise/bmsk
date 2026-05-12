@@ -60,7 +60,7 @@ export default  () =>{
                                 {/*<div><SwitchItem check={thememode=='light'} label='Light' n='mode' v='light' identity='light' handleChange={e=>toggleMode(e.target.value)}/> </div>*/}
                             </FlexH>
                         </div>
-                    </FlexV>
+                    </div>
                 </FlexH>
             </ScrollViewH>
         </ProfileCard>
