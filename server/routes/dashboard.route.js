@@ -1,7 +1,7 @@
 import express from 'express';
 const router=express.Router();
 import limiter from '../middlewares/rateLimit.js'
-import {seed,socketSeed,initRecovery,adminLogin,authenticateAdmin,getTodayExpense,changeSuperAdminPassword,changeSuperAdminPIN,sendCredentialRecoveryEmail,resetSuperAdminPassword,resetSuperAdminPIN,getSubAdmins,addSubAdmin,editSubAdmin,deleteSubAdmin,getTelecoms,addTelecom,editTelecom,getDepositRates,toggleSubAdminStatus,editSubAdminAccess,getMBanks,addMBank,updateMBankList,getBankNames,saveBankNames,editContactMedia,editSocialMedia,updateDepositRates,getServices,editServices,getRequestAPI,getUsersByAdmin,getUserByAdmin,editUserAccess,getUserFeedback,deleteUserFeedback,resetSubAdminPassword,resetSubAdminPIN,addUser,resetUserPassword,resetUserPIN,deleteUserByAdmin,getSlideImages,addSlideImageLink,editSlideImageLink,deleteSlideImageLink,getPGW,addPGW,editPGW,getNotices,addNotice,editNotice,toggleNotice,deleteNotice/*,sendNotice*/,logout, getContactMedia} from '../controllers/admin.controller.js';//import { addBalance, deductBalance } from '../controllers/transaction.controller.js';
+import {seed,socketSeed,initRecovery,adminLogin,authenticateAdmin,getTodayExpense,changeSuperAdminPassword,changeSuperAdminPIN,sendCredentialRecoveryEmail,resetSuperAdminPassword,resetSuperAdminPIN,getSubAdmins,addSubAdmin,editSubAdmin,deleteSubAdmin,getTelecoms,addTelecom,editTelecom,getDepositRates,toggleSubAdminStatus,editSubAdminAccess,getMBanks,addMBank,updateMBankList,getBankNames,saveBankNames,editContactMedia,getSocialMediaLinks,editSocialMedia,updateDepositRates,getServices,editServices,getRequestAPI,getUsersByAdmin,getUserByAdmin,toggleUserStatus,editUserAccess,toggleUserNewDevice,removeUserDevice,getUserFeedback,deleteUserFeedback,resetSubAdminPassword,resetSubAdminPIN,addUser,resetUserPassword,resetUserPIN,deleteUserByAdmin,getSlideImages,addSlideImageLink,editSlideImageLink,deleteSlideImageLink,getPGW,addPGW,editPGW,getSMSGateway,addSMSGateway,editSMSGateway,getNotices,addNotice,editNotice,toggleNotice,deleteNotice/*,sendNotice*/,logout, getContactMedia} from '../controllers/admin.controller.js';//import { addBalance, deductBalance } from '../controllers/transaction.controller.js';
 import {authAdmin,isSuperAdmin,matchAuthPIN} from '../middlewares/auth.middleware.js';
 import {validatePack,validateTxn,validateAuthPIN,validateAdminPassword,validateAdminPIN,validateSubAdmin,validateUserPassword,validateUserPIN,validatePackEdit,validateBankNames,validateRequestStatus} from '../validations/dashboard.validation.js'
 import {validateUserRegister} from '../validations/user.validation.js'
@@ -21,7 +21,6 @@ router.patch('/admin/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,va
 router.patch('/admin/access/:id',authAdmin,isSuperAdmin,editSubAdminAccess)  //dashboard/api/drive-package
 router.patch('/admin/status/:id',authAdmin,isSuperAdmin, toggleSubAdminStatus);
 router.delete('/admin/:id',authAdmin,isSuperAdmin,deleteSubAdmin)
-//router.get('/',authAdmin,access)
 router.get('/today-expense',authAdmin,getTodayExpense);
 router.get('/today-deposit-summary',authAdmin,getTodayDepositSummary);
 router.get('/balance-summary', authAdmin, getBalanceSummary);
@@ -71,9 +70,11 @@ router.get('/manage-user',authAdmin,isSuperAdmin,getUsersByAdmin);
 router.get('/manage-user/:id',authAdmin,isSuperAdmin,getUserByAdmin);
 router.delete('/manage-user/:id',authAdmin,isSuperAdmin,deleteUserByAdmin);
 router.patch('/manage-user/access/:id',authAdmin,isSuperAdmin,editUserAccess);
+router.patch('/manage-user/status/:id', authAdmin,  isSuperAdmin, toggleUserStatus);
 router.patch('/manage-user/reset-password/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateUserPassword,resetUserPassword);// ,,, );
 router.patch('/manage-user/reset-pin/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateUserPIN,resetUserPIN)// ,,, resetUserPIN);
-//router.post('/topup/:username', authAdmin, userValidation, limiter, topupBalance);
+router.patch('/manage-user/device/:id',authAdmin,isSuperAdmin,validateAdminPIN,matchAuthPIN,toggleUserNewDevice)
+router.delete('/manage-user/device/:id',authAdmin,isSuperAdmin,validateAdminPIN,matchAuthPIN,removeUserDevice);
 router.patch('/deposit/add/:id', authAdmin,isSuperAdmin,validateAuthPIN, matchAuthPIN, addBalanceByAdmin);
 router.patch('/deposit/deduct/:id', authAdmin,isSuperAdmin,validateAuthPIN, matchAuthPIN, deductBalanceByAdmin);
 //router.put('/status', authAdmin, updateUserStatus);
@@ -109,6 +110,9 @@ router.delete('/slide-images/:id',authAdmin,isSuperAdmin,deleteSlideImageLink)
 router.get('/pgw',authAdmin,isSuperAdmin,getPGW)
 router.patch('/pgw',authAdmin,isSuperAdmin,addPGW)
 router.patch('/pgw/:id',authAdmin,isSuperAdmin,editPGW)
+router.get('/sms-gateway',authAdmin,getSMSGateway)
+router.patch('/sms-gateway',authAdmin,isSuperAdmin,addSMSGateway)
+router.patch('/sms-gateway/:id',authAdmin,isSuperAdmin,editSMSGateway)
 router.get('/services',authAdmin,isSuperAdmin,getServices)
 router.patch('/services',authAdmin,isSuperAdmin,editServices)
 router.get('/api-request',authAdmin,getRequestAPI)
@@ -122,6 +126,7 @@ router.get('/feedback', authAdmin, getUserFeedback);
 router.delete('/feedback/:id', authAdmin,isSuperAdmin, deleteUserFeedback);
 router.get('/contacts',authAdmin,isSuperAdmin,getContactMedia)
 router.patch('/contacts', authAdmin,isSuperAdmin, editContactMedia);
+router.get('/social-links',authAdmin,getSocialMediaLinks)
 router.patch('/social-links',authAdmin,editSocialMedia)
 router.post('/logout',authAdmin,logout)
 
