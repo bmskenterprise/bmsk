@@ -13,7 +13,7 @@ export default () => {
   const isMobile = useMediaQuery({maxWidth:768})
   const {modeData:{backSecondary,textSecondary}} = useTheme();
   const [loading,setLoading] = useState(false);
-  let [edited,setEdited]= useState([])
+  const [edited,setEdited]= useState([])
   let services //;
   
   useEffect(()=>{fetchServices()}, [])
@@ -58,7 +58,7 @@ export default () => {
   </div>
   
   return <>{isMobile?<Col /*xs={12}*/>
-              <Accordion>
+              
               <Accordion title='Services'  content={content}/>
               </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
       }</>
