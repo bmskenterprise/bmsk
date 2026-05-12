@@ -49,20 +49,27 @@ export const depositByUser = async (req, res,next) => {
         const admin= await Admin.findOne({role:'admin'});
         if(admin.methods.deposit=='manual') return next();
         const user = await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user) return res.status(404).json({ error: 'User not found' });
+        if(!user) return res.status(404).json({ error: 'User not found',success:false });
         let init= await Deposit.findOneAndUpdate(initFilter,{$set:{status:'SUCCESS',updatedAt:new Date()}},{returnDocument:'after'});
-        if(!init) return res.status(404).json({error:'txn not found'});
-        if(!admin) return res.status(404).json({ error: 'Admin not found' });
+        if(!init) return res.status(404).json({error:'txn not found',success:false});
+        if(!admin) return res.status(404).json({ error: 'Admin not found',success:false });
       //let c=admin.deposits.find(d=>d.level==req.user.level)?.[balanceType]?.commission?.[init.gateway]//const newBalance = user[balanceType] += (amount+amount*(admin.topupDeposit.commission/100).toPrecision(3));
       //let extra = (Number(init.amount)*c/100).toFixed(2);
       //io.emit('failed', )
         await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.main.${gateway}`]:Number(init.amount)},$set:{lastActiveAt:new Date()}});
         //await Deposit.insertOne({txn,user:req.user.username, amount:Number(init.amount), balanceType,createdAt:new Date(),updatedAt:new Date()})
         //await DepositInit.findOneAndDelete(initFilter);
-        res.status(201).json({message:'ডিপোজিট সফল', success:true});
+        res.status(201).json({message:'deposit success', success:true});
     }catch(err) {next(err)}
 }
 
+const getDepositFee = async (level,gateway,amount)=>{
+    try{
+        const admin = await Admin.findOne({role:'admin'});
+        let c = admin.deposits.find(d=> d.level==level)?.[gateway]
+        return Number((Number(amount)-(Number(amount)*Number(c)/100)).toFixed(3))
+    }catch(e) {}
+}
 const getExtra = async (level,balanceType,gateway,amount)=>{
     try{
         const admin = await Admin.findOne({role:'admin'});
@@ -96,14 +103,14 @@ export const addBalanceByUser = async (req,res,next) =>{
     const {balanceType,gateway,amount} = req.body
     try{
         const user = await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission'});
+        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
         let admin = await Admin.findOne({role:'admin'})
         let currentLevel = admin.deposits.find(l=>l.level==req.user.level)
-        if(currentLevel[balanceType].min>Number(amount)||currentLevel[balanceType].max<Number(amount)) return res.status(422).json({error:`${balanceType} amount minimum ${currentLevel[balanceType].min} and maximum ${currentLevel[balanceType].max}`})
+        if(currentLevel[balanceType].min>Number(amount)||currentLevel[balanceType].max<Number(amount)) return res.status(422).json({error:`${balanceType} amount minimum ${currentLevel[balanceType].min} and maximum ${currentLevel[balanceType].max}`,success:false})
         let factAmount = user.balance.main[gateway]<Number(amount) ? user.balance.main[gateway] : Number(amount);
         let extra= await getExtra(req.user.level,balanceType,gateway,factAmount);
         await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.${balanceType}`]:parseFloat(factAmount)+parseFloat(extra),[`balance.main.${gateway}`]:factAmount*(-1)},$set:{lastActiveAt:new Date()}});
-        res.status(200).json({message:'refill success'});
+        res.status(200).json({message:'refill success',success:false});
     }catch(e) {next(e)}
 }
 
@@ -111,11 +118,11 @@ export const depositRequest = async (req,res,next) =>{
     const {txn,gateway,amount,ref} = req.body
     try{
         let user = await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission'});
+        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
         let deposit = await Deposit.findOne({txn,gateway});
-        if(deposit) return res.status(409).json({error:'txn already exist'});
+        if(deposit) return res.status(409).json({error:'txn already exist',success:false});
         await Deposit.insertOne({txn,gateway,status:'PENDING',amount,ref:ref||'',user:req.user.username,createdAt:new Date(),updatedAt:new Date()})
-        res.status(200).json({message:'wait for admin approval'});
+        res.status(200).json({message:'wait for admin approval',success:true});
     }catch(e) {next(e)}
 }
 //admin
@@ -142,11 +149,14 @@ export const changeDepositStatus = async (req,res,next) =>{
     let io = socket.getIO()
     try{
         
+        let user = await User.findOne({username})
+        if(!user.verified) return res.status(422).json({error:'user not verified'});
         let {gateway,amount,txn}=await Deposit.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
+        let deductedAmount = getDepositFee(user.level,gateway,amount)
         let {socketId} = await SocketResponse.findOne({user:username})
-        if(socketId) io.to(socketId).emit('user:status-changed',{title:`Deposit ${status}`,body:`TXN:${txn} Amount:${amount}`,url:`${process.env.CLIENT_URL}/deposit/history`});
-        if(status=='SUCCESS') await User.findOneAndUpdate({username},{$inc:{[`balance.main.${gateway}`]:amount}})
-          if(status=='FAILED') await SocketResponse.findOneAndUpdate({user:username},{$inc:{[`failed.deposit`]:1}});
+        if(socketId) io.to(socketId).emit('user:status-changed',{title:`Deposit ${status}`,body:`TXN:${txn} Amount:${deductedAmount}`,url:`${process.env.CLIENT_URL}/deposit/history`});
+        if(status=='SUCCESS') await User.findOneAndUpdate({username},{$inc:{[`balance.main.${gateway}`]:deductedAmount}})
+        if(status=='FAILED') await SocketResponse.findOneAndUpdate({user:username},{$inc:{[`failed.deposit`]:1}});
      
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','deposit')
         
@@ -167,7 +177,7 @@ export const withdraw/*transferBalance*/ = async (req, res, next) => {
       //const receiver = await User.findOneAndUpdate({username},{$inc:{[`balance.${balanceType}`]:Number(amount)}});
         let user = await User.findOne({_id:new ObjectId(req.user.id)});
         let balanceMain = Object.values(user.balance?.main|| {}).reduce((sum,val)=>sum+val,0) //user.balance.main[gateway]<amount? user.balance.main[gateway] : amount;
-        if(balanceMain<Number(amount)) return res.status(400).json({error:'Insufficient Balance'});
+        if(balanceMain<Number(amount)) return res.status(400).json({error:'Insufficient Balance',success:false});
         let {bkash,dbbl,nagad} = user.balance.main
         let remaining = Number(amount)
         let newBkash = Math.max(0,bkash-remaining)
@@ -309,7 +319,7 @@ export const getDepositHistoryByUser = async (req, res, next) => {
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}});
         const total = await Deposit.countDocuments(filter);
         const deposits = await /*Transaction*/Deposit.find(filter,{projection:{__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
-        if(!deposits) {return res.status(404).json({error:'ডিপোজিট হিস্টোরি পাওয়া যায়নি',success:false});}
+        if(!deposits) {return res.status(404).json({error:'deposit history not found',success:false});}
         res.status(200).json({deposits,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
     }catch(err) {next(err)}
 }
@@ -321,7 +331,7 @@ export const getWithdrawHistoryByUser = async (req,res,next) =>{
     try{
         const withdraws = await Withdraw.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
         let total = await Withdraw.countDocuments(filter);
-        if(!withdraws) {return res.status(404).json({error:'উইথড্র হিস্টোরি পাওয়া যায়নি',success:false});}
+        if(!withdraws) {return res.status(404).json({error:'withdraw history not found',success:false});}
     res.status(200).json({withdraws,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
     }catch(e) {next(e)}
 }
@@ -406,7 +416,7 @@ export const bkashPaymentCreate = async (req,res) =>{
           merchantInvoiceNumber:`inv${uuidv4().substring(0,8)}`,
         });
         res.status(200).json({bkashURL:data.bkashURL})
-    }catch(err) {res.status(401).json({error:err.message})}
+    }catch(err) {res.status(401).json({error:err.message,success:false})}
 }
   
   
@@ -462,8 +472,8 @@ export const sslc = async (req,res) =>{
     try{
         const apiResponse = await sslcz.init(data);
         if(apiResponse?.GatewayPageURL) return res.status(200).json({url:apiResponse.GatewayPageURL})
-        res.status(500).json({error:'payment initiation failed'})
-    }catch(err) {res.status(500).json({error:err.message})}
+        res.status(500).json({error:'payment initiation failed',success:false})
+    }catch(err) {res.status(500).json({error:err.message,success:false})}
 };
 
 export const sslcSuccess = async (req,res,next) =>{
