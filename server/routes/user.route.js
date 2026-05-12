@@ -1,35 +1,38 @@
 import express from 'express';
-import {authenticateAPIUser, registerUser,loginUser,getSliderImages,validateUserPIN,changePassword,changePIN,authenticateUser,getPGWs,deleteUser,getUserBalances,getContactList,getTelecomOpts,getMBankList, getDepositLimit,getModalNotices,seenModalNotices,getNotices,validUser,getRegisterSetting,regfeeByTXN,otpGenerateAndSend,verifyByOTP,getBankNames,getFeedbacksByUser,addFeedback,addAvatar,getUserProfile,loginAPIUser,requestAPI,logout} from '../controllers/user.controller.js';
+import {authenticateAPIUser, registerUser,loginUser,verifyLoginOTP,getSliderImages,validateUserPIN,changePassword,changePIN,authenticateUser,getPGWs,deleteUser,getUserBalances,getContactList,getSocialLinks,getMBankList,getDepositFee, getDepositLimit,getModalNotices,seenModalNotices,getNotices,validUser,getRegisterSetting,regfeeByTXN,otpGenerateAndSend,verifyRegisterByOTP,getBankNames,getFeedbacksByUser,addFeedback,addAvatar,getUserProfile,toggleNewDevice,getLoginSecurity,enableTwoStep,logout} from '../controllers/user.controller.js';
 //import { 
-import {validateUserRegister,validateUserLogin,validateTopupRequest,validateDriveHit,validateBillRequest,validateBankRequest,validateMbankTransaction,validateUserFeedback,validateUserAuthPIN} from '../validations/user.validation.js';
+import {validateUserRegister,validateUserLogin,validateTopupRequest,validateDriveHit,validateBillRequest,validateBankRequest,validateMbankTransaction,validateUserFeedback,validatePassword,validatePIN,validateUserAuthPIN} from '../validations/user.validation.js';
 import {authAPIUser,authUser,matchUserAuthPIN,authBkash} from '../middlewares/auth.middleware.js';
 import limiter from '../middlewares/rateLimit.js';
 //import {getContactMedia} from '../controllers/admin.controller.js';
 import {sendMoney,cashin,addBankRequest,getBankHistoryByUser,addBillRequest,requestMbankTransaction,getBillHistoryByUser,getMbankHistoryByUser,getBkashHistory,getDBBLHistory,getNagadHistory} from '../controllers/request.controller.js';
-/*import {getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser} from '../controllers/topup.controller.js';*/import {getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser,getDriveOpts,getDrivesByUser,hitDrive,getDriveHistoryByUser,getRegularOpts,getRegularsByUser} from '../controllers/telecom.controller.js'
+/*import {getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser} from '../controllers/topup.controller.js';*/import {getTelecomOpts,getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser,getDriveOpts,getDrivesByUser,hitDrive,getDriveHistoryByUser,getRegularOpts,getRegularsByUser} from '../controllers/telecom.controller.js'
 import {depositByUser,addBalanceByUser,depositRequest,getDepositHistoryByUser,getWithdrawHistoryByUser,withdraw/*transferBalance*/,bkashPaymentCreate,bkashCallback,sslc,sslcSuccess,sslcCancel,sslcFail,sslcIPN} from '../controllers/deposit.controller.js';
 
 const router = express.Router();
 
 router.get('/register', /*authUser,*/ getRegisterSetting);
 router.post('/register/regfee',regfeeByTXN)
-router.patch('/register/verify',otpGenerateAndSend)
-router.post('/register/verify',verifyByOTP)
+//router.patch('/register/verify',otpGenerateAndSend)
+router.post('/register/verify',verifyRegisterByOTP)
 router.post('/register', validateUserRegister, registerUser);
 router.post('/login', /*userValidation,*/ validateUserLogin, /*limiter,*/ loginUser);
+router.post('/login/verify',  verifyLoginOTP);
+router.get('/login/two-step', authUser, getLoginSecurity);
+router.patch('/login/two-step', authUser, validateUserAuthPIN, matchUserAuthPIN, enableTwoStep);
+router.patch('/device-lock', authUser, validateUserAuthPIN,matchUserAuthPIN,toggleNewDevice);
 router.get('/auth', authUser, authenticateUser);
-router.post('/api-user/login', /*userValidate,*/ validateUserLogin, limiter, loginAPIUser);
-router.get("/api-user/auth", authAPIUser, authenticateAPIUser);
 router.post('/valid/:username', /*authUser,*/ validUser);
 router.get('/image-slider', authUser,  getSliderImages);
-//router.post('/change-password', adminAuth, userValidation, limiter, changePassword);
-//router.post('/change-pin', adminAuth, userValidation, limiter, changePIN);
+router.patch('/change-password', authUser, validatePassword, limiter, changePassword);
+router.patch('/change-pin', authUser, validatePIN, limiter, changePIN);
 router.get('/balance', authUser, getUserBalances/*, limiter, topupBalance*/);
 router.post('/balance',authUser,validateUserAuthPIN,matchUserAuthPIN,addBalanceByUser)
 router.get('/telecoms', authUser, getTelecomOpts)
-router.get('/mbank', authUser, getMBankList)
+router.get('/mbank', /*authUser,*/ getMBankList)
 router.get('/bank',authUser,getBankNames)
 router.get('/deposit-info/:level', /*authUser,*/ getDepositLimit);
+router.get('/deposit',authUser,getDepositFee)
 router.post('/deposit',authUser,depositByUser,depositRequest)
 router.post('/deposit/payment/bkash',authUser,authBkash,bkashPaymentCreate)
 router.post('/deposit/payment/bkash/callback',authUser,authBkash,bkashCallback)
@@ -60,12 +63,9 @@ router.post('/bank', authUser,validateUserAuthPIN,matchUserAuthPIN, validateBank
 router.post('/validate-pin',authUser,validateUserPIN)
 router.get('/pgws',authUser,getPGWs)
 router.get('/mbank/history/:type', authUser, getMbankHistoryByUser);
-//router.get('/mbank/history/bkash',authUser,getBkashHistory)
-//router.get('/mbank/history/dbbl', authUser, getDBBLHistory);
-//router.get('/mbank/history/nagad', authUser, getNagadHistory);
 router.post('/mbank',authUser,validateUserAuthPIN,matchUserAuthPIN,validateMbankTransaction,requestMbankTransaction)
 router.get('/contacts', authUser, getContactList);
-router.post('/api-user/api-request',authUser,requestAPI)
+router.get('/social-links',/*authUser,*/getSocialLinks)
 router.get('/feedback',authUser,getFeedbacksByUser)
 router.post('/feedback',authUser,validateUserAuthPIN,matchUserAuthPIN,validateUserFeedback,addFeedback)
 router.get('/modal-notices',authUser,getModalNotices)
