@@ -144,7 +144,7 @@ const [hover,setHover]=useState(false);
 
     return <>{isMobile ? (
         <Col /*xs={12}*/>
-        <Accordion title=Image Slider content={content}/>
+        <Accordion title='Image Slider' content={content}/>
         </Col>
       ) : <Col /*md={2} xl={4}*/>{content}</Col>}</>
 }
