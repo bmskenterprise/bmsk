@@ -1,18 +1,18 @@
-import React,{useEffect,useState} from 'react' 
-import {Accordion,Col,} from 'react-bootstrap'
+import {useEffect,useState} from 'react' 
 import {useMediaQuery} from 'react-responsive'
 import {toast} from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext' 
 import {useTelecom} from '../../contexts/TelecomContext'       //
+import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Select,Spinner} from '../styles/Admin.style';
+import Accordion from './Accordion'
 import url from '../../config/url'
-import {FlexH,Field,ThemeButton,TinyIcon,Select,Spinner} from '../styles/Admin.style';
 
 export default  () =>{
-    let [modemRouting,setModemRouting] = useState([]);
+    const {modeData:{backSecondary,textSecondary}} =useTheme()
+    const isMobile = useMediaQuery({maxWidth:768})
+    const [modemRouting,setModemRouting] = useState([]);
     const [modified,setModified] = useState([])
     const [loading,setLoading] = useState(false) 
-    const {isMobile} = useMediaQuery({maxWidth:768})
-    const {modeData:{backSecondary,textSecondary}} =useTheme()
     const {icons} = useTelecom()
           //
     useEffect(()=>{fetchRouting()}, [])  //
@@ -60,29 +60,30 @@ export default  () =>{
         setModified(prev=> prev.find(b=> b._id==id) ? prev.map(b=>b._id==id?{...b,ip}:b) : [...prev,{_id:id,ip}])
         setModemRouting(prev=> prev.map(b=>b._id==id?{...b,ip}:b))
     }
-    let content = <div style={{background:backSecondary,color:textSecondary}}>
-        <h4 style={{marginBottom:'2rem'}}>Modem Routing</h4>
+    let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
+        <h4>Modem Routing</h4><GapV x='2'/>
         <form onSubmit={saveRouting}>
-        {modemRouting?.map(({_id,operator,ip,slot},i)=> <FlexH x='space-between' y='center' style={{width:'100%',marginBottom:'1rem'}} key={i}>
-            <div style={{width:'30%'}}><TinyIcon src={icons[operator]}/></div>
-            <FlexH x='flex-end' style={{width:'70%'}}>
-                <Field x='8' name={`${operator}-ip`} value={ip} onChange={e=>changeIP(_id,e.target.value)}/>
+        {modemRouting?.map(({_id,operator,ip,slot})=> <FlexH x='space-between' y='center' style={{width:'100%',marginBottom:'1rem'}} key={_id}>
+            <div style={{width:'25%'}}><TinyIcon src={icons[operator]}/></div>
+            <FlexH x='flex-end' style={{width:'71%'}}>
+                <Field x='10' name={`${operator}-ip`} value={ip} onChange={e=>changeIP(_id,e.target.value)}/>
                 <Select style={{width:'15%'}} name={`${operator}-slot`} onChange={e=>changeSlot(_id,e.target.value)} value={slot}>
                     <option value='0'>1</option>
                     <option value='1'>2</option>
                 </Select>
             </FlexH>
         </FlexH>)}
-        <FlexH x='flex-end' y='center'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1' />:'save'}</ThemeButton></FlexH>
-    </form></div>
+        <GapV x='1'/><FlexH x='flex-end'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'save'}</ThemeButton></FlexH><GapV x='4'/>
+    </form>
+    </div>
+            
     return <>{isMobile ? (
-            <Col xs={12}>
-            <Accordion>
-              <Accordion.Item eventKey="0">
-                <Accordion.Header>Routing Setting</Accordion.Header>
-                <Accordion.Body>{content}</Accordion.Body>
-              </Accordion.Item>
-            </Accordion>
+            <Col >
+              <Accordion title='Routing' content={content}/>
+                 
+                
+              
+            
             </Col>
-          ) :<Col md={6} xl={4}>{content}</Col>}</>
+          ) :<Col /*md={6} xl={4}*/>{content}</Col>}</>
 }
