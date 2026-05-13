@@ -26,21 +26,17 @@ export default () =>{
     const {appData,admin} = useAdminAuth();
     const accesses = admin?.accesses
     const navigate = useNavigate();
+    const {toggleVerification,deleteUser} = useUser()
+    const [searchParams] = useSearchParams()
+    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||'not-verified',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'']  ;
     const [formInit,setFormInit] = useState(false);
     const [filterData,setFilterData] = useState({status,user,fromDate,toDate,limit,page});// || '';
     const [userDetail,setUserDetail]= useState(null);
-    const [searchParams] = useSearchParams()
-    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||'not-verified',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'']  ;
-         
          
     const getMainBalance = balanceMain => Object.values(balanceMain|| {}).reduce((sum,val)=>sum+val,0)
     const initUser = {username:'', name:'', nid:'', password:'', pin:'', services:serviceTypes, accesses:accessTypes};
-    const {toggleVerification,deleteUser} = useUser()
-    const initToggle = (id,verified) => AdminPIN([thememode,themeBackground],{cb:toggleVerification,data:{id,verified}},'VERIFY');
-    const initDelete = id => AdminPIN([thememode,themeBackground],{cb:deleteUser,data:{id}},'DELETE');
     const {/*fetchUsers,initFilterData,addUser,userLevels,*/data,loading} = useFetch(`${url.urlManageUser}?status=${status.toUpperCase()}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`);
     //let today= (new Date()).toISOString().split('T')[0];
-    
     useEffect(e=>{
         if(socket) {
             socket.emit('admin:user-history:seen',null);
@@ -64,6 +60,8 @@ export default () =>{
         return ()=> window.removeEventListener('popstate',handlePopState)
     },[formInit])
     
+    const initToggle = (id,verified) => AdminPIN([thememode,themeBackground],{cb:toggleVerification,data:{id,verified}},'VERIFY');
+    const initDelete = id => AdminPIN([thememode,themeBackground],{cb:deleteUser,data:{id}},'DELETE');
     /*const check = (id)=>{
     let i=selected.indexOf(id)
         if(0<=i){setSelected(selected.filter(i=>i!=id))}
@@ -79,6 +77,8 @@ export default () =>{
     };
     const pageNav = p=> navigate(`/dashboard/manage-user?status=${status}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}));
+         
+    
     return !accesses?.includes('manage-user')?<Center><p>Don't have manage user permission</p></Center>:<div style={{width:'100%',height:'100%',position:'relative'}}><div>
                 <h4>Manage User</h4><GapV x='4'/>
             {/*<form onSubmit={fetchUsers}>
@@ -135,7 +135,7 @@ export default () =>{
                     <div style={{width:'12%'}}>{balance.topup}</div>
                     <div style={{width:'12%'}}>{balance.drive}</div>
                     <div style={{width:'12%'}}>{balance.mbank}</div>
-                    <div style={{width:'20%'}}>{formatDistanceToNow(lastActiveAt,{addSuffix:true})}</div>
+                    <div style={{width:'20%'}}>{formatDistanceToNow(lastActiveAt??(new Date()).toISOString(),{addSuffix:true})}</div>
                     {/*<td>{status}</td>*/}
                     <div style={{width:'12%'}}>
                         <SwitchItem check={verified} handleChange={e=>initToggle(_id,e.target.checked)}/>
