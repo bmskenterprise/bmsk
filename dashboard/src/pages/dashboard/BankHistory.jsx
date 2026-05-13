@@ -4,11 +4,11 @@ import {toast} from 'react-toastify';
 import {formatDistanceToNow} from 'date-fns';
 import {FaCheck} from 'react-icons/fa';
 import {MdCancel} from 'react-icons/md';
-import {ScrollViewV,ScrollViewH,FlexH,Field,Center,StripedList,PaginationBar,ApproveButton,RejectButton,Select,DatePicker,Spinner, Loader} from '../../components/styles/Admin.style';
-import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {useTheme} from '../../contexts/ThemeContext';
 import {useNotification} from '../../contexts/NotificationContext';
 import {useSocket} from '../../contexts/SocketContext'
-import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {ScrollViewV,ScrollViewH,FlexH,Field,Center,StripedList,PaginationBar,ApproveButton,RejectButton,Select,DatePicker,Spinner, Loader} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import useFetch from '../../hooks/useFetch'
 import AdminPIN from '../../components/AdminPIN'
@@ -27,7 +27,6 @@ export default () =>{
     const navigate = useNavigate()
     const [status,user,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
          
-         
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({banks:[],pagination:{totalPages:1,currentPage:1}});
@@ -39,6 +38,7 @@ export default () =>{
         fetchBankHistory()
         setFilterData({status,ac,fromDate,toDate,user,limit,page})
     },[status,user,ac,fromDate,toDate,limit,page]);
+         
     useEffect(()=>{
         reducePendingCounts('bank')
         //filterData= {status:'PENDING',ac:'',fromDate:'',toDate:'',user:'',limit:20};
@@ -132,11 +132,11 @@ export default () =>{
         {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
                 <ScrollViewH style={{width:'100%'}}>
             {/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
-                    {history.banks.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status},i)=> <StripedList /*x='flex-start' y='center'*/ key={i} style={{width:'96rem',fontSize:'1.3rem'}}>
+                    {history?.banks?.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status},i)=> <StripedList /*x='flex-start' y='center'*/ key={i} style={{width:'87rem',fontSize:'1.2rem'}}>
                         <div style={{width:'15%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
                         <div style={{width:'25%'}}>{bank}</div>
                         <div style={{width:'25%'}}>{acNumber} {acName}</div>
-                        <div style={{width:'15%'}}>{amount}</div>
+                        <div style={{width:'15%'}}>{Object.values(amount||{}).reduce((a,b)=>a+b,0)}</div>
                 {/*<div style={{width:'10%'}}>{acName}</div>*/}
                         <div style={{width:'10%'}}>{user}</div>
                         {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>  
