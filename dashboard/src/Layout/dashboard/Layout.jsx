@@ -3,9 +3,9 @@ import {Navigate} from 'react-router-dom'
 import {toast} from 'react-toastify'
 import {MdOutlineMenu,MdClose,MdLightMode,MdDarkMode,MdOutlineLogout} from 'react-icons/md';
 import {useMediaQuery} from 'react-responsive'
+import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useSocket} from '../../contexts/SocketContext'
-import {useTheme} from '../../contexts/ThemeContext';
 import {useTelecom} from '../../contexts/TelecomContext';
 import {ResponsiveLayout,Header,PageContent,MenuTogglerButton,Avatar} from '../../components/styles/Admin.style';
 import Sidebar from './Sidebar';
@@ -14,11 +14,11 @@ import AdminProfile from './AdminProfile';
 export default  ({children}) =>{
     const {socket} = useSocket();
     const isMobile = useMediaQuery({maxWidth:768});
-    const [sidebarToggler, setSidebarToggler] = useState(false);
-    const {authentic,appData,admin,fetchAdminData,} = useAdminAuth();const [errors, setErrors] = useState({});
-    const [adminProfileCard, setAdminProfileCard] = useState(false);
     const {themeData,modeData:{backPrimary,textPrimary}} = useTheme()
+    const {authentic,appData,admin,fetchAdminData,} = useAdminAuth();const [errors, setErrors] = useState({});
     const {fetchTelecoms} = useTelecom()
+    const [sidebarToggler, setSidebarToggler] = useState(false);
+    const [adminProfileCard, setAdminProfileCard] = useState(false);
     
     useEffect(()=>{
         fetchTelecoms()
@@ -38,7 +38,7 @@ export default  ({children}) =>{
     },[])
                 
                  
-    if(!admin) return <Navigate to='login'/>
+    if(!admin) return <Navigate to='/login'/>
     const handleSidebarToggle = e => setSidebarToggler(prev=> !prev)
 
 
