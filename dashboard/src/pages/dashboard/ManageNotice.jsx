@@ -2,12 +2,12 @@ import {useEffect,useState} from 'react'
 import {useNavigate} from 'react-router-dom';
 import {formatDistanceToNow} from 'date-fns';
 import {FaPen,FaTrash} from 'react-icons/fa';
-import {ScrollViewH,ScrollViewV,FlexH,StripedList,ThemeButton,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
-import useLongPress from '../../hooks/longPress';
-import {useMessage} from '../../contexts/MessageContext'
 import {useTheme} from '../../contexts/ThemeContext';
-import SwitchItem from '../../components/Switch'
+import {useMessage} from '../../contexts/MessageContext'
+import {ScrollViewH,ScrollViewV,FlexH,StripedList,ThemeButton,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {getAheadLocalDateTime,renderLocalTimeFromUTC,getLocalDateTimeFromUTC} from '../../utils/date'
+import useLongPress from '../../hooks/longPress';
+import SwitchItem from '../../components/Switch'
 import deleteConfirm from '../../components/Confirmation'
 import useArrayFetch from '../../hooks/useArrayFetch'
 import url from '../../config/url'  
@@ -23,8 +23,13 @@ export default  ({}) =>{
     const [selected,setSelected] = useState([]);
      const [hovered, setHovered] = useState(false);
     const [modifiedNotices,setModifiedNotices] = useState(data)
+    const fields = [ 'Date', 'Notice','Status','Action'  ];
+    const [init, setInit] = useState(formInit);
+    const [form,setForm] = useState(false)
     
-    //useEffect(()=> setModifiedNotices(notices),[notices])
+    useEffect(()=> {
+        if(data?.length>0) setModifiedNotices(data)
+    },[data])
     
     const check = (id)=>{
       let i=selected.indexOf(id)
@@ -32,9 +37,6 @@ export default  ({}) =>{
       else{setSelected([...selected,id]);}
     };
     const {start,clear} = useLongPress(check)
-    const fields = [ 'Date', 'Notice','Status','Action'  ];
-    const [init, setInit] = useState(formInit);
-    const [form,setForm] = useState(false)
     const onClickOrHold = id =>{
         if(selected[0]) check(id)
         else start(id) // {/* </Col> */}
@@ -49,10 +51,10 @@ export default  ({}) =>{
         setModifiedNotices(prev=> prev.map(n=>n._id==id?{...n,active:status}:n));
             /*let data=await */toggleNoticeStatus(id,status);//setModifiedNotices(data)
         } // 
-    return <div style={{background:backSecondary}}>  
+    return <div >  
         {/*<Col xs={12}>
           <Accordion.Item eventKey="0">*/}
-            <h4 style={{marginBottom:'4rem'}}>Manage Notice</h4>
+            <h4>Manage Notice</h4><GapV x='4'/>
             <div>
             {/* <Sidebar></Sidebar> */}
                 {/*<h4 style={{marginBottom: '3rem'}}>Notice</h4>*/}
@@ -80,7 +82,10 @@ export default  ({}) =>{
                             <div style={{width:'15%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
                             <div style={{width:'75%'}}><b>{notice.title}</b> {notice.description}</div>
                             <div style={{width:'5%'}}><SwitchItem  check={active} handleChange={e=>toggleNotice(_id,e.target.checked)}/></div>
-                            <div style={{width:'5%'}}><IconButton style={{color:textPrimary}} onClick={e=>{navigate('/dashboard/notice/edit',{state:{id:_id,notice,recipient:recipients,medium:receiveMedium,noticeDuration:renderLocalTimeFromUTC(duration),repeat}})}}><FaPen/></IconButton><IconButton onClick={e=>deleteConfirm(thememode,deleteNotice,[_id])}><FaTrash/></IconButton></div>
+                            <div style={{width:'5%'}}>
+                                <IconButton  onClick={e=>{navigate('/dashboard/notice/edit',{state:{id:_id,notice,recipient:recipients,medium:receiveMedium,noticeDuration:renderLocalTimeFromUTC(duration),repeat}})}}><FaPen/></IconButton>
+                                <IconButton onClick={e=>deleteConfirm(thememode,deleteNotice,[_id])}><FaTrash/></IconButton>
+                            </div>
                         </StripedList>)}
                     {/*</tbody></table>*/}</ScrollViewH></ScrollViewV>
                     </div>
