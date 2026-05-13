@@ -3,10 +3,10 @@ import {useNavigate,useSearchParams} from 'react-router-dom';
 import {toast} from 'react-toastify';
 import {MdCancel} from 'react-icons/md';
 import {formatDistanceToNow} from 'date-fns';
-import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {useNotification} from '../../contexts/NotificationContext'
-import {useSocket} from '../../contexts/SocketContext'
 import {useTheme} from '../../contexts/ThemeContext';
+import {useSocket} from '../../contexts/SocketContext'
+import {useNotification} from '../../contexts/NotificationContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {FlexH,ScrollViewV,ScrollViewH,StripedList,PaginationBar,ApproveButton,RejectButton,Field,DatePicker,Select,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import copyToClipboard from '../../utils/copyToClipboard';
@@ -20,7 +20,9 @@ const billTypes = ['Electricity','Internet','Cable TV','Gas','Water'];
 
 export default () =>{ 
     const navigate = useNavigate()
+    const {socket} = useSocket()
     const [searchParams] = useSearchParams()
+    const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {pendingCounts:{bill},reducePendingCounts} = useNotification();
     const [status,user,type,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'1']  ;
     //const user = searchParams.get('user') || '';
@@ -30,14 +32,12 @@ export default () =>{
     const {admin} = useAdminAuth()
     const accesses = admin?.accesses             //
     const [hovered,setHovered] = useState(false);
-    const {thememode,modeData} = useTheme();
     //const [formRef,userRef,typeRef,acRef,fromDateRef,toDateRef,limitRef] = [useRef(null),useRef(null),useRef(null),useRef(null),useRef(null),useRef(null),useRef(null)];
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({bills:[],pagination:{totalPage:1,currentPage:1}});
     const [filterData,setFilterData] = useState({status,user,type,ac,fromDate,toDate,limit,page});
     //const today = (new Date()).toISOString().split('T')[0]
-    const {socket} = useSocket()
     const [hover,setHover] = useState(false);
     const {data} = useFetch(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
@@ -59,7 +59,7 @@ export default () =>{
                 if(!res.ok) throw new Error(data.error || 'failed');
                 //if(data.length)caches[status] = data;
                 setHistory(data/*.filter(d=>d.status==statusRef.current.value)*/);
-            }catch(err) {toast.error(err.message)}
+            }catch(e) {toast.error(e.message)}
             finally{setLoading(false);}
         }
 
@@ -79,7 +79,7 @@ export default () =>{
             //let moved = cache['pending'].splice(cache['pending'].findIndex(i=>i.id===hitId),1)[0]     //'failed')
             //cache[status] && cache[status].unshift(moved)
             toast.success(data.message);//fetchBillHistory(/*{page:history.pagination.currentPage}*/);
-        }catch(err) {toast.error(err.message)}
+        }catch(e) {toast.error(e.message)}
         finally{setLoading(false);}
     }
     const filter = (e) =>{
@@ -87,13 +87,13 @@ export default () =>{
         navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&fromDate=${fd.fromDate}&toDate=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
     }
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}));
-    const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,user,status:'SUCCESS'}},'OK');
+    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,user,status:'SUCCESS'}},'OK');
+                      
     const onFailed = (id,user,feedback) =>{
         setFailedID(null);
-        AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
     }
     const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
-                      
                           
                       
     return !accesses?.includes('bill-history')?<Center><p>don't have bill history permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
@@ -101,13 +101,13 @@ export default () =>{
         {/*<FlexH x='space-between' y='center'>*/}
             <form  onSubmit={filter}>
                 <FlexH x='space-between' y='center' style={{width:'100%'}}>
-                <div>  <Field value={filterData.limit} name='limit' x='4' min="10" max='100' step='5' onChange={filterParams}/></div>
+                <div>  <Field value={filterData.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/></div>
                     {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor="reseller">reseller</label><br /></div>*/}
                     
                     <Field x='8' value={filterData.user} name='user' placeholder='user' onChange={filterParams}/>
                     <div>
-                        <Field x='8' name='type' value={filterData.type} list='bill-types'placeholder='Bill Types' onChange={filterParams}/>
-                        <datalist id="bill-types">
+                        <Field x='8' name='type' value={filterData.type} list='bill-types' placeholder='Bill Types' onChange={filterParams}/>
+                        <datalist id='bill-types'>
                             {/*<option value="">bill type</option>*/}
                             {billTypes.map((type,i)=> <option key={i} value={type}/>)}
                         </datalist>
@@ -115,8 +115,8 @@ export default () =>{
                     {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor="ac">AC Number</label><br /></div>*/}
                     <Field x='8' value={filterData.ac} name='ac' placeholder='AC' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor="from">from</label><br/>*/}<DatePicker onChange={filterParams} value={filterData.fromDate}  type="date" name="fromDate" min={launchDate} max={getCurrentLocalDate()}/>
-                        {/*<label htmlFor="to">to</label><br/>*/}<DatePicker onChange={filterParams} value={filterData.toDate}  type="date" name="toDate" min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor="from">from</label><br/>*/}<DatePicker onChange={filterParams} value={filterData.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor="to">to</label><br/>*/}<DatePicker onChange={filterParams} value={filterData.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
                     </div>
                 <div>
                     <Select name='status' onChange={filterParams} value={filterData.status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
@@ -134,7 +134,7 @@ export default () =>{
                 {data?.bills?.map(({_id,billType,updatedAt,acNumber,amount,expireDate,user,status},i)=> <StripedList  style={{width:'87rem',fontSize:'1.3rem'}} key={i}>
                     <div style={{width:'20%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div onMouseOver={e=>setHover(true)} onMouseOut={e=>setHover(false)} onClick={e=>copyToClipboard(acNumber)} style={{width:'25%'}}>{hover?billType:acNumber}</div>
-                    <div style={{width:'15%'}}>{amount}</div>
+                    <div style={{width:'15%'}}>{Object.values(amount||{}).reduce((a,b)=>a+b,0)}</div>
                 {/*<div>{billMonth}</div>*/}
                     <div style={{width:'15%'}}>{expireDate}</div>
                     <div style={{width:'15%'}}>{user}</div>
