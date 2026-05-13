@@ -1,15 +1,15 @@
 import Swal from 'sweetalert2';
 
-export default (thememode,callback,cbt) =>{
+export default ([thememode,themeBack],callback,cbt) =>{
   Swal.fire({
     title: "Enter Super Admin PIN",
     input: 'text',
-    inputAttributes: {
-      autocapitalize: 'off'
-    },
+    inputAttributes: {autocapitalize: 'off'},
+    
     showCancelButton: true,
     confirmButtonText: cbt,
     theme: thememode,
+    confirmButtonColor: themeBack,  
     preConfirm:  (pin) => {
       try {callback.cb(callback.data,pin)
         /*const githubUrl = `https://api.github.com/users/${login}`;
