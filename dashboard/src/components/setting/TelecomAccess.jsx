@@ -129,16 +129,16 @@ export default   () =>{
                     <div><RadioItem style={{width:'24%'}} check={topupMethod=='api'} n='method' identity='api' v='api' label='API' handleChange={changeTopupMethod}/></div>
                 </FlexH>
             {/*</Col></FlexH>*/}
-            <Form onSubmit={modifyTopupTelecomAccess}>
+            <form onSubmit={modifyTopupTelecomAccess}>
                 <div>
                     {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedTopupAccess?.includes(opt)} identity={`topup-${opt}`} handleChange={e=>toggleTopupAccess(e.target.checked,opt)}/></FlexH>)}
                     {/*switchTopup&& <Stack/>*/}
                 </div>
                       <FlexH x='flex-end' y='center'><ThemeButton  type="submit">{loading?<Spinner  size="1"/>:'SAVE'}</ThemeButton></FlexH>
-            </Form>
+            </form>
         </Col>
         <Col /*xs={12} xl={4}*/>
-            <Form onSubmit={modifyDriveTelecomAccess}>
+            <form onSubmit={modifyDriveTelecomAccess}>
                 <FlexH x='flex-start' y='center'>
                     <h5 style={{marginBottom: '2rem'}}>Drive Pack Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchDrivePack(e.target.checked)}/>*/}
                 </FlexH>
@@ -147,10 +147,10 @@ export default   () =>{
                     {/*switchDrivePack&& <Stack></Stack>*/}
                 </div>
                           <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
-            </Form>
+            </form>
         </Col>
         <Col /*xs={12} xl={4}*//*{span:6, offset:1}*/>
-            <Form onSubmit={modifyRegularTelecomAccess}>
+            <form onSubmit={modifyRegularTelecomAccess}>
                 <FlexH x='flex-start' y='center'>
                     <h5 style={{marginBottom: '2rem'}}>Regular Pack Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchRegularPack(e.target.checked)}/>*/}
                 </FlexH>
@@ -159,7 +159,7 @@ export default   () =>{
                     {/*switchRegularPack&& <Stack/>*/}
                 </div>
                       <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
-            </Form>
+            </form>
         </Col>
     </FlexH>
     
