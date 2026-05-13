@@ -9,7 +9,7 @@ import AdminPIN from '../../components/AdminPIN'
 export default () =>{
     //const navigate = useNavigate()
     const location = useLocation()
-    const {thememode,modeData:{backPrimary,textPrimary}}=useTheme()
+    const {thememode,modeData:{backPrimary,textPrimary},themeData:{themeBackground}}=useTheme()
     const {id,username,credentialType} = location?.state
     const {resetAdminPassword,resetAdminPIN,errors,loading} = useAdminAuth();
     if(!id) return <Navigate to='/manage-admins'/>
@@ -41,8 +41,8 @@ export default () =>{
               <div>
                   <InputField placeholder={`Confirm ${credentialType}`}/>
                   <ErrorText>{errors?.confirm}</ErrorText>
-              </div><GapV x='1'/>
-              <GapV x='3'/><FlexH x='center'><ThemeButton type='submit' disabled={loading}>{loading?<Spinner/>:'NEXT'}</ThemeButton></FlexH>
+              </div><GapV x='4'/>
+              <FlexH x='center'><ThemeButton type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'NEXT'}</ThemeButton></FlexH>
             </form>
         </CenterCard>
         {/*</div>*/}
