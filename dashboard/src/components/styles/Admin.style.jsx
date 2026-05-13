@@ -1,4 +1,4 @@
-import styled,{keyframes} from 'styled-components';
+import styled,{keyframes,createGlobalStyle} from 'styled-components';
 
 const GlobalStyle = createGlobalStyle`
   :root {
