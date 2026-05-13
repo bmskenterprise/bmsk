@@ -1,4 +1,4 @@
-import validURL from "./validURL";
+import validURL from './validURL';
 let validationErrors// = {};
     let passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,32}$/;
     let pinRegex = /^\d{4,6}$/
@@ -8,7 +8,7 @@ export const validateAdminLogin =({username,password})=> {
     if(!username) validationErrors.username = 'enter your username';
     if(!/^[a-zA-Z0-9!@#$%^&*]{2,32}$/.test(username)) validationErrors.username = 'invalid username';
     if(!password) validationErrors.password = 'enter your password';
-    if(!(/^[^\s]{4,32}$/.test(password))) validationErrors.password= "invalid password";
+    if(!(/^[^\s]{4,32}$/.test(password))) validationErrors.password= 'invalid password';
     return validationErrors
 }
 
@@ -126,12 +126,12 @@ export const validateMBank = (data)=>{
     return validationErrors;
 }
 
-export const validateAddPGW = (pgws,{name,icon,merchantID,apiKey,apiPassword})=>{
+export const validateAddAPIGateway = (gateways,{name,icon,merchantID,apiKey,apiPassword})=>{
     validationErrors={}
-    if(!name) validationErrors.name ='pgw name required'
-    if(!/^[A-Za-z0-9\s]{2,32}$/.test(name)) validationErrors.name = 'invalid pgw name ';
-    if(name && /*newName!=name &&*/ pgws.some(pgw=>pgw.name==name)) validationErrors.name = 'pgw name already exist';
-    if(icon&&!validURL(icon))validationErrors.icon='invalidurl'
+    if(name && /*newName!=name &&*/ gateways.some(gw=>gw.name==name)) validationErrors.name = 'gateway name already exist';
+    if(!name) validationErrors.name ='gateway name required'
+    if(!/^[A-Za-z0-9\s]{2,32}$/.test(name)) validationErrors.name = 'invalid gateway name ';
+    if(icon&&!validURL(icon)) validationErrors.icon = 'invalidurl'
     //if(merchantID && !/^[A-Z][a-z][0-9]{2,80}$/.test(merchantID)) validationErrors.merchantID = 'invalid merchant id';
     //if(!(apiKey)) validationErrors.apiKey = 'api key is required';
     //else if(apiKey.includes(' ') || (apiKey.length>500)) validationErrors.apiKey = 'api key is invalid';
@@ -140,14 +140,14 @@ export const validateAddPGW = (pgws,{name,icon,merchantID,apiKey,apiPassword})=>
     return validationErrors;
 }
 
-export const validateEditPGW = (pgws,{name,merchantID,apiKey,apiPassword})=>{
+export const validateEditAPIGateway = (gateways,{name,merchantID,apiKey,apiPassword})=>{
     validationErrors={}
-    if(name&&pgws.some(pgw=>pgw.name==name)) validationErrors.name = 'pgw name already exist';
-    if(name&&!/^[A-Z][a-z]$/.test(name)) validationErrors.name='invalid pgw name'
-    if(name&&name.length<2&&name.length>32) validationErrors.name = 'pgw name should be between 2 to 32 chars'
+    if(name&&gateways.some(gw=>gw.name==name)) validationErrors.name = 'gateway name already exist';
+    if(name&&!/^[A-Z][a-z]$/.test(name)) validationErrors.name='invalid gateway name'
+    if(name&&name.length<2&&name.length>32) validationErrors.name = 'gateway name should be between 2 to 32 chars'
     if(merchantID&&!(/^[A-Z][a-z][0-9]{2,80}$/).test(merchantID)) validationErrors.merchantID = 'invalid merchantId  ';
     if(apiKey&&!(/^[A-Z][a-z][0-9]{2,500}$/).test(apiKey)) validationErrors.apiKey = 'invalid apiKey';
-    if(apiPassword&&!(/^[A-Z][a-z][0-9]{2,500}$/).test(apiPassword)) validationErrors.apiPassword = 'invalid pgw password';// too long
+    if(apiPassword&&!(/^[A-Z][a-z][0-9]{2,500}$/).test(apiPassword)) validationErrors.apiPassword = 'invalid gateway password';// too long
     return validationErrors
 }
 
