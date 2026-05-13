@@ -126,7 +126,7 @@ export default  () =>{
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
         <h4>PGW</h4><GapV x='2'/>
         {!Object.keys(editInit).length>0 &&<>
-            <FlexH x='flex-end'><IconButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></Iconbutton></FlexH><GapV x='2'/>    
+            <FlexH x='flex-end'><IconButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></IconButton></FlexH><GapV x='2'/>    
             <div /*style={{border:'none'}}*/>
                 {gateways?.map(({_id,name,icon,merchantID,active}) => <FlexH key={_id} style={{marginBottom: '2rem!important'}}>
                     <div style={{width:'65%'}}><TinyIcon src={icon}/><GapH x='1'/>{name}</div>
