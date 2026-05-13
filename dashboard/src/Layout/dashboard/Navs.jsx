@@ -17,11 +17,11 @@ export default ()=>{
         {text:<>Manage Regular</>,path:"/dashboard/manage-package/regular",access:"manage-regular"},
         {text:<>Users {user>0&&<InlineBadge>{user}</InlineBadge>}</>,path:"/dashboard/manage-user",access:"manage-user"},
         {text:<>Admins</>,path:"/dashboard/manage-admins",access:"manage-admin"},
-        {text:<>Deposit Setup</>,path:"/dashboard/deposit-setup",access:"deposit-setup"},
-        {text:<>Setup</>,path:"/dashboard/setup",access:"setup"},
+        {text:<>Deposit Setting</>,path:"/dashboard/deposit-setup",access:"deposit-setup"},
+        {text:<>Setting</>,path:"/dashboard/setup",access:"setup"},
         {text:<>Store</>,path:"/dashboard/store",access:"store"},
         {text:<>Notice</>,path:"/dashboard/notice/manage",access:"notice"},
-        {text:<>API</>,path:[{text:<>Request</>,path:"/dashboard/manage-api/request"},{text:<>Setup</>,path:"/dashboard/manage-api/setup"}],access:"notice"},
+        {text:<>API</>,path:"/dashboard/gateway-api",access:"api"},
         {text:<>Feedback</>,path:"/dashboard/feedback",access:"feedback"}
     ]
 }    
