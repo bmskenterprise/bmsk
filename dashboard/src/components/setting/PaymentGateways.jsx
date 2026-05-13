@@ -1,36 +1,36 @@
-import React,{useEffect,useState} from "react";
-import { Col,Accordion,Form, } from "react-bootstrap";
+import {useEffect,useState} from 'react';
 import {useMediaQuery} from 'react-responsive'
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 import {MdEdit} from 'react-icons/md';     
+import {useTheme} from '../../contexts/ThemeContext';
+import {Col,FlexH,FlexV,GapV,ThemeButton,InputField,ErrorText,TinyIcon,IconButton,Spinner} from '../styles/Admin.style'
+import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
-import {useTheme} from "../../contexts/ThemeContext";
-import {FlexH,FlexV,GapV,ThemeButton,InputField,ErrorText,TinyIcon,IconButton,Spinner} from '../styles/Admin.style'
-import {validateAddPGW,validateEditPGW} from "../../utils/validate";
+import  Accordion  from './Accordion';
 import SwitchItem from '../Switch'
 
 export default  () =>{
-    const {isMobile} = useMediaQuery({maxWidth:786})
-    const [gateways,setGateways] = useState([])
+    const isMobile = useMediaQuery({maxWidth:786})
+    const {modeData:{backSecondary,textSecondary}} = useTheme()
     const init = {id:null,name:'',merchantID:''}
+    const [gateways,setGateways] = useState([])
     const [editInit, setEditInit] = useState({});
     const [errors, setErrors] = useState({});
     const [loading,setLoading] = useState(false)
-    const {modeData:{backSecondary,textSecondary}} = useTheme()
-    let pgws 
+    const [pgws,setPGW] =useState([])
+                  
     useEffect(()=>{fetchPGW()}, [])
+                  
     const fetchPGW = async e =>{
         try{
             let res = await fetch(url.urlPGW,{credentials:'include'})
             let data = await res.json()
             if(!res.ok) throw new Error(data.error|| ' failed');
             setGateways(data)
-            pgws = data
+              setPGW(data)
         }catch(e) {toast.error(e.message)}
     }
         //   catch(err){  toast.error(err.message)}
-                  
-                  
                   
                   
                   
@@ -114,53 +114,55 @@ export default  () =>{
         let validationErrors// = validatePGW(pgws,editInit);
         //if (Object.keys(validationErrors).length) {return setErrors(validationErrors);}
         if(editInit.id){
-          validationErrors = validateEditPGW(pgws,editInit);
+          validationErrors = validateEditAPIGateway(pgws,editInit);
           if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
           editPGW(editInit.id,editInit)
         }else{
-          validationErrors = validateAddPGW(pgws,editInit)
+          validationErrors = validateAddAPIGateway(pgws,editInit)
           if(Object.keys(validationErrors).length) {setErrors(validationErrors);return} //new Error(data.message || ' failed');
           addPGW(editInit)
         }
     }
-    let content= <div style={{background:backSecondary,color:textSecondary}}>
-        <h4 style={{marginBottom:'2rem'}}>PGW</h4>
-        {!Object.keys(editInit).length &&<>
-            <FlexH x='flex-end' y='center'><ThemeButton  style={{marginBottom:'2rem'}} onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}>Add  </ThemeButton></FlexH>
-            <table style={{border:'none'}}><tbody>
-                {gateways?.map(({_id,name,icon,merchantID,active}) => <tr key={_id} style={{marginBottom: '2rem!important'}}>
-                    <td style={{width: '80%'}}><TinyIcon src={icon}/>{name}</td>
-                    <td style={{width:'10%'}}><IconButton style={{color:textSecondary}} onClick={()=>setEditInit({id:_id,name,merchantID})}><MdEdit/></IconButton></td>
-                    <td style={{width:'10%'}} ><SwitchItem  check={active} handleChange={e=>editPGW(_id,{active:e.target.checked})}/></td>
-                </tr>) }
-            </tbody></table>
+    let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
+        <h4>PGW</h4><GapV x='2'/>
+        {!Object.keys(editInit).length>0 &&<>
+            <FlexH x='flex-end'><IconButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></Iconbutton></FlexH><GapV x='2'/>    
+            <div /*style={{border:'none'}}*/>
+                {gateways?.map(({_id,name,icon,merchantID,active}) => <FlexH key={_id} style={{marginBottom: '2rem!important'}}>
+                    <div style={{width:'65%'}}><TinyIcon src={icon}/><GapH x='1'/>{name}</div>
+                    <FlexH x='flex-end' y='center' style={{width:'30%'}}>
+                       <IconButton size='1.5' onClick={()=>setEditInit({id:_id,name,merchantID})}><MdEdit/></IconButton>
+                       <SwitchItem check={active} handleChange={e=>editPGW(_id,{active:e.target.checked})}/>
+                    </FlexH>
+                </FlexH>) }
+            </div>
         </>}
         {Object.keys(editInit).length>0 &&<form onSubmit={handleSubmit}>
-            <FlexV x='flex-start' y='flex-start'>
+            <div /*x='flex-start' y='flex-start'*/>
                 <label>Gateway Name</label>
                 <InputField name='name' value={editInit.name} onChange={handleChange}/>
                 <ErrorText>{errors?.name}</ErrorText>
-            </FlexV><GapV x='2'/>
-            <FlexV x='flex-start' y='flex-start'>
+            </div><GapV x='2'/>
+            <div /*x='flex-start' y='flex-start'*/>
                 <label>Gateway Icon</label>
                 <InputField name='icon' value={editInit.icon} onChange={handleChange}/>
                 <ErrorText>{errors?.icon}</ErrorText>
-            </FlexV><GapV x='2'/>
-            <FlexV x='flex-start' y='flex-start'>
+            </div><GapV x='2'/>
+            <div /*x='flex-start' y='flex-start'*/>
                 <label>Merchant ID</label>
                 <InputField name='merchantID' value={editInit.merchantID} onChange={handleChange}/>
                 <ErrorText >{errors?.merchantID}</ErrorText>
-            </FlexV><GapV x='2'/>
-            <FlexV x='flex-start' y='flex-start'>
+            </div><GapV x='2'/>
+            <div /*x='flex-start' y='flex-start'*/>
                 <label>API KEY</label>
                 <InputField name='apiKey' onChange={handleChange}/>
           <ErrorText>{errors?.apiKey}</ErrorText>
-            </FlexV><GapV x='2'/>
-            <FlexV x='flex-start' y='flex-start'>
+            </div><GapV x='2'/>
+            <div /*x='flex-start' y='flex-start'*/>
                 <label>API Password</label>
                 <InputField name='apiPassword' onChange={handleChange}/>
           <ErrorText>{errors?.apiPassword}</ErrorText>
-            </FlexV>
+            </div>
             {/* <Form.Group>
                 <Form.Label>API Type</Form.Label>
                 <FlexH x='start' y='center'>
@@ -168,16 +170,17 @@ export default  () =>{
                     <div><input type="radio" name="pgw" id="live" /><label htmlFor="live">production</label></div>
                 </FlexH>
             </Form.Group> */}
-            <FlexH x='flex-end' y='center'><button onClick={e=>setEditInit({})}>CANCEL</button><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
+            <FlexH x='flex-end' y='center'><button onClick={e=>setEditInit({})}>CANCEL</button><ThemeButton type='submit' style={{marginLeft:'2rem'}} disabled={loading}>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH><GapV x='2'/>
         </form>}
     </div>
-    return <>{isMobile? <Col xs={12}>
-            <Accordion>
-              <Accordion.Item eventKey="0">
-                  <Accordion.Header>Payment Gateways</Accordion.Header>
-                  <Accordion.Body>{content}</Accordion.Body>
-                </Accordion.Item>
-                </Accordion>
-                </Col>:<Col md={6} xl={4}>{content}</Col>
+                   
+            
+    return <>{isMobile? <Col >
+              <Accordion title='Payment Gateways' content={content}/>
+                </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
     }</>
 }
+
+                
+                  
+                
