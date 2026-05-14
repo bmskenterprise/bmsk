@@ -3,7 +3,7 @@ const router=express.Router();
 import limiter from '../middlewares/rateLimit.js'
 import {seed,socketSeed,initRecovery,adminLogin,authenticateAdmin,getTodayExpense,changeSuperAdminPassword,changeSuperAdminPIN,sendCredentialRecoveryEmail,resetSuperAdminPassword,resetSuperAdminPIN,getSubAdmins,addSubAdmin,editSubAdmin,deleteSubAdmin,getTelecoms,addTelecom,editTelecom,getDepositRates,toggleSubAdminStatus,editSubAdminAccess,getMBanks,addMBank,updateMBankList,getBankNames,saveBankNames,editContactMedia,getSocialMediaLinks,editSocialMedia,updateDepositRates,getServices,editServices,getUsersByAdmin,getUserByAdmin,toggleUserStatus,editUserAccess,toggleUserNewDevice,removeUserDevice,getUserFeedback,deleteUserFeedback,resetSubAdminPassword,resetSubAdminPIN,addUser,resetUserPassword,resetUserPIN,deleteUserByAdmin,getSlideImages,addSlideImageLink,editSlideImageLink,deleteSlideImageLink,getPGW,addPGW,editPGW,getSMSGateway,addSMSGateway,editSMSGateway,getNotices,addNotice,editNotice,toggleNotice,deleteNotice/*,sendNotice*/,logout, getContactMedia} from '../controllers/admin.controller.js';//import { addBalance, deductBalance } from '../controllers/transaction.controller.js';
 import {authAdmin,isSuperAdmin,matchAuthPIN} from '../middlewares/auth.middleware.js';
-import {validatePack,validateTxn,validateAuthPIN,validateAdminPassword,validateAdminPIN,validateSubAdmin,validateUserPassword,validateUserPIN,validatePackEdit,validateBankNames,validateRequestStatus} from '../validations/dashboard.validation.js'
+import {validatePack,validateTxn,validateAuthPIN,validateAdminPassword,validateAdminPIN,validateAddSubAdmin,validateUserPassword,validateUserPIN,validatePackEdit,validateBankNames} from '../validations/dashboard.validation.js'
 import {validateUserRegister} from '../validations/user.validation.js'
 import {getTelecomBalances,getModemRouting,updateModemRouting,updateTopupTelecomAccess,getTopupHistoryByAdmin,changeTopupStatus,getTopupMethod,changeTopupMethod, getAllOptDriveSummary,getDriveHits,changeHitStatus,getDrivesByAdmin,getDrive,addDrive,editDrive,toggleDriveStatus,deleteDrive, getAllOptRegularSummary,getRegularsByAdmin,getRegular,addRegular,editRegular,toggleRegularStatus,deleteRegular,updateDriveTelecomAccess,updateRegularTelecomAccess,getAllTelecomAccess} from '../controllers/telecom.controller.js';
 import {getTodayDepositSummary,getBalanceSummary,getDepositInit,depositInit,getDepositHistoryByAdmin,getWithdrawHistoryByAdmin,changeDepositStatus,changeWithdrawStatus,deleteDepositHistory,addBalanceByAdmin,deductBalanceByAdmin,getDepositMethod,changeDepositMethod} from '../controllers/deposit.controller.js';
@@ -53,9 +53,9 @@ router.patch('/withdraw/:id',authAdmin,changeWithdrawStatus)
 router.get('/topup/history', authAdmin, getTopupHistoryByAdmin);
 router.patch('/topup/:id',authAdmin,validateAdminPIN,matchAuthPIN,changeTopupStatus)
 router.get('/utility-bill/history', authAdmin, getBillRequestByAdmin);
-router.patch('/utility-bill/:id',authAdmin,validateAdminPIN,matchAuthPIN,validateRequestStatus, changeBillRequestStatus);
+router.patch('/utility-bill/:id',authAdmin,validateAdminPIN,matchAuthPIN, changeBillRequestStatus);
 router.get('/bank/history', authAdmin, getBankRequestByAdmin);
-router.patch('/bank/:id',authAdmin,validateRequestStatus, changeBankRequestStatus);
+router.patch('/bank/:id',authAdmin, changeBankRequestStatus);
 router.patch('/mbank/:id',authAdmin,validateAdminPIN,matchAuthPIN,changeMbankRequestStatus)
 router.patch('/change-password', authAdmin, /*userValidation,*/ limiter, changeSuperAdminPassword);
 router.patch('/change-pin', authAdmin, /*userValidation,*/ limiter, changeSuperAdminPIN);
