@@ -3,12 +3,12 @@ import {useNavigate,useSearchParams} from 'react-router-dom'
 import {toast} from 'react-toastify';
 import {MdCancel} from 'react-icons/md';
 import {formatDistanceToNow} from 'date-fns';
-import {ScrollViewV,ScrollViewH,FlexH,GapH,Center,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,PaginationBar,Loader,Spinner, } from '../../components/styles/Admin.style';
-import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import {useNotification} from "../../contexts/NotificationContext";
-import {useSocket} from '../../contexts/SocketContext'
 import {useTheme} from '../../contexts/ThemeContext';
+import {useSocket} from '../../contexts/SocketContext'
+import {useNotification} from '../../contexts/NotificationContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext';
+import {ScrollViewV,ScrollViewH,FlexH,GapH,Center,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,PaginationBar,Loader,Spinner, } from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import url from '../../config/url'
 import copyToClipboard from '../../utils/copyToClipboard'
@@ -25,7 +25,6 @@ export default () => {
     const {pendingCounts:{drive},reducePendingCounts} = useNotification();
     const [status,user,telecom,recipient,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const errorlist = {width:'100%',marginBottom:'1.5rem'}  ;
-         
          
          
     const [hovered,setHovered] = useState(false);
@@ -79,10 +78,10 @@ export default () => {
         }catch(err){toast.error(err.message)}
         finally{setLoading(false)}
     }
-    const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK')
+    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK')
     const onFailed = async (id,user,feedback)=>{
         setFailedID(null)
-        AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
     }
         
         /*try{
@@ -90,7 +89,10 @@ export default () => {
             toast.success('copied to clipboard')
         }catch(err) { toast.error('failed to copy to clipboard') }
     };*/
-    const filter = (e)=> {e.preventDefault();navigate(`/dashboard/drive?status=${e.target.status.value.trim()}&telecom=${e.target.telecom.value.trim()}&user=${e.target.user.value.trim()}&recipient=${e.target.recipient.value.trim()}&fromDate=${e.target['from-date'].value}&toDate=${e.target['to-date'].value}&limit=${e.target.limit.value.trim()||'20'}&page=1`);//fetchDriveHits({page:1})
+    const filter = (e)=> {
+        e.preventDefault();
+        let form=e.target
+        navigate(`/dashboard/drive/history?status=${form.status.value.trim()}&telecom=${form.telecom.value.trim()}&user=${form.user.value.trim()}&recipient=${form.recipient.value.trim()}&fromDate=${form.fromDate.value}&toDate=${form.toDate.value}&limit=${form.limit.value.trim()||'20'}&page=1`);//fetchDriveHits({page:1})
         /*let filtered=cache[statusRef.current.value].filter(d=>{
             for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
@@ -100,7 +102,7 @@ export default () => {
         });setHits(filtered)*/
     }
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/drive?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
 
                   
                   
@@ -108,18 +110,18 @@ export default () => {
        <div><h4 style={{marginBottom:'4rem'}}>Drive</h4>{/*<IconButton style={{float: 'right'}}><BsPrinter/></IconButton>*/}</div>
         <form  onSubmit={filter}>
             <FlexH x='space-between' style={{gap:'0.5rem'}}>
-                <FlexH x='space-between' y='center' style={{width:'40%'}}>  <Field value={filterData.limit} name='limit' x='5' min='10' max='100' onChange={filterParams}/>
-                <Field x='8' name='user' placeholder="username" value={filterData.user} onChange={filterParams}/> <Field   x='8' name='recipient' placeholder='recipient' value={filterData.recipient} onChange={filterParams}/></FlexH>
-                <FlexH x='space-between' y='center' style={{width:'50%'}}>
-                <Field x='8' name='telecom' value={filterData.telecom} onChange={filterParams}/><datalist>{telecoms.map(({name},i)=> <option key={i} value={name}/>)}</datalist>
-                <div><DatePicker  type="date" value={filterData.fromDate} name="fromDate" max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/><DatePicker  type="date" value={filterData.toDate} name="toDate" max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/></div>
+                     <Field value={filterData.limit} name='limit' x='5' min='10' max='100' onChange={filterParams}/>
+                <Field x='8' name='user' placeholder='username' value={filterData.user} onChange={filterParams}/> <Field   x='8' name='recipient' placeholder='recipient' value={filterData.recipient} onChange={filterParams}/>
+                   
+                <Field x='8' name='telecom' value={filterData.telecom} placeholder='telecom' list='telecoms' onChange={filterParams}/><datalist id='telecoms'>{telecoms?.map(({name},i)=> <option key={i} value={name}/>)}</datalist>
+                <div><DatePicker  type='date' value={filterData.fromDate} name='fromDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/><DatePicker  type='date' value={filterData.toDate} name='toDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/></div>
                     {/*<Button onClick={filter}>filter</Button>*/}
                     <Select  name='status' value={filterData.status} onChange={filterParams} /*onChange={e=>{cache[e.target.value]?setHits(cache[e.target.value]):fetchDriveHits()}}*/>
                         <option value='pending'>Pending</option>
+                        <option value='success'>Success</option>
                         <option value='failed'>Failed</option>
-                        <option value='success'>Succcess</option>
                     </Select>
-                </FlexH>
+                
                 <button type='submit'>filter</button>
             </FlexH>
         </form>
@@ -129,7 +131,7 @@ export default () => {
                     {/* <th><input type="checkbox" name="" id="" /></th> */}
                     {/*fields.map(f=> <th>{f}</th>)</tr>*/}
                 
-                {data?.hits?.map(({_id,updatedAt,drive,recipient,user,status})=> <StripedList style={{width:'87rem',fontSize:'1.3rem'}}  key={_id}>
+                {data?.hits?.map(({_id,updatedAt,drive,recipient,user,status})=> <StripedList style={{width:'87rem',fontSize:'1.2rem'}}  key={_id}>
                     <div style={{width:'20%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
                     {/*<td><Button></Button><Button onClick={} id=""> </Button></td>*/}
                     <div style={{width:'15%'}}><TinyIcon src={icons[drive.operator]}/><GapH x='0.5'/>{recipient} </div>
