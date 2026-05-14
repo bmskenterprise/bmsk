@@ -5,13 +5,14 @@ import {FaEye,FaEyeSlash} from 'react-icons/fa';
 import {useAdminAuth} from '../contexts/AdminAuthContext';
 import {useTheme} from '../contexts/ThemeContext';
 import {useUser} from '../contexts/UserContext';
-import {ScrollViewV,FlexH,Col,GapV,ThemeButton,Select,InputField,ErrorText,Loader,Spinner } from '../components/styles/Admin.style'
+import {ScrollViewV,FlexH,Col,GapV,GapH,ThemeButton,Select,InputField,ErrorText,Loader,Spinner } from '../components/styles/Admin.style'
 import url from '../config/url';
 import AdminPIN from './AdminPIN';
 import SwitchItem from '../components/Switch'
     
 export default ({user,handleCancel}) =>{
     const {thememode,themeData:{themeBackground}, modeData} = useTheme()
+    const {backPrimary,textPrimary} = modeData  //  
     const {admin,appData,sendRecoveryEmail} = useAdminAuth()
     //const [loading,setLoading] = useState(false)
     const {addUser,editUserAccess,authError,errors,loading} = useUser()
@@ -19,7 +20,6 @@ export default ({user,handleCancel}) =>{
     //let [services,accesses] = [[],['deposit','topup','drive','regular','bill','bank']]
     //const [serviceTypes,setServiceTypes]=useState([])
     const [accesses,setAccesses] = useState([])
-    const {backPrimary,textPrimary} = modeData  //  
     /*useEffect(()=>{fetchGrantedServices()},[])
     const fetchGrantedServices = async () =>{
         setLoading(true)
@@ -63,10 +63,10 @@ export default ({user,handleCancel}) =>{
     return <div style={{width:'100%',height:'100%',position:'relative',fontSize:'1.2rem',background:backPrimary}}>
         <h4 style={{marginBottom:'2rem'}}> {user.username}</h4>
          <ScrollViewV style={{width:'100%',height:'80%'}}><form onSubmit={handleSubmit/*e=>{e.preventDefault();addUser()}*/}>
-                 
+                <FlexH x='space-between'>
                 {!user.id&&<Col /*xs={12} md={4} lg={4} xl={3}*/>
-                    <div>
-                        <Select /*isInvalid={!!errors?.level}*/name='level'>
+                    <div style={{width:'100%'}}>
+                        <Select /*isInvalid={!!errors?.level}*/name='level' style={{width:'100%',padding:'0.5rem'}}>
                             <option value=''>Select User Levels</option>{appData?.userLevels.map(({name},i)=><option key={i} value={name}>{name}</option>)}
                             {/*<option value="distributor">Distributor</option>
                             <option value="sr">SR</option>
@@ -127,9 +127,9 @@ export default ({user,handleCancel}) =>{
                         </div>)}
                     </div>*/}
             </Col>
-        
-        <FlexH x='flex-end' y='center'><button onClick={handleCancel}>CANCEL</button><ThemeButton type='submit' style={{marginLeft:'2rem'}} disabled={loading}>{loading?<Spinner size='1'/>:'NEXT'}</ThemeButton></FlexH>
+        </FlexH>
+        <GapV x='4'/><FlexH x='flex-end'><button onClick={handleCancel}>CANCEL</button><GapH x='2'/><ThemeButton type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'NEXT'}</ThemeButton></FlexH>
         {/*loading&&<Loader><Spinner /></Loader>*/}
-            </form></ScrollViewV>
+           <GapV x='4'/></form></ScrollViewV>
     </div>
 }
