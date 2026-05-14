@@ -308,20 +308,20 @@ export const resetUserPIN = async (req,res,next) =>{
         let hashed= await bcrypt.hash(pin,11)
         await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{pin:hashed}});
         res.status(200).json({message:'Pin reset successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const toggleUserNewDevice = async (req,res,next) =>{
     try{
         let {user,domain,apiType} = await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{'device.lock':req.body.isDeviceLock}});
         res.status(200).json({message:'API Denied'});
-    }catch(err) {next(err)} 
+    }catch(e) {next(e)} 
 }
 export const removeUserDevice = async (req,res,next) =>{
     try{
         await User.UpdateOne({_id:new ObjectId(req.params.id)},{$pull:{'device.allowed':req.body.deviceId}})
-        res.status(200).json(message:'device removed')
-    }catch(err) {next(err)} 
+        res.status(200).json({message:'device removed'})
+    }catch(e) {next(e)} 
 }
 export const deleteUserByAdmin = async (req,res,next) =>{
     try{
