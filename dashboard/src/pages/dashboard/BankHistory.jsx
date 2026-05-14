@@ -5,8 +5,8 @@ import {formatDistanceToNow} from 'date-fns';
 import {FaCheck} from 'react-icons/fa';
 import {MdCancel} from 'react-icons/md';
 import {useTheme} from '../../contexts/ThemeContext';
-import {useNotification} from '../../contexts/NotificationContext';
 import {useSocket} from '../../contexts/SocketContext'
+import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {ScrollViewV,ScrollViewH,FlexH,Field,Center,StripedList,PaginationBar,ApproveButton,RejectButton,Select,DatePicker,Spinner, Loader} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
@@ -22,7 +22,7 @@ export default () =>{
     const accesses = admin?.accesses
     const {socket} = useSocket()
     const {pendingCounts:{bank},reducePendingCounts} = useNotification()
-    const {thememode,modeData} = useTheme();
+    const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const [searchParams,] = useSearchParams();
     const navigate = useNavigate()
     const [status,user,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
@@ -35,17 +35,18 @@ export default () =>{
     let [filterData,setFilterData] = useState({status,ac,fromDate,toDate,user,limit,page});
 
     useEffect(()=>{
-        fetchBankHistory()
-        setFilterData({status,ac,fromDate,toDate,user,limit,page})
-    },[status,user,ac,fromDate,toDate,limit,page]);
-         
-    useEffect(()=>{
         reducePendingCounts('bank')
         //filterData= {status:'PENDING',ac:'',fromDate:'',toDate:'',user:'',limit:20};
         socket.emit('admin:bank-history:seen', null);
         navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
     },[]);
+         
+    useEffect(()=>{
+        fetchBankHistory()
+        setFilterData({status,ac,fromDate,toDate,user,limit,page})
+    },[status,user,ac,fromDate,toDate,limit,page]);
 
+    const {data} = useFetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
 
         const fetchBankHistory = async (/*{page}*/) => {setLoading(true);
             try {
@@ -54,7 +55,7 @@ export default () =>{
                 if(!res.ok) throw new Error(data.error || 'failed to fetch banks');
                 //if(data.length)cache[status] = data;
                 setHistory(data/*.filter(d=>d.status==statusRef.current.value)*/);
-            } catch (err) {toast.error(err.message);}
+            } catch (e) {toast.error(e.message);}
             finally{setLoading(false);}
         }
 
@@ -75,7 +76,7 @@ export default () =>{
             //let moved = cache['pending'].splice(cache['pending'].findIndex(i=>i.id===hitId),1)[0]//   'failed')
             //cache[status] && cache[status].unshift(moved)
             toast.success(data.message);fetchBankHistory(/*{page:history.pagination.currentPage}*/);
-        }catch(err) {toast.error(err.message)}
+        }catch(e) {toast.error(e.message)}
         finally{setLoading(false);}
     }    
 
@@ -85,16 +86,15 @@ export default () =>{
             navigate(`/dashboard/bank/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&fromDate=${fd.fromDate}&toDate=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)  //  
         }
 
-    const {data} = useFetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
 
      const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
          
     const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`);
 
-    const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,user,status:'SUCCESS'}},'OK');
+    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,user,status:'SUCCESS'}},'OK');
     const onFailed = (id,user,feedback)=>{
         setFailedID(null);//changeStatus(id,'FAILED',feedback,user)
-         AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
     }
                       
                       
@@ -132,7 +132,7 @@ export default () =>{
         {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
                 <ScrollViewH style={{width:'100%'}}>
             {/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
-                    {history?.banks?.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status},i)=> <StripedList /*x='flex-start' y='center'*/ key={i} style={{width:'87rem',fontSize:'1.2rem'}}>
+                    {history?.banks?.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status})=> <StripedList /*x='flex-start' y='center'*/ key={_id} style={{width:'87rem',fontSize:'1.2rem'}}>
                         <div style={{width:'15%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
                         <div style={{width:'25%'}}>{bank}</div>
                         <div style={{width:'25%'}}>{acNumber} {acName}</div>
