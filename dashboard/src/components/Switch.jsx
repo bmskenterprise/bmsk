@@ -12,6 +12,6 @@ export default ({v,identity,label,check,handleChange,n}) => {
   
   return <>
   <Switch style={{display:'inline-block'}} onClick={toggleCheckbox}><input ref={chb} type='checkbox' checked={check??false} value={v??''} id={identity??''} onChange={handleChange} name={n??''}/><div></div></Switch>
-  {label&&<><GapH x='1'/><label style={{cursor:'pointer'}} htmlFor={identity}>{label}</label></>}
+  {label&&<><GapH x='0.5'/><label style={{cursor:'pointer'}} htmlFor={identity}>{label}</label></>}
 </>
 }
