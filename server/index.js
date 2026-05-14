@@ -36,7 +36,7 @@ app.use(cors({
     credentials: true,
     optionsSuccessStatus: 200,
     methods:['GET','POST','PATCH','DELETE','OPTIONS'],
-    allowedHeaders:['Content-Type','Authorization','x-user-agent','x-admin-pin','x-user-pin']
+    allowedHeaders:['Content-Type','Authorization','x-user-agent','x-admin-pin','x-user-pin','user-login-id']
 }))
 //for preflight request
 app.options('*',cors());
