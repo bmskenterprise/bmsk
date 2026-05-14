@@ -4,11 +4,11 @@ import {toast} from 'react-toastify';
 import {FaCheck} from 'react-icons/fa';
 import {MdCancel} from 'react-icons/md';
 import {formatDistanceToNow} from 'date-fns';
+import {useTheme} from '../../contexts/ThemeContext'
+import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {useTheme} from '../../contexts/ThemeContext'
 import {useTelecom} from '../../contexts/TelecomContext';
-import {useSocket} from '../../contexts/SocketContext'
 import {ScrollViewV,ScrollViewH,FlexH,GapH,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import url from '../../config/url';
@@ -21,6 +21,9 @@ export default  () =>{
     const {failedCounts:{topup},reducePendingCounts} = useNotification()
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
+    const {thememode,themeData:{themeBackground},modeData} = useTheme()
+    const {backPrimary,textPrimary} = modeData
+    const {socket} = useSocket()
     const [status,user,telecom,recipient,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     //const telecom = searchParams.get('telecom') || '';
     //const recipient = searchParams.get('recipient') || '';
@@ -31,14 +34,11 @@ export default  () =>{
     const [loading,setLoading] = useState(false);
     const [topupHistory, setTopupHistory] = useState({topups:[],pagination:{totalPage:1,currentPage:1,limit:20}});
     const [failedID,setFailedID] = useState(null);
-    //let today = (new Date()).toISOString().split('T')[0];
     const filterObj = {};const {appData,admin} = useAdminAuth();
-    const {thememode,modeData} = useTheme()
     let [filterData,setFilterData]=useState({status,recipient,telecom,fromDate,toDate,user,limit,page});
-    const {backPrimary,textPrimary} = modeData
-    const {socket} = useSocket()
     const accesses = admin?.accesses
     const {data} = useFetch(`${url.urlTopupHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    //let today = (new Date()).toISOString().split('T')[0];
     useEffect(()=>{
         reducePendingCounts('topup') ;
         socket.emit('admin:topup-history:seen', null);
@@ -65,10 +65,10 @@ export default  () =>{
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }
-    const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
+    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
     const onFailed = (id,user,feedback)=>{
         setFailedID(null);
-        AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
     }
     const fetchTopupHistory = async (/*{page}*/) => {
             try {
@@ -80,7 +80,7 @@ export default  () =>{
                 if(!res.ok) throw new Error(data.error || 'failed');
                 //if(data.length)cache[status]=data;
                 setTopupHistory(data/*.filter(d=>d.status==statusRef.current.value)*/);
-            }catch(err) {toast.error(err.message);}// (err) {  }
+            }catch(e) {toast.error(e.message);}// (err) {  }
             finally{setLoading(false);}
     }
     const filter = (e)=> {e.preventDefault()
@@ -95,6 +95,8 @@ export default  () =>{
         });*///fetchTopupHistory({page:1})
     }
     const pageNav = p=> navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
+                              
+                              
     return !accesses?.includes('topup-history')?<Center><p>don't have topup history permission</p></Center>:<div style={{background:backPrimary,color:textPrimary}} onClick={e=>setFailedID(null)}>
                 <h4 style={{marginBottom:'4rem'}}>Topup History</h4>
                 <form onSubmit={filter}><FlexH x='space-between' y='center'>
@@ -120,18 +122,16 @@ export default  () =>{
             {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem',fontSize:'1.3rem'}}>
                 <ScrollViewH style={{width:'100%'}}>
                 {/*<tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead>*/}
-                    {data?.topups?.map(({_id,updatedAt,recipient,amount,operator,user,status})=><StripedList  key={_id} style={{marginBottom:'1rem'}}>
+                    {data?.topups?.map(({_id,updatedAt,recipient,amount,operator,user,status})=><StripedList  key={_id} style={{width:'87rem',fontSize:'1.2rem'}}>
                         <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
-                        <div style={{width:'25%'}}><TinyIcon src={icons[operator]}/><GapH x='1'/>{recipient}</div>
-                        <div style={{width:'25%'}}>{amount}</div>
+                        <FlexH y='center' style={{width:'25%'}}><TinyIcon src={icons[operator]}/><GapH x='0.5'/>{recipient}</div>
+                        <div style={{width:'25%'}}>&#2547;{amount}</div>
                     {/*<td>{billMonth}</td>
                     <td>{billExpire}</td>*/}
                         <div style={{width:'15%'}}>{user}</div>
-                        {status=='PENDING'&&<div style={{width:'10%',position:'relative',background:'orange'}}>
+                        {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
                         <ApproveButton  onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton  onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>
                         {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
-                              
-                              
                               
                         </div>}
                     </StripedList>)}
