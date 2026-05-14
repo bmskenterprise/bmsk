@@ -2,11 +2,12 @@ import {useEffect,useState} from 'react';
 import {useMediaQuery} from 'react-responsive'
 import { toast } from 'react-toastify';
 import {MdEdit} from 'react-icons/md';     
+import {BsPlusLg} from 'react-icons/bs'
 import {useTheme} from '../../contexts/ThemeContext';
 import {Col,FlexH,FlexV,GapV,ThemeButton,InputField,ErrorText,TinyIcon,IconButton,Spinner} from '../styles/Admin.style'
 import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
-import  Accordion  from './Accordion';
+import Accordion from './Accordion';
 import SwitchItem from '../Switch'
 
 export default  () =>{
