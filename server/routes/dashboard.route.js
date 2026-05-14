@@ -16,7 +16,7 @@ router.post('/socket-seed', socketSeed);
 router.post('/login', adminLogin);
 router.get('/auth', authAdmin, authenticateAdmin);
 router.get('/admin',authAdmin,isSuperAdmin,getSubAdmins)
-router.post('/admin',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateSubAdmin,addSubAdmin)
+router.post('/admin',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateAddSubAdmin,addSubAdmin)
 router.patch('/admin/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateSubAdmin,editSubAdmin)
 router.patch('/admin/access/:id',authAdmin,isSuperAdmin,editSubAdminAccess)  //dashboard/api/drive-package
 router.patch('/admin/status/:id',authAdmin,isSuperAdmin, toggleSubAdminStatus);
