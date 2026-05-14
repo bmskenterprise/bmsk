@@ -5,7 +5,7 @@ export const validateUserRegister = [
     .isIn(['platinum','gold','silver','distributor','sr','retailer']).withMessage('level must be one of the following: platinum'),
     
     body('username').escape().notEmpty().withMessage('Username is required')
-    .matches(/^[a-zA-Z0-9_.]{4,32}$/).withMessage('username must contain alphabet number _ .')
+    .matches(/^[a-zA-Z0-9_.]{4,32}$/).withMessage('username must contain alphabet number _ .'),
     //.trim()
     body('phone').escape()
     .trim().notEmpty().withMessage('username cannot be empty')
@@ -18,13 +18,13 @@ export const validateUserRegister = [
     
     body('fullname').escape()
     .trim().notEmpty().withMessage('full name cannot be empty')
-    .isLength({min:2, max: 32}).withMessage('username must be between 2 and 32 characters')
-    .escape(),
+    .isLength({min:2, max: 32}).withMessage('username must be between 2 and 32 characters'),
+    
     //.isLength({min:2, max: 32}).withMessage('full name must be between 2 and 32 characters')
     
     body('nid').escape()
-        .isNumeric().withMessage('শুধুমাত্র সংখ্যা হতে হবে')
-        .matches(/^(\d{10}|\d{13}|\d{17})$/).withMessage('নাম্বারটি অবশ্যই ১০, ১৩ অথবা ১৭ সংখ্যার হতে হবে'),
+        .isNumeric().withMessage('nid must be a number')
+        .matches(/^(\d{10}|\d{13}|\d{17})$/).withMessage('nid number must be 10, 13 or 17 digits'),
         //.withMessage('নাম্বারটি অবশ্যই ১০, ১৩ অথবা ১৭ সংখ্যার হতে হবে'),
     body('password').escape()
     .trim().notEmpty().withMessage('password cannot be empty')
@@ -143,10 +143,10 @@ export const validatePassword=[
     body('password').escape()
     .trim().notEmpty().withMessage('new password cannot be empty')
     .isLength({min:8, max: 32}).withMessage('new password must be between 8 and 32 characters')
-    .isStrongPassword().withMessage('password must be strong')/*.matches(/[A-Z]/).withMessage('New password must contain at least one uppercase letter')
+    .isStrongPassword().withMessage('password must be strong'),/*.matches(/[A-Z]/).withMessage('New password must contain at least one uppercase letter')
     .matches(/[a-z]/).withMessage('New password must contain at least one lowercase letter')
     .matches(/[0-9]/).withMessage('New password must contain at least one number')
-    .matches(/[\W_]/).withMessage('New password must contain at least one special character')*/,
+    .matches(/[\W_]/).withMessage('New password must contain at least one special character')*/
 
     /*body('confirmPassword')
     .isLength({min:8, max: 32}).withMessage('new password must be between 8 and 32 characters')
