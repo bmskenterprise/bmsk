@@ -46,7 +46,7 @@ let Admin,User,DepositInit,Drive,Regular,DriveHit,Feedback,Bill,Bank,APIUser,API
         Notice = db.collection('notices')
         SocketResponse = db.collection('socketresponses')
         APIRequest = db.collection('apirequests')
-    }catch(err){console.error(err);}
+    }catch(e){console.error(e);}
 })()
       
 export const authenticateAdmin =async (req, res, next) =>{
@@ -54,7 +54,7 @@ export const authenticateAdmin =async (req, res, next) =>{
         let appData = await Admin.findOne({role:'admin'},{projection:{avatar:1,mbanks:1,userLevels:1,methods:1/*,email:0,role:0,notices:0,__v:0*/}})
         if(!appData) throw new Error('Server Issue')
         res.status(200).json({admin:req.admin,appData})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
   //res.json({message: "Protected route access granted", admin: req.admin,});
 };
 
@@ -63,7 +63,7 @@ export const authenticateAdmin =async (req, res, next) =>{
         let admin = await Admin.findOne({role:'admin'},{username:0,password:0,pin:0,email:0,role:0,_V:0})
         if(!admin) throw new Error('Server Issue')
         res.status(200).json(admin)
-    }catch(err) {next(err)}//   
+    }catch(e) {next(e)}//   
 }*/
 
 export const register = async (req, res,next) => {
@@ -74,7 +74,7 @@ export const register = async (req, res,next) => {
         await Admin.insertOne({username,password:hashPassword,pin:hashPIN,role:'subadmin',access,createdAt:new Date(),updatedAt:new Date()})
         const subadmins = await Admin.find({role:'subadmin'}).toArray()
         res.status(200).json({subadmins})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -99,7 +99,7 @@ export const adminLogin = async (req, res, next) => {
             })
          return res.status(200).json({message: 'login success'});
         //res.status(400).json({success: false, message:'wrong credentials'})
-    }catch(err) {next(err);}  
+    }catch(e) {next(e);}  
 }
 
 
@@ -108,7 +108,7 @@ export const getSubAdmins = async (req,res,next) =>{
         let admins = await Admin.find({role:'subadmin'}).toArray()
         if(!admins) return res.status(404).json({error:'No subadmins found'})
         return res.status(200).json(admins)
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 
 export const addSubAdmin = async (req,res,next) =>{
@@ -123,7 +123,7 @@ export const addSubAdmin = async (req,res,next) =>{
         await Admin.insertOne({username,phone,email,nid,password:hashedPassword,pin:hashedPIN,role:'subadmin',accesses,device:['',''],status:false,loginStatus:false,createdAt:new Date(),updatedAt:new Date()})
         const admins = await Admin.find({role:'subadmin'}).toArray();
         res.status(201).json({admins,message:'subadmin added'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const editSubAdmin = async (req,res,next) =>{
@@ -147,7 +147,7 @@ export const editSubAdmin = async (req,res,next) =>{
         }
         await Admin.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{updated}});
         res.status(200).json({message:'updated successfully'})
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const editSubAdminAccess = async (req,res,next) =>{
     const {accesses} = req.body;
@@ -155,7 +155,7 @@ export const editSubAdminAccess = async (req,res,next) =>{
         if(!Array.isArray(accesses)) return res.status(400).json({error:'data is not an array'})
         await Admin.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{accesses,status:false}})
         res.status(200).json({message:'access updated'})
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const toggleSubAdminStatus = async (req,res,next) =>{
     try{
@@ -177,7 +177,7 @@ export const deleteSubAdmin = async (req,res,next) =>{
     try{
         await Admin.findOneAndDelete({_id:new ObjectId(req.params.id)})
         res.status(200).json({message:'Sub Admin deleted' })
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const changeSuperAdminPassword = async (req, res, next) => {
     const {oldPassword,password} = req.body;
@@ -190,7 +190,7 @@ export const changeSuperAdminPassword = async (req, res, next) => {
             //admin.password = hash;
             await Admin.findOneAndUpdate({_id:new ObjectId(req.admin.id)},{$set:{password:hashed}});
             return res.status(200).json({success:true,message:'Password changed successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -205,7 +205,7 @@ export const changeSuperAdminPIN = async (req, res, next) => {
             //admin.pin = hash;
             await Admin.findOneAndUpdate({_id:new ObjectId(req.admin.id)},{$set:{pin:hashed}});
             return res.status(200).json({success:true,message:'PIN changed successfully'})
-    }catch(err) {next(err)}  
+    }catch(e) {next(e)}  
 }
 
 export const initRecovery = async (req,res,next) =>{
@@ -226,7 +226,7 @@ export const resetSuperAdminPassword = async (req,res,next) =>{
         let hashed = await bcrypt.hash(password,11)
         await Admin.findOneAndUpdate({role:'admin'},{$set:{password:hashed}})
         res.status(204).json({message:'password reseted'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }  
 export const resetSuperAdminPIN = async (req,res,next) =>{
     const {pin,token} = req.body
@@ -238,7 +238,7 @@ export const resetSuperAdminPIN = async (req,res,next) =>{
         if(decoded) return res.status(401).json({error:'token invalid or expired'})
         await Admin.findOneAndUpdate({role:'admin'},{$set:{pin:hashed}})
         res.status(204).json({message:'pin reseted'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const sendCredentialRecoveryEmail = async (req,res,next) =>{
     try{
@@ -248,7 +248,7 @@ export const sendCredentialRecoveryEmail = async (req,res,next) =>{
             subject:'Credential Recovery',
             html:`<h5>tannimtelecom.shop</h5><p>Click the link below to recover your credential</p><p>The links is valid for 2 minutes</p><a href=${process.env.CLIENT_URL}/recover-${req.params.credential}/${recoveryToken}>${process.env.CLIENT_URL}/recover-password/${recoveryToken}</a>`
         })
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 /*export const sendPINRecoveryEmail = async (req,res,next) =>{
     try{
@@ -269,7 +269,7 @@ export const resetSubAdminPassword = async (req,res,next) =>{
         let hashed = await bcrypt.hash(password,11)
         await Admin.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{password:hashed,status:false}});
         res.status(200).json({message:'Password reset successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //admin
@@ -282,7 +282,7 @@ export const resetSubAdminPIN = async (req,res,next) =>{
         //let matched= await bcrypt.compare(req.headers['x-admin-pin'], admin.pin)
         await Admin.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{pin:hashed,status:false}});
         res.status(200).json({message:'Pin reset successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //admin
@@ -296,7 +296,7 @@ export const resetUserPassword = async (req,res,next) =>{
         let hashed= await bcrypt.hash(password,11)
         await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{password:hashed}});
         res.status(200).json({message:'Password reset successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //admin
@@ -325,7 +325,11 @@ export const removeUserDevice = async (req,res,next) =>{
 }
 export const deleteUserByAdmin = async (req,res,next) =>{
     try{
-        let user = await User.findOneAndDelete({_id:new ObjectId(req.params.id)})
+        let {username} = await User.findOne({_id:new ObjectId(req.params.id)})
+        let {socketId} = await SocketResponse.findOne({user:username})
+        if(socketId) io.to(socketId).emit('deleted',null)
+        await User.deleteOne({_id:new ObjectId(req.params.id)});
+        await SocketResponse.deleteOne({user:username}) //return res.status(404).json({ error: 'Admin not found' });*/
         res.status(200).json({message:'user deleted'})
     }catch(e) {next(e)}
 }
@@ -339,7 +343,7 @@ export const depositInitByAdmin = async (req,res,next) =>{
         if(!matched) return res.status(401).json({error:'admin pin doesnt matched'})*/
         await DepositInit.insertOne({...req.body,createdAt:new Date(),updatedAt:new Date()})
         res.status(201).json({message:'txn added'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const deleteDepositInit = async (req,res,next) =>{
     let errors = validationResult(req);
@@ -349,7 +353,7 @@ export const deleteDepositInit = async (req,res,next) =>{
         if(!matched) return res.statrus(401).json({error:'admin pin doesnt matched'})*/
         await DepositInit.findOneAndDelete({_id:new ObjectId(req.params.id)})
         res.status(200).json({message:'deleted'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const access = async (req, res, next) => {
@@ -364,7 +368,7 @@ export const access = async (req, res, next) => {
         const result = parser.getResult();
 
         socket.emit('admin',admins)
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -398,7 +402,7 @@ export const updateMBankList = async (req,res,next) =>{
         await Admin.bulkWrite(bulkOps)
         let admin= await Admin.findOne({role:'admin'})
         res.status(200).json({mbanks:admin.mbanks,message:'mbank updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -407,7 +411,7 @@ export const getDepositRates = async (req,res,next) => {
         let admin = await Admin.findOne({role:'admin'});
         if(!admin) return res.status(404).json({error: 'Admin not found'});
         res.status(200).json(admin.deposits);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const updateDepositRates= async (req, res,next) => {
@@ -415,7 +419,7 @@ export const updateDepositRates= async (req, res,next) => {
         if(!Array.isArray(req.body)) return res.status(400).json({error:"Deposits array must be an array of objects" });
     const result = await Admin.findOneAndUpdate({role:'admin'},{$set:{deposits:req.body}},{returnDocument:'after'})
         res.status(200).json(result.value?.deposits);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -434,8 +438,8 @@ export const updateDepositRates= async (req, res,next) => {
     const updated = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{new:true});
       
     res.json(updated);
-  }catch(err) {next(err)}// (err) {
-    //res.status(500).json({ error: err.message });
+  }catch(e) {next(e)}// (err) {
+    //res.status(500).json({ error: e.message });
 };*/
 
 
@@ -458,7 +462,7 @@ export const toggleUserStatus = async (req,res,next) =>{
     try{
         await User.UpdateOne({_id:new ObjectId(req.params.id)},{$set:{verified:req.params.verified}})
         res.status(200).json({message:'updated successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 //admin
 export const getUsersByAdmin = async (req, res, next) => {
@@ -477,23 +481,26 @@ export const getUsersByAdmin = async (req, res, next) => {
         const users = await User.find(filter,{projection:{password:0,pin:0,failedLoginAttempts:0,lockUntil:0,__v:0}}).skip((currentPage-1)*queryLimit).limit(queryLimit).sort({createdAt:-1}).toArray();
         if(!users) return res.status(404).json({error:'users not found'})
         res.status(200).json({users,pagination:{currentPage,totalPages:Math.ceil(totalUsers/queryLimit),}});
-    }catch(err) {next(err)}  
+    }catch(e) {next(e)}  
 }
 
 
 export const getUserByAdmin = async (req,res,next) =>{
     try{
-        let user = await User.findOne({_id:new ObjectId(req.params.id)})
+        let user = await User.findOne({_id:new ObjectId(req.params.id)},{projection:{_id:1,username:1,level:1,phone:1,fullname:1,email:1,nid:1,device:1,createdAt:1,accesses:1,regFeeRef:1}})
         if(!user) return res.status(404).json({error:'user not found'});
         res.status(200).json(user)
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const editUserAccess = async (req,res,next) =>{
+    let io = socket.getIO()
     try{
-        await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{accesses:req.body,status:req.body.length>0?'ACTIVE':'INACTIVE'}})
+        let {username} = await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{accesses:req.body/*,status:req.body.length>0?'ACTIVE':'INACTIVE'*/}})
+        const {socketId} = await SocketResponse.findOne({user:username})
+        if(socketId) io.to(socketId).emit('access-modified',null)
         res.status(200).json({message:'user access updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -506,10 +513,10 @@ export const getSlideImages =async (req,res,next) =>{
 
 export const addSlideImageLink = async (req, res,next) => {
     const {link} = req.body;
-    try {
+    try{
         let result=await Admin.findOneAndUpdate({role:'admin'},{$push:{slideImages:{_id:new ObjectId(),link,active:true}}},{returnDocument:'after'})
         res.status(200).json({slides:result.slideImages,message:'slide image added'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 /*export const editSlideImageLink = async (req, res,next) => {
     const {active link,newLink,active} = req.body;
@@ -521,7 +528,7 @@ export const addSlideImageLink = async (req, res,next) => {
         if (newLink !== undefined) image.link = newLink;
         if (active !== undefined) image.active = active;
         res.status(200).json({links:admin.slideImages});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }*/
 export const editSlideImageLink = async (req,res,next) =>{
     const {link,active} = req.body
@@ -531,14 +538,14 @@ export const editSlideImageLink = async (req,res,next) =>{
         if(active!=undefined) updateFields['slideImages.$[elem].active'] = active
         let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'})
         res.status(200).json({slides:result.slideImages,message:'slide image edited'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const deleteSlideImageLink = async (req, res, next) => {
     try {
         let result = await Admin.findOneAndUpdate({role:'admin'},{$pull:{slideImages:{_id:new ObjectId(req.params.id)}}},{returnDocument:'after'})
         res.status(200).json({slides:result.slideImages,message:'slide image deleted'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -550,7 +557,7 @@ export const getContactMedia = async (req, res, next) => {
         let admin = await Admin.findOne({role:'admin'});
         if(!admin) return res.status(404).json({error:'Admin not found'})
         res.status(200).json(admin.contacts);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -567,7 +574,7 @@ export const getSocialMediaLinks = async (req, res, next) => {
         let admin = await Admin.findOne({role:'admin'});
         if(!admin) return res.status(404).json({error:'Admin not found'})
         res.status(200).json(admin.socialLinks);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const editSocialMedia = async (req,res,next) =>{
     try{
@@ -589,7 +596,7 @@ export const editSocialMedia = async (req,res,next) =>{
             { arrayFilters, new:true}
         );
         res.status(200).json({ message: "Contact numbers updated", contacts:admin.contacts });
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }*/
 
 export const getServices = async (req, res,next) => {
@@ -597,14 +604,14 @@ export const getServices = async (req, res,next) => {
         let admin=await Admin.findOne({role:'admin'})
         //let services=admin.services.filter(service=>service.active)
         res.status(200).json(admin.services)
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const editServices = async (req,res,next) =>{
     try{    
         await Admin.findOneAndUpdate({role:'admin'},{$set:{services:req.body.services}})
         await User.updateMany({},{$set:{accesses:req.body.services}})
         res.status(200).json({message:'services updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -616,7 +623,7 @@ export const getTelecoms = async (req,res,next)=>{
         for(const element of admin.telecom) logos[element.name] =element.icon*/
         let telecoms = admin.telecoms.map(t=>({name:t.name,icon:t.icon,active:t.active}))
         res.status(200).json(telecoms);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 };
 
 
@@ -625,7 +632,7 @@ export const addTelecom = async (req, res, next) => {
           const {name,icon} = req.body;
         const result = await Admin.findOneAndUpdate({role:'admin'},{$push:{telecoms:{_id:new ObjectId(),name,icon,active:true}}},{returnDocument:'after'})
         res.status(200).json({telecoms:result.telecoms,message:'telecom added'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -644,7 +651,7 @@ export const editTelecom = async (req,res,next) =>{
         }
         socket.getIO().emit('telecoms',{telecoms:result.telecoms});
         res.status(200).json({telecoms:result.telecoms,message:'telecom edited'});
-    }catch(err) {next(err)};
+    }catch(e) {next(e)};
 }
 
 
@@ -656,7 +663,7 @@ export const editTelecom = async (req,res,next) =>{
         if(newName!==undefined) opt.name = newName;
         if(newIcon!==undefined) opt.icon = newIcon;
         res.status(200).json({telecoms:admin.telecoms,message:'operator updated successfully'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }*/
 
 
@@ -666,7 +673,7 @@ export const getPGW = async (req, res,next) => {
         let admin = await Admin.findOne({role:'admin'});
         if(!admin) return res.status(404).json({error:'Admin not found'})
         res.status(200).json(admin.pgws);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -677,7 +684,7 @@ export const addPGW = async (req, res, next) => {
         if(admin.pgws.some(pgw => pgw.name === name)) return res.status(400).json({error:'Payment gateway already exists'})
         let updated=await Admin.findOneAndUpdate({role:'admin'},{$push:{pgws:{_id:new ObjectId(),name,icon,merchantID,apiKey,apiPassword,active:true}}},{returnDocument:'after'})
         res.status(200).json({pgws:updated.pgws,message:'Payment gateway added '});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -692,7 +699,7 @@ export const editPGW = async (req, res, next) => {
         if(active!==undefined) gateway['pgws.$[elem].active'] = active
         const result = await Admin.findOneAndUpdate({role:'admin'},{$set:gateway},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'});
         res.status(200).json({pgws:result.pgws});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const getSMSGateway = async (req,res,next) =>{
     try{
@@ -716,8 +723,6 @@ export const editSMSGateway = async (req,res,next) =>{
         if(name!==undefined) gateway['smsGateways.$[elem].name'] = name
         if(apiKey!==undefined) gateway['smsGateways.$[elem].apiKey'] = apiKey;
         if(active!==undefined) gateway['smsGateways.$[elem].active'] = active //gateway.active = active;*/
-        /*if (!admin) return res.status(404).json({ error: 'Admin not found' });
-        if(!gateway) return res.status(404).json({ error: 'payment gateway not found' });*/
     }catch(e) {next(e)}
 }
 export const getUserLevels =async (req, res,next) => {
@@ -727,21 +732,21 @@ export const getUserLevels =async (req, res,next) => {
             if(!admin) return res.status(404).json({error:'Admin not found'});cacheData.levels=admin.userLevels;
         }
         res.status(200).json(cacheData.levels);
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 
 export const getNotices = async (req,res,next) => {
     try{
         let notices = await Notice.find({}).toArray();
         res.status(200).json(notices)
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 /*export const addNotice = async (req,res,next) =>{
     let {title,description} = req.body;
     try{
         let result=await Admin.findOneAndUpdate({role:'admin'},{$push:{notices:{_id:new ObjectId(),title,description,}}},{returnDocument:'after'})//modifiedAt:new Date()
         res.status(200).json({notices:result.notices,message:'Notice Added'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }*/
 
 export const /*noticeStack*//*sendNotice*/addNotice = async (req, res,next) => {
@@ -761,7 +766,7 @@ export const /*noticeStack*//*sendNotice*/addNotice = async (req, res,next) => {
             await SocketResponse.updateMany({socketId:null,level:{$in:recipients}},{$inc:{countInbox:1}});
         }
         res.status(200).json({message:'Notice Sent'});
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const editNotice = async (req,res,next) =>{
     const {recipient,medium,notice,noticeDuration,repeat}=req.body
@@ -783,19 +788,19 @@ export const editNotice = async (req,res,next) =>{
          
         if(result.modifiedCount==0) return res.status(404).json({error:'Notice not found'})
         res.status(200).json({/*notices:result.notices,*/message:'Notice Edited'});
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const toggleNotice = async (req,res,next) =>{
     try{
         let result = await Notice.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{active:req.body.status}})
         res.status(200).json({/*notices:result.notices,*/message:'Notice Toggled'});
-    }catch(err) {next(err)} 
+    }catch(e) {next(e)} 
 }
 export const deleteNotice = async (req,res,next) =>{
     try{
         await Notice.findOneAndDelete({_id:new ObjectId(req.params.id)})
         res.status(200).json({/*notices:result.notices,*/message:'Notice Deleted'});
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 
 
@@ -832,7 +837,7 @@ export const getTodayExpense = async (res, req, next)=>{
             todayTopupExpense:topupExpense[0]?.todayTopupExpense||0,
             todayBankExpense:bankExpense[0]?.todayBankExpense||0
         })
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 
 //admin
@@ -852,7 +857,7 @@ export const deleteUserFeedback = async (req,res,next) =>{
     try{
         await Feedback.findOneAndDelete({_id:new ObjectId(req.params.id)});
         res.status(200).json({message:'feedback deleted'});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const getBankNames =async (req,res,next) =>{
@@ -878,8 +883,7 @@ export const saveBankNames = async (req,res,next) =>{
     if(domain) query.domain=domain
     if(status) query.status=status
     try{
-        const requests = await APIRequest.find(query).sort({updatedAt:-1}).toArray()
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 
 export const allowAPIKey = async (req, res,next) => {
@@ -900,9 +904,9 @@ export const allowAPIKey = async (req, res,next) => {
                         </div>
                     `
                 })
-            }catch(err) {}
+            }catch(e) {}
         }*/
-    /*}catch(err){next}
+    /*}catch(e){next(e)}
 }*/
 
 export const logout = async (req, res,next) => {
@@ -910,19 +914,19 @@ export const logout = async (req, res,next) => {
         res.clearCookie('admin-token');
         await Admin.findOneAndUpdate({_id:new ObjectId(req.admin.id)},{$set:{loginStatus:false}});
         res.status(200).json({message:'Logout success'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const seed = async (req, res,next) => {
     try{
         await Admin.insertOne({username:'admin',password:await bcrypt.hash('admin',11),pin:await bcrypt.hash('98765',11),role:'admin',status:true,avatar:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1752837562/bitmap_q4lnon.svg',email:'bmskenterprise70@gmail.com',device:['Windows','Chrome'],accesses:['index','drive-history','bill-history','mbank-history','deposit-history','deposit-init','topup-history','manage-drive','manage-regular','manage-admin','manage-user','deposit-setup','setup','notice','feedback','manage-api'],telecoms:[{_id:new ObjectId(),name:'airtel',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/airtel-logo__sygrey.png',active:true},{_id:new ObjectId(),name:'banglalink',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/bl-logo__xphcjx.png',active:true},{_id:new ObjectId(),name:'grameenphone',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1777964343/GP_Logo_hhlgph.png',active:true},{_id:new ObjectId(),name:'robi',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/robi-logo__bz1avh.png',active:true},{_id:new ObjectId(),name:'teletalk',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756549356/teletalk_logo_h9h0kz.png',active:true}],routing:[{_id:new ObjectId(),operator:'airtel',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'banglalink',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'grameenphone',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'robi',ip:'168.192.',slot:0},{_id:new ObjectId(),operator:'teletalk',ip:'168.192.',slot:0}],slideImages:[{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/one_sygkfm.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/two_ixyjca.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504783/three_wttlwu.png',active:true},{_id:new ObjectId(),link:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1760504784/four_hu2nnt.png',active:true}],deposits:[{level:'platinum',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0',upay:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'gold',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'silver',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'distributor',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0.0',selfReg:true,otp:false},{level:'sr',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false},{level:'retailer',topup:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},drive:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},mbank:{commission:{bkash:'0.0',dbbl:'0.0',nagad:'0.0'},min:'500',max:'5000'},regFee:'0',selfReg:true,otp:false}],userLevels:[{name:'platinum',active:true},{name:'gold',active:true},{name:'silver',active:true},{name:'distributor',active:true},{name:'sr',active:true},{name:'retailer',active:true}],mbanks:[{_id:new ObjectId(),name:'bkash',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576795/bkash_bxyoyp.webp',active:true,account:'017'},{_id:new ObjectId(),name:'dbbl',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576816/DBBL-rocket_zjmdzj.jpg',active:true,account:'017'},{_id:new ObjectId(),name:'nagad',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576817/nogod_essbez.png',active:true,account:'017'}],methods:{deposit:'manual',topup:'manual',mbank:'manual'},topupAccess:['airtel','banglalink','grameenphone','robi','teletalk'],driveAccess:['airtel','banglalink','grameenphone','robi','teletalk'],regularAccess:['airtel','banglalink','grameenphone','robi','teletalk'],contacts:[{_id:new ObjectId(),media:'call',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/telephone-call-logo_wq1wsh.png',contactURL:'tel:01'},{_id:new ObjectId(),media:'whatsapp',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/WhatsApp_Logo_green_ineja8.svg',contactURL:'https://wa.me/01'},{_id:new ObjectId(),media:'telegram',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/Telegram_2019_Logo_kmt1ox.svg',contactURL:'https://t.me/01'},{_id:new ObjectId(),media:'messenger',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756577181/Facebook_Messenger_logo_2025_iigz5y.svg',contactURL:'https://m.me/01'}],socialLinks:[{_id:new ObjectId(),media:'facebook',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1770729684/Facebook_f_logo__2019.svg_wrj2hr.png',url:'https://www.facebook.com'},{_id:new ObjectId(),media:'youtube',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1778658063/YouTube-500_doo8ld.jpg',url:'https://www.youtube.com'},{_id:new ObjectId(),media:'instagram',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1777965618/instagram_oteyjy.jpg',url:'httos://instagram.com'},{_id:new ObjectId(),media:'x',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1777965618/x_icon_cyroag.png',url:'httos://x.com'}],pgws:[{_id:new ObjectId(),name:'bkash',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576795/bkash_bxyoyp.webp',active:true,apiKey:'',apiPassword:''},{_id:new ObjectId(),name:'dbbl',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576816/DBBL-rocket_zjmdzj.jpg',active:true,apiKey:'',apiPassword:''},{_id:new ObjectId(),name:'nagad',icon:'https://res.cloudinary.com/dnyyugfjv/image/upload/v1756576817/nogod_essbez.png',active:true,apiKey:'',apiPassword:''}],smsGateways:[],   services:['deposit','topup','drive','regular','bill','mbank'],bankNames:'Islami Bank\nDBBL Bank'});
         res.status(200).json({message:'seeding success'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const socketSeed = async (req,res,next)=>{
     try{
         await SocketResponse.insertOne({socketId:null,admin:'socket-admin',pending:{deposit:0,withdraw:0,topup:0,drive:0,mbank:0,bill:0,user:0},failed:{deposit:0,topup:0,mbank:0}})
         res.status(200).json({message:'socket seeding success'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 //module.exports = {protectedController,register,login,deposit,updatePackageAccess/*,getImageLinks*/,addImageLink,editImageLink,deleteImageLink,getPGW,editContactList,getContactList,editContactList,getTelecoms,addTelecom,editTelecom,getPGW,addPGW,togglePGW}
