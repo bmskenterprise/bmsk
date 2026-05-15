@@ -1,13 +1,13 @@
-import React,{ useEffect,useRef, useState } from 'react';
-import {Container,Row,Accordion,} from 'react-bootstrap';
-import {useMediaQuery} from 'react-responsive';
+import { useEffect, useState } from 'react';
+//import {Container,Row,Accordion,} from 'react-bootstrap';
+//import {useMediaQuery} from 'react-responsive';
 //import { FaPen,FaTrash } from 'react-icons/fa';
 //import { toast } from 'react-toastify';
 //BsPlusLg  } from 'react-icons/bs';
 //import url from '../../config/url';// from "";
-import {ScrollViewV,Loader,Spinner} from '../../components/styles/Admin.style';
-import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {useTheme} from "../../contexts/ThemeContext";
+import {useTheme} from '../../contexts/ThemeContext';
+//import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {ScrollViewV,FlexH,Loader,Spinner} from '../../components/styles/Admin.style';
 import ImageSlider from '../../components/setting/ImageSlider';
 import TelecomAccess from '../../components/setting/TelecomAccess';
 import Bank from '../../components/setting/Banks';
@@ -21,13 +21,13 @@ import Services from '../../components/setting/Services';
 
 
 export default  () =>{
-    const isMobile = useMediaQuery({ maxWidth: 768 });
+    //const isMobile = useMediaQuery({ maxWidth: 768 });
     const {themeData, modeData:{backPrimary,backSecondary,textPrimary}} = useTheme();
-        /*const permission = config['permission'];*/let [imagesRef,linkRef]=[useRef(null),useRef(null)];
-        const {appData/*:{topupAccess,driveAccess,regularAccess,mbanks,slideImages,routing,contacts,bankNames,pgws}*/} = useAdminAuth();
-        const [links,setLinks] = useState();
-        const [linkText,setLinkText] = useState('');
-        const [loading,setLoading] = useState(false);
+        /*const permission = config['permission'];*///let [imagesRef,linkRef]=[useRef(null),useRef(null)];
+        //const {appData/*:{topupAccess,driveAccess,regularAccess,mbanks,slideImages,routing,contacts,bankNames,pgws}*/} = useAdminAuth();
+        //const [links,setLinks] = useState();
+        //const [linkText,setLinkText] = useState('');
+        //const [loading,setLoading] = useState(false);
         /*useEffect(() =>{
 
 
@@ -67,40 +67,40 @@ export default  () =>{
             .then(data => setLinks(data))
         };*/
 
-        return <ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}><div style={{background: backPrimary}}>
+        return <ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}><div style={{background:backPrimary, width:'100%'}}>
             {/*Object.keys(permission).map((p) => {
                 permission[p].map((t,i)=> <div key={i}><input type='radio' name={key.split(' ')[0]} id={t} /><label htmlFor={t}>{t}</label></div>)
             })
             */}
-        {isMobile?<Accordion>
-            {/*<Notice notices={admin.notices}/>
-            <Deposit topupBalance={admin.topupBalance} bankBalance={admin.bankBalance} />*/}
-            <TelecomAccess /*accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}}*/ /*accessRegularPack={admin.regularHit}*/ />
-            <MBanks /*mbanks={appData?.mbanks}*/ />
-            <ImageSlider /*slideImages={appData?.slideImages}*/ />
-            <Contact /*contacts={appData?.contacts}*//>
+        
+            {/*<Notice notices={admin.notices}/>*/}
+            <FlexH x='space-between' style={{alignItems:'stretch',gap:'5rem 0',width:'100%'}}/>
+             <TelecomAccess/*accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}}*/ /*accessRegularPack={admin.regularHit}*/ />
+             <MBanks/*mbanks={appData?.mbanks}*/ />
+             <ImageSlider/*slideImages={appData?.slideImages}*/ />
+             <Contact/*contacts={appData?.contacts}*//>
             {/*<SocialMedia socialLinks={appData?.socialLinks}/>*/}
-            <Routing /*routing={appData?.routing}*/ />
-            <Telecom></Telecom>
-            <Bank /*bankNames={appData?.bankNames}*//>
-            <PaymentGateways /*pgws={appData?.pgws}*//>
-            <Services />
-        </Accordion>
-        :<Container fluid><Row>
+             <Routing/*routing={appData?.routing}*/ />
+            <Telecom/>
+             <Bank/*bankNames={appData?.bankNames}*//>
+             <PaymentGateways/*pgws={appData?.pgws}*//>
+             <Services/>
+        </FlexH>
+         
             {/*<Notice notices={admin.notices}/>
-            <Deposit topupBalance={admin.topupBalance} bankBalance={admin.bankBalance} />*/}
-            <TelecomAccess /*accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}}*/ /*accessRegularPack={admin.regularHit}*/ />
-            <MBanks /*mbanks={appData?.mbanks}*/ />
-            <ImageSlider /*slideImages={appData?.slideImages}*/ />
-            <Contact /*contacts={appData?.contacts}*//>
-            {/*<SocialMedia socialLinks={appData?.socialLinks}/>*/}
-            <Routing /*routing={appData?.routing}*/ />
+            <Deposit topupBalance={admin.topupBalance} bankBalance={admin.bankBalance} />
+            <TelecomAccess accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}} accessRegularPack={admin.regularHit} />
+            <MBanks mbanks={appData?.mbanks} />
+            <ImageSlider slideImages={appData?.slideImages} />
+            <Contact contacts={appData?.contacts}/>
+            {<SocialMedia socialLinks={appData?.socialLinks}/>}
+            <Routing routing={appData?.routing} />
             <Telecom></Telecom>
-            <Bank /*bankNames={appData?.bankNames}*//>
-            <PaymentGateways /*pgws={appData?.pgws}*//>
+            <Bank bankNames={appData?.bankNames}/>
+            <PaymentGateways pgws={appData?.pgws}/>
             <Services />
-        </Row></Container>}
+        </Row></Container>*/}
         </div>
-        {loading&&<Loader><Spinner/></Loader>}  
+          
         </ScrollViewV>
 }
