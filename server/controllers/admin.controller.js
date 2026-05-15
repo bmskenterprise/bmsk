@@ -51,7 +51,7 @@ let Admin,User,DepositInit,Drive,Regular,DriveHit,Feedback,Bill,Bank,APIUser,API
       
 export const authenticateAdmin =async (req, res, next) =>{
     try{//console.log('req.admin')
-        let appData = await Admin.findOne({role:'admin'},{projection:{avatar:1,mbanks:1,userLevels:0,pin:0,email:0,role:0,notices:0,__v:0}})
+        let appData = await Admin.findOne({role:'admin'},{projection:{avatar:1,mbanks:1,userLevels:1,methods:1/*,email:0,role:0,notices:0,__v:0*/}})
         if(!appData) throw new Error('Server Issue')
         res.status(200).json({admin:req.admin,appData})
     }catch(err) {next(err)}
