@@ -33,7 +33,7 @@ router.get('/mbank', /*authUser,*/ getMBankList)
 router.get('/bank',authUser,getBankNames)
 router.get('/deposit-info/:level', /*authUser,*/ getDepositLimit);
 router.get('/deposit',authUser,getDepositFee)
-router.post('/deposit',authUser,depositByUser,depositRequest)
+router.post('/deposit',authUser,validateUserAuthPIN,matchUserAuthPIN,depositByUser,depositRequest)
 router.post('/deposit/payment/bkash',authUser,authBkash,bkashPaymentCreate)
 router.post('/deposit/payment/bkash/callback',authUser,authBkash,bkashCallback)
 router.post('/deposit/payment/sslcommerz', authUser, /*validateUserData,*/ sslc);
