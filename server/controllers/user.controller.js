@@ -375,13 +375,13 @@ export const getDepositLimit = async (req, res,next) => {
         });
     }catch(err){next(err)}
 }
-export const getDepositFee = async (req, res,next) => {
+/*export const getDepositFee = async (req, res,next) => {
     try{
         const admin = await Admin.findOne({role: 'admin'});
         let userLevel = admin.deposits.find(d=> d.level==req.user.level);
-        res.status(200).json({depositFee:userLevel.fee})
+        res.status(200).json(userLevel.fee)
     }catch(e) {next(e)}
-}
+}*/
 
 /*export const deposit =async (req, res,next) => {
     const {balanceType,txnId,} = req.body;
