@@ -63,6 +63,13 @@ export const depositByUser = async (req, res,next) => {
     }catch(err) {next(err)}
 }
 
+export const getAllGatewayDepositFee = async (req, res,next) => {
+    try{
+        const admin = await Admin.findOne({role: 'admin'});
+        let userLevel = admin.deposits.find(d=> d.level==req.user.level);
+        res.status(200).json(userLevel.fee)
+    }catch(e) {next(e)}
+}
 const getDepositFee = async (level,gateway,amount)=>{
     try{
         const admin = await Admin.findOne({role:'admin'});
