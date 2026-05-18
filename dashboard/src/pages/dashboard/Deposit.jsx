@@ -76,13 +76,13 @@ export default  () =>{
                 <div><SwitchItem check={depositMethod=='auto'} label='auto' v='auto' identity='auto' handleChange={changeDepositMethod}/></div>
             </FlexH>
         </form><GapV x='5'/>
-        <form onSubmit={onSave} style={{width:'48rem'}}>
+        <form onSubmit={onSave} >
             <ScrollViewH style={{width:'100%'}}>
                 <Table>
                     <thead><TR>{['level',...Object.keys(formData[0]?.fee??{})]?.map((f,i)=> <TH key={i} style={{marginRight:'1rem'}}>{f}</TH>)}</TR></thead>
                     <tbody>{formData.map(({level,fee},ind)=> <TR key={ind}>
                         <TD>{level}</TD>
-                        {Object.keys(fee).map((mb,i)=> <TD key={i}><NumberField onChange={e=>setFormData(prev=>prev.map((l,index)=> ind==index?({...l,fee:{...prev[index].fee,[mb]:Number(e.target.value)}}):l))} style={{padding:'0.5rem',border:'0',outline:'0'}} value={fee[mb]} />{}</TD>)}
+                        {Object.keys(fee).map((mb,i)=> <TD key={i}><NumberField x='4' onChange={e=>setFormData(prev=>prev.map((l,index)=> ind==index?({...l,fee:{...prev[index].fee,[mb]:Number(e.target.value)}}):l))} style={{padding:'0.5rem',border:'0',outline:'0'}} value={fee[mb]}/>{}</TD>)}
                     </TR>)} 
                     </tbody>
                 </Table>
