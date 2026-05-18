@@ -119,8 +119,8 @@ export default () =>{
                 <button  type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'filter'}</button>
                 </FlexH>
             </form>{/*<div><Link to={'user/chat'}><MdMessage/></Link></div>*/}<GapV x='4'/>
-             <ScrollViewV style={{width:'100%'}}><ScrollViewH style={{width:'100%'}}><div style={{width:'100%'}}>
-                <FlexH x='flex-start' style={{width:'87rem',marginBottom:'2rem',fontSize:'1.3rem'}}>
+             <ScrollViewV style={{height:'80%'}}><ScrollViewH style={{width:'100%'}}><div style={{width:'100%'}}>
+                <FlexH x='flex-start' style={{width:'80rem',marginBottom:'2rem',fontSize:'1.2rem'}}>
                     <div style={{width:'20%'}}>Username</div>
                   <div style={{width:'12%'}}>Main Bal.</div>
                   <div style={{width:'12%'}}>Topup Bal.</div>
@@ -129,7 +129,7 @@ export default () =>{
                   <div style={{width:'20%'}}>Last Active</div>
                   <div style={{width:'12%'}}>Action</div>
                 </FlexH>
-                <div style={{width:'100%'}}>{data?.users?.map(({_id,userid,level,username,fullname,nid,balance,verified,lastActiveAt,createdAt,status,accesses})=> <StripedList key={_id} /*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear}*/ style={{width:'87rem',fontSize:'1.3rem',paddingBlock:'0.5rem'}} >
+                <div style={{width:'100%'}}>{data?.users?.map(({_id,userid,level,username,fullname,nid,balance,verified,lastActiveAt,createdAt,status,accesses})=> <StripedList key={_id} /*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear}*/ style={{width:'80rem',fontSize:'1.2rem',paddingBlock:'0.5rem'}} >
                     {/*<td>{userid}</td>*/}
                     <div style={{width:'20%',position:'relative'}}   ><Link to={`${_id}`} state={{ user: {level,username,fullname,nid,createdAt,accesses}}}>{username}</Link><GapH x='1'/><sub>({level})</sub></div>
                     <div style={{width:'12%'}}>&#2547;{getMainBalance(balance.main)}</div> 
