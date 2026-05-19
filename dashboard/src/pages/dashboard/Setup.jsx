@@ -15,8 +15,8 @@ import MBanks from '../../components/setting/MBanks';
 import Contact from '../../components/setting/Contact';
 import SocialMedia from '../../components/setting/SocialMedia'
 import Telecom from '../../components/setting/Telecoms'
+import TelecomCategory from '../../components/setting/TelecomCategory';
 import Routing from '../../components/setting/Routing';
-import PaymentGateways from '../../components/setting/PaymentGateways';
 import Services from '../../components/setting/Services';
 
 
@@ -75,16 +75,16 @@ export default  () =>{
         
             {/*<Notice notices={admin.notices}/>*/}
             <FlexH x='space-between' style={{alignItems:'stretch',gap:'5rem 0',width:'100%'}}/>
-             <TelecomAccess/*accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}}*/ /*accessRegularPack={admin.regularHit}*/ />
-             <MBanks/*mbanks={appData?.mbanks}*/ />
-             <ImageSlider/*slideImages={appData?.slideImages}*/ />
-             <Contact/*contacts={appData?.contacts}*//>
-            {/*<SocialMedia socialLinks={appData?.socialLinks}/>*/}
-             <Routing/*routing={appData?.routing}*/ />
-            <Telecom/>
-             <Bank/*bankNames={appData?.bankNames}*//>
-             <PaymentGateways/*pgws={appData?.pgws}*//>
-             <Services/>
+                <TelecomAccess/*accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}}*/ /*accessRegularPack={admin.regularHit}*/ />
+                <MBanks/*mbanks={appData?.mbanks}*/ />
+                <ImageSlider/*slideImages={appData?.slideImages}*/ />
+                <Contact/*contacts={appData?.contacts}*//>
+                <Routing/*routing={appData?.routing}*/ />
+                <Telecom/>
+                <TelecomCategory/*pgws={appData?.pgws}*//>
+                <Bank/*bankNames={appData?.bankNames}*//>
+                <SocialMedia /*socialLinks={appData?.socialLinks}*//>
+                <Services/>
         </FlexH>
          
             {/*<Notice notices={admin.notices}/>
