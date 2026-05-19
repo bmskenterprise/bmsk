@@ -549,6 +549,31 @@ export const deleteSlideImageLink = async (req, res, next) => {
 }
 
 
+export const addTelecomCategory = async (req, res,next) => {
+    const {category} = req.body;
+    try{
+        let result=await Admin.findOneAndUpdate({role:'admin'},{$push:{categories:{_id:new ObjectId(),category,active:true}}},{returnDocument:'after'})
+        res.status(200).json({categories:result.categories,message:'telecom category added'});
+    }catch(e) {next(e)}
+}
+export const editTelecomCategory = async (req,res,next) =>{
+    const {category,active} = req.body
+    try{
+        let updateFields = {}
+        if(category!=undefined) updateFields['categories.$[elem].category'] = category
+        if(active!=undefined) updateFields['categories.$[elem].active'] = active
+        let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'})
+        res.status(200).json({categories:result.categories,message:'telecom category edited'})
+    }catch(e) {next(e)}
+}
+
+export const deleteTelecomCategory = async (req, res, next) => {
+    try {
+        let result = await Admin.findOneAndUpdate({role:'admin'},{$pull:{categories:{_id:new ObjectId(req.params.id)}}},{returnDocument:'after'})
+        res.status(200).json({slides:result.categories,message:'telecom category deleted'});
+    }catch(e) {next(e)}
+}
+
 
 
 
