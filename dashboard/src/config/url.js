@@ -66,6 +66,7 @@ export default {
  urlTopupTelecomAccess : `${api}/topup/telecom-access`,
  urlDriveTelecomAccess : `${api}/drive/telecom-access`,
  urlRegularTelecomAccess : `${api}/regular/telecom-access`,
+ urlTelecomCategory:`${api}/telecom-category`,
  urlModemRouting:`${api}/modem-routing`,
  urlImageSlider:`${api}/slide-images`,
  urlNotice : `${api}/notice`,
