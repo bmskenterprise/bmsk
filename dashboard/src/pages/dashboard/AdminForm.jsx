@@ -25,7 +25,7 @@ export default () =>{
     const handleForm = (e) =>{
         e.preventDefault()
         let form = e.target
-        let formData ={username:form.username.value.trim(),phone:form.phone?.value.trim(),fullname:form.fullname?.value.trim(),email:form.email?.value.trim(),nid:form.nid?.value.trim(),password:form.password.value.trim(),pin:form.pin.value.trim()/*,adminPIN:e.target['admin-pin'].value.trim()*/}
+        let formData ={username:form.username?.value.trim(),phone:form.phone?.value.trim(),fullname:form.fullname?.value.trim(),email:form.email?.value.trim(),nid:form.nid?.value.trim(),password:form.password.value.trim(),pin:form.pin.value.trim()/*,adminPIN:e.target['admin-pin'].value.trim()*/}
         if(!editedData?.id && accesses.length>0) {AdminPIN([thememode,themeBackground],{cb:addSubAdmin,data:{formData,accesses:editedAccesses,cancelForm}},'ADD');return}
         if(accesses.length>0) {AdminPIN([thememode,themeBackground],{cb:editSubAdminAccess,data:{id:editedData?.id,editedAccesses,cancelForm}},'EDIT');return}
         if(editedData?.id) {AdminPIN([thememode,themeBackground],{cb:editSubAdmin,data:{admin:{id:editedData?.id,username:editedData?.username},formData,cancelForm}},'EDIT');return}
@@ -33,9 +33,11 @@ export default () =>{
     const cancelForm = e =>{navigate(-1)/*setEditAccess(false);setOpenForm(false);setEditedData(null)*/}
 
 
-    return <form onSubmit={handleForm}>
+
+               return <div>
+                   {admin?.id&&<h4>{admin?.username}</h4><h5>Access Permission</h5><GapV x='4'/>}
+     <form onSubmit={handleForm}>
                 <FlexH x='space-between' style={{width:'100%'}}>
-                {/*<Col xs={12} md={4}>*/}
                     {(Object.keys(editedData??{}).length>0)&&<Col  ><div /*x='flex-start'*/>
                         <InputField placeholder='Username' name='username' onChange={e=>setEditedData(prev=>({...prev,username:e.target.value.trim()}))} value={editedData?.username}/>
                         <ErrorText>{errors?.username}</ErrorText>
@@ -64,7 +66,6 @@ export default () =>{
                         <ErrorText>{errors?.pin}</ErrorText>
                     </div><GapV x='4'/>
                     {/*authError&&admin.role=='admin'&&<span onClick={sendRecoveryEmail}>Forgot PIN?</span>*/}</Col>}
-                {/*</Col>*/}
                     {editedAccesses.length>0&&<Col  >
                         <h3></h3>
                         <div>
@@ -85,4 +86,5 @@ export default () =>{
         </FlexH>
                     <GapV x='4'/><FlexH x='flex-end' y='center' style={{width:'100%'}}><button onClick={e=>{cancelForm()}}>CANCEL</button><ThemeButton style={{marginLeft:'2rem'}} type='submit'>{editedData?.id?'NEXT':'NEXT'}</ThemeButton></FlexH>
     </form>
+                </div>
 }
