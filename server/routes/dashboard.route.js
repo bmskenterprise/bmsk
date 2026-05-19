@@ -1,7 +1,7 @@
 import express from 'express';
 const router=express.Router();
 import limiter from '../middlewares/rateLimit.js'
-import {seed,socketSeed,initRecovery,adminLogin,authenticateAdmin,getTodayExpense,changeSuperAdminPassword,changeSuperAdminPIN,sendCredentialRecoveryEmail,resetSuperAdminPassword,resetSuperAdminPIN,getSubAdmins,addSubAdmin,editSubAdmin,deleteSubAdmin,getTelecoms,addTelecom,editTelecom,getDepositRates,toggleSubAdminStatus,editSubAdminAccess,getMBanks,addMBank,updateMBankList,getBankNames,saveBankNames,editContactMedia,getSocialMediaLinks,editSocialMedia,updateDepositRates,getServices,editServices,getUsersByAdmin,getUserByAdmin,toggleUserStatus,editUserAccess,toggleUserNewDevice,removeUserDevice,getUserFeedback,deleteUserFeedback,resetSubAdminPassword,resetSubAdminPIN,addUser,resetUserPassword,resetUserPIN,deleteUserByAdmin,getSlideImages,addSlideImageLink,editSlideImageLink,deleteSlideImageLink,getPGW,addPGW,editPGW,getSMSGateway,addSMSGateway,editSMSGateway,getNotices,addNotice,editNotice,toggleNotice,deleteNotice/*,sendNotice*/,logout, getContactMedia} from '../controllers/admin.controller.js';//import { addBalance, deductBalance } from '../controllers/transaction.controller.js';
+import {seed,socketSeed,initRecovery,adminLogin,authenticateAdmin,getTodayExpense,changeSuperAdminPassword,changeSuperAdminPIN,sendCredentialRecoveryEmail,resetSuperAdminPassword,resetSuperAdminPIN,getSubAdmins,addSubAdmin,editSubAdmin,deleteSubAdmin,getTelecoms,addTelecom,editTelecom,getDepositRates,toggleSubAdminStatus,editSubAdminAccess,getMBanks,addMBank,updateMBankList,getBankNames,saveBankNames,editContactMedia,getSocialMediaLinks,editSocialMedia,updateDepositRates,getServices,editServices,getUsersByAdmin,getUserByAdmin,toggleUserStatus,editUserAccess,toggleUserNewDevice,removeUserDevice,getUserFeedback,deleteUserFeedback,resetSubAdminPassword,resetSubAdminPIN,addUser,resetUserPassword,resetUserPIN,deleteUserByAdmin,getSlideImages,addSlideImageLink,editSlideImageLink,deleteSlideImageLink,getTelecomCategories,addTelecomCategory,editTelecomCategory,deleteTelecomCategory,getPGW,addPGW,editPGW,getSMSGateway,addSMSGateway,editSMSGateway,getNotices,addNotice,editNotice,toggleNotice,deleteNotice/*,sendNotice*/,logout, getContactMedia} from '../controllers/admin.controller.js';//import { addBalance, deductBalance } from '../controllers/transaction.controller.js';
 import {authAdmin,isSuperAdmin,matchAuthPIN} from '../middlewares/auth.middleware.js';
 import {validatePack,validateTxn,validateAuthPIN,validateAdminPassword,validateAdminPIN,validateAddSubAdmin,validateUserPassword,validateUserPIN,validatePackEdit,validateBankNames} from '../validations/dashboard.validation.js'
 import {validateUserRegister} from '../validations/user.validation.js'
@@ -107,6 +107,10 @@ router.get('/slide-images',authAdmin,isSuperAdmin,getSlideImages)
 router.patch('/slide-images',authAdmin,isSuperAdmin,addSlideImageLink)
 router.patch('/slide-images/:id',authAdmin,isSuperAdmin,editSlideImageLink)
 router.delete('/slide-images/:id',authAdmin,isSuperAdmin,deleteSlideImageLink)
+router.get('/telecom-category',authAdmin,isSuperAdmin,getTelecomCategories)
+router.patch('/telecom-category',authAdmin,isSuperAdmin,addTelecomCategory)
+router.patch('/telecom-category/:id',authAdmin,isSuperAdmin,editTelecomCategory)
+router.delete('/telecom-category/:id',authAdmin,isSuperAdmin,deleteTelecomCategory)
 router.get('/pgw',authAdmin,isSuperAdmin,getPGW)
 router.patch('/pgw',authAdmin,isSuperAdmin,addPGW)
 router.patch('/pgw/:id',authAdmin,isSuperAdmin,editPGW)
