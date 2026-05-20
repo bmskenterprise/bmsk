@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import  { createContext, useContext, useEffect, useState } from 'react';
 import {useNavigate} from 'react-router-dom';
 import {toast} from 'react-toastify';
-import url from '../config/url'
 import {validateAdminAdd,validateAdminEdit, validatePassword,validatePIN,validateAdminAuthPIN} from '../utils/validate';
+import url from '../config/url'
 //import { changePassword, changePIN } from '../../../server/controllers/admin.controller';
 
 const AdminAuthContext = createContext(/*{
@@ -36,14 +36,14 @@ export const AdminAuthProvider = ({ children }) => {
           setAdmin(data.admin)
           setAppData(data.appData);
           //navigate('/dashboard')
-        }catch(err){toast.error(`1.${err.message}`);navigate('/login') }
+        }catch(e){toast.error(e.message);navigate('/login') }
     }      /*const fetchSuperAdmin= async ()=>{
             try{
                 let res = await fetch(url.urlAdmin,{credentials:'include'})
                 let data = await res.json();
                 if (!res.ok) throw new Error(data.message || 'failed to fetch access');
                 setAdmin(data)
-            }catch(err) {toast.error(err.message)}
+            }catch(e) {toast.error(e.message)}
             finally{setLoading(false)}
         }*/
     const fetchAdmins = async ()=>{
@@ -53,7 +53,7 @@ export const AdminAuthProvider = ({ children }) => {
           let data = await res.json();
         if(!res.ok) throw new Error('Failed to fetch admin');
           setAdmins(data);
-      }catch(err) {toast.error(err.message)}
+      }catch(e) {toast.error(e.message)}
       finally {setLoading(false);}
     };
     /*const login = token =>{
@@ -67,7 +67,7 @@ export const AdminAuthProvider = ({ children }) => {
           let res=await fetch(url.urlAdminLogin,
           {
             method:'POST',
-            credentials: "include",
+            credentials: 'include',
             headers: {'Content-Type':'application/json', 'x-user-agent':navigator.userAgent},  
             body: JSON.stringify(loginData)
           })
@@ -76,7 +76,7 @@ export const AdminAuthProvider = ({ children }) => {
           if(!res.ok) {throw new Error(data.error || 'Login failed');}
           toast.success(data.message);
           fetchAdminData()
-      }catch(err){toast.error(`81.${err.status} ${err.message}`);}
+      }catch(e){toast.error( e.message);}
       finally{setLoading(false);}
     }
     const logout = async () =>{
@@ -86,7 +86,7 @@ export const AdminAuthProvider = ({ children }) => {
             if(!res.ok) throw new Error(data.error || 'failed to logout');
             setAdmin(null);
             navigate('/login')
-        }catch(err) {toast.error(err.message)}
+        }catch(e) {toast.error(e.message)}
     };
     
     const changeSuperAdminPassword = async (formData) => {
@@ -114,7 +114,7 @@ export const AdminAuthProvider = ({ children }) => {
             if(!res.ok){throw new Error(data.error || 'failed');}
             toast.success('successfully changed');
             setLoading(false)
-        }catch(err) {toast.error(err.message);}  
+        }catch(e) {toast.error(e.message);}  
         finally{setLoading(false)}
     }
     
@@ -137,7 +137,7 @@ export const AdminAuthProvider = ({ children }) => {
             if(!res.ok){throw new Error(data.error || 'failed');}
             toast.success('successfully changed');
             
-        }catch(err) {toast.error(err.message);}
+        }catch(e) {toast.error(e.message);}
         finally{setLoading(false)}
     }
 
@@ -152,7 +152,7 @@ export const AdminAuthProvider = ({ children }) => {
             if(res.status==400) {setErrors(data.error);return}
             if(!res.ok) throw new Error(data.error|| 'failed')
             toast.success(data.message)
-        }catch(err){toast.error(err.message)}
+        }catch(e){toast.error(e.message)}
         finally{setLoading(false)}
     }
 
@@ -165,7 +165,7 @@ export const AdminAuthProvider = ({ children }) => {
             if(res.status==400) {setErrors(data.error);return}
             if(!res.ok) throw new Error(data.error|| 'failed to reset');
             toast.success(data.message)
-        }catch(err){toast.error(err.message)}
+        }catch(e){toast.error(e.message)}
     }
     
     const resetSuperAdminPassword = async(formData) =>{
@@ -200,7 +200,7 @@ export const AdminAuthProvider = ({ children }) => {
       let authError = validateAdminAuthPIN(pin);
       if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
       if(Object.keys(authError).length) {/*setErrors(authError)*/toast.error('invalid admin pin');return}
-      setLoading(true);console.log({...formData,accesses});
+      setLoading(true);
       try{
         let res = await fetch(url.urlAdmin,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pin.toString()},body:JSON.stringify({...formData,accesses})});
         let data = await res.json();
@@ -228,21 +228,21 @@ export const AdminAuthProvider = ({ children }) => {
         if(!res.ok){throw new Error(data.error || 'failed to edit subadmin');}
         toast.success(data.message);
         setAdmins(data.admins);handleFormCancel()
-      }catch(err) {toast.error(err.message);}
+      }catch(e) {toast.error(e.message);}
       finally{setLoading(false)}
     }
     const editSubAdminAccess = async ({id,editedAccesses,cancelForm},pin) => {
       setLoading(true);
       try {
         let res = await fetch(`${url.urlAdminAccess}/${id}`, {
-          method: 'PATCH',
+          method: 'PATCH',credentials:'include',
           headers: {'Content-Type':'application/json','x-admin-pin':pin.toString()},
           body: JSON.stringify({accesses:editedAccesses})
         });
         let data = await res.json();
         if(!res.ok){throw new Error(data.error || 'failed to edit access');}
         toast.success(data.message);cancelForm()
-      }catch(err) {toast.error(err.message);}
+      }catch(e) {toast.error(e.message);}
       finally{setLoading(false)}
     }
     const toggleSubAdminStatus = async (id,e) =>{
@@ -253,7 +253,7 @@ export const AdminAuthProvider = ({ children }) => {
             if(!res.ok) throw new Error(data.error)
             toast.success(data.message)
             setAdmins(data.admins)
-        }catch(err){toast.error(err.message)}
+        }catch(e){toast.error(e.message)}
         finally{setLoading(false)}
     }
         const sendRecoveryEmail = async(credential) =>{
