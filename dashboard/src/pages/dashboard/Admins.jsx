@@ -7,9 +7,9 @@ import {IoLogoAndroid} from 'react-icons/io'
 import {FaApple,FaChrome,FaEdge,FaFirefoxBrowser,FaLinux,FaLock,FaOpera,FaSafari,FaWindows,FaEye,FaEyeSlash} from 'react-icons/fa'
 import {MdEdit,MdAdminPanelSettings,MdPassword} from 'react-icons/md';
 //import {useSocket} from "../../contexts/SocketContext";
-import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import {ScrollViewV,ScrollViewH,FlexH,FlexV,GapV,Col,StripedList,ThemeButton,IconButton,InputField,ErrorText,Loader,Spinner} from '../../components/styles/Admin.style';
 import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
+import {ScrollViewV,ScrollViewH,FlexH,GapV,Col,StripedList,ThemeButton,IconButton,InputField,ErrorText,Loader,Spinner} from '../../components/styles/Admin.style';
 import {adminAccess} from '../../../Preferences';
 import adminPIN from '../../components/AdminPIN';
 import SwitchItem from '../../components/Switch';
@@ -155,18 +155,18 @@ export default  () =>{
                            
                            
     return <div style={{width:'100%',height:'100%',position:'relative'}}>
-        <h4 style={{marginBottom:'5rem'}}>Admins</h4>
-              <><FlexH x='flex-end' style={{marginBottom:'3rem'}}><ThemeButton  onClick={e=>{navigate('add',{state:{admin:{id:null,username:'admin'},accesses:adminAccess}})}}>Add Admin</ThemeButton></FlexH>
+        <h4>Admins</h4><GapV x='5'/>
+              <><FlexH x='flex-end'><ThemeButton onClick={e=>{navigate('add',{state:{admin:{id:null,username:'admin'},accesses:adminAccess}})}}>Add Admin</ThemeButton></FlexH> <GapV x='3'/>
                 <ScrollViewV style={{width:'100%',height:'80%'}}><ScrollViewH style={{width:'100%'}}>
-                    {admins.map(({_id,username,device,loginStatus,status,accesses}, i) => <StripedList key={_id} style={{width:'87rem'}}>
+                    {admins.map(({_id,username,email,phone,nid,device,loginStatus,status,accesses} ) => <StripedList key={_id} style={{width:'70rem'}}>
                         <div style={{width:'25%',fontSize:'1.2rem'}}>{username}&nbsp;{loginStatus&&<svg height='8' width='8' xmlns='http://www.w3.org/2000/svg'><circle r='4' cx='4' cy='4' fill='lightgreen'/></svg>}</div>
-                        <div style={{color:textPrimary,width:'35%'/*,fontSize:'2rem'*/}}>{systemIcon[device[0].toLowerCase()]} {systemIcon[device[1].toLowerCase()]}</div>
+                        <div style={{color:textPrimary,width:'50%'/*,fontSize:'2rem'*/}}>{systemIcon[device[0].toLowerCase()]} {systemIcon[device[1].toLowerCase()]}</div>
                         {/*<div style={{width:'20%'}}>{format(loginAt,'dd/MM/yyyy hh:mm aa')}</div>*/}
-                        <div style={{width:'20%'}}>
+                        <FlexH x='flex-end' style={{width:'25%'}}>
                             <SwitchItem  check={status} handleChange={e=>toggleSubAdminStatus(_id,e.target.checked)}/>
-                         <IconButton style={{color:textPrimary}} onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},accesses:[]}})}}><MdEdit/></IconButton>
-                        <IconButton onClick={e=>{navigate('edit',{state:{admin:null,accesses}})}} style={{color:textPrimary}}><MdAdminPanelSettings/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'password'}})} ><MdPassword/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'pin'}})} ><FaLock/></IconButton>
-                        </div>
+                         <IconButton  onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},adminData:{phone,email,nid},accesses:[]}})}}><MdEdit/></IconButton>
+                        <IconButton onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},adminData:null,accesses}})}} ><MdAdminPanelSettings/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'password'}})} ><MdPassword/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'pin'}})} ><FaLock/></IconButton>
+                        </FlexH>
                     </StripedList>)}
                 </ScrollViewH></ScrollViewV></>
             
