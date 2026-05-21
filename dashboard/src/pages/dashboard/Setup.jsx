@@ -100,7 +100,7 @@ export default  () =>{
             <PaymentGateways pgws={appData?.pgws}/>
             <Services />
         </Row></Container>*/}
-        </div>
+        
           
         </ScrollViewV>
 }
