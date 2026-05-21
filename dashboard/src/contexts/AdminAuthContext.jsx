@@ -1,7 +1,7 @@
 import  { createContext, useContext, useEffect, useState } from 'react';
 import {useNavigate} from 'react-router-dom';
 import {toast} from 'react-toastify';
-import {validateAdminAdd,validateAdminEdit, validatePassword,validatePIN,validateAdminAuthPIN} from '../utils/validate';
+import {validateAdminLogin,validateAdminAdd,validateAdminEdit, validatePassword,validatePIN,validateAdminAuthPIN} from '../utils/validate';
 import url from '../config/url'
 //import { changePassword, changePIN } from '../../../server/controllers/admin.controller';
 
@@ -32,7 +32,7 @@ export const AdminAuthProvider = ({ children }) => {
         try{
           const res = await fetch(url.urlAdminAuth, {credentials:'include',headers:{Accept:'application/json','Content-Type':'application/json'}});
           const data = await res.json();
-          if(!res.ok) throw new Error(data.error||'Failedtofetchaccess')
+          if(!res.ok) throw new Error(data.error||'Failed to fetch access')
           setAdmin(data.admin)
           setAppData(data.appData);
           //navigate('/dashboard')
@@ -62,6 +62,9 @@ export const AdminAuthProvider = ({ children }) => {
     //const fakeUser = { username: credentials.username, token: "fake-jwt-token" };
   };*/
     const handleLogin = async (loginData) => {
+        const validationErrors = validateAdminLogin(loginData)
+        setErrors(validationErrors)
+        if(Object.keys(validationErrors).length>0) return
       setLoading(true);
       try{
           let res=await fetch(url.urlAdminLogin,
@@ -90,8 +93,7 @@ export const AdminAuthProvider = ({ children }) => {
     };
     
     const changeSuperAdminPassword = async (formData) => {
-        /*e.preventDefault();
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,16}$/;*/
+        /*const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,16}$/;*/
         /*if (!(e.target[0].value.trim())) validationErrors.oldCredential = 'Old password is required';
         else if(!(passwordRegex.test(e.target[0].value.trim()))) validationErrors.oldCredential = 'Old password is invalid';
 
@@ -100,7 +102,9 @@ export const AdminAuthProvider = ({ children }) => {
         /*let formData = {oldPassword:e.target[0].value.trim(), newPassword:e.target[1].value.trim()}//   */
 
         const validationErrors = validatePassword(formData);
-        if (Object.keys(validationErrors).length) return setErrors(validationErrors);setLoading(true)
+        setErrors(validationErrors);
+        if (Object.keys(validationErrors).length>0) return 
+          setLoading(true)
         try {
             setLoading(true)
             let res = await fetch(url.urlChangeSuperAdminPassword,{
@@ -119,11 +123,12 @@ export const AdminAuthProvider = ({ children }) => {
     }
     
     const changeSuperAdminPIN = async (formData) => {
-        /*e.preventDefault();
-        const pinRegex = /^\d{4,6}$/;
+        /*const pinRegex = /^\d{4,6}$/;
         let formData={oldPIN:e.target[0].value.trim(),newPIN:e.target[1].value.trim()}*/
         const validationErrors = validatePIN(formData);
-        if (Object.keys(validationErrors).length) return setErrors(validationErrors);setLoading(true)
+        setErrors(validationErrors);
+        if (Object.keys(validationErrors).length>0) return 
+      setLoading(true)
         try {
             setLoading(true)
             let res = await fetch(url.urlChangeSuperAdminPIN,{
@@ -136,7 +141,6 @@ export const AdminAuthProvider = ({ children }) => {
             if(res.status==400) {setErrors(data.error);return}
             if(!res.ok){throw new Error(data.error || 'failed');}
             toast.success('successfully changed');
-            
         }catch(e) {toast.error(e.message);}
         finally{setLoading(false)}
     }
@@ -144,7 +148,8 @@ export const AdminAuthProvider = ({ children }) => {
     
     const resetAdminPassword = async ({id,password,confirm},pinSuperAdmin)=>{
             const validationErrors = validatePassword({password,confirm});
-            if (Object.keys(validationErrors).length) {return setErrors(validationErrors);}
+      setErrors(validationErrors)
+            if (Object.keys(validationErrors).length>0) return 
         setLoading(true)
         try{
             let res = await fetch(`${url.urlResetSubAdminPassword}/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pinSuperAdmin},body:JSON.stringify({password})})
@@ -158,7 +163,8 @@ export const AdminAuthProvider = ({ children }) => {
 
     const resetAdminPIN = async ({id,pin,confirm},pinSuperAdmin)=>{
         const validationErrors = validatePIN({pin,confirm});
-        if (Object.keys(validationErrors).length) {return setErrors(validationErrors);}
+      setErrors(validationErrors)
+        if (Object.keys(validationErrors).length>0) return 
         try{
             let res = await fetch(`${url.urlResetSubAdminPIN}/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pinSuperAdmin},body:JSON.stringify(pin)}) 
             let data = await res.json() 
@@ -170,10 +176,15 @@ export const AdminAuthProvider = ({ children }) => {
     
     const resetSuperAdminPassword = async(formData) =>{
       const validationErrors = validatePassword(formData)
-          if(validationErrors.length>0) return setErrors(validationErrors)
+      setErrors(validationErrors)
+          if(Object.keys(validationErrors).length>0) return 
           setLoading(true)
       try{
-        let res= await fetch(url.urlResetSuperAdminPassword);
+        let res= await fetch(url.urlResetSuperAdminPassword,{
+          method:'PATCH',
+          headers: {'Content-Type':'application/json'},
+          body:JSON.stringify(formData)
+        });
         let data= await res.json();
         if(res.status==400) {setErrors(data.error);return}
         if(!res.ok) throw new Error(data.error||'failed to reset')
@@ -184,10 +195,15 @@ export const AdminAuthProvider = ({ children }) => {
     
     const resetSuperAdminPIN = async(formData) =>{
       const validationErrors = validatePIN(formData)
-          if(validationErrors.length>0) return setErrors(validationErrors)
+      setErrors(validationErrors)
+          if(Object.keys(validationErrors).length>0) return 
           setLoading(true)
       try{
-        let res= await fetch(url.urlResetSuperAdminPIN);
+        let res= await fetch(url.urlResetSuperAdminPIN,{
+          method:'PATCH',
+          headers: {'Content-Type':'application/json'},
+          body:JSON.stringify(formData)
+        });
         let data= await res.json();
         if(res.status==400) {setErrors(data.error);return}
         if(!res.ok) throw new Error(data.error||'failed to reset')
@@ -198,8 +214,8 @@ export const AdminAuthProvider = ({ children }) => {
     const addSubAdmin = async ({formData,accesses,cancelForm},pin)=>{
       let validationErrors = validateAdminAdd(formData)
       let authError = validateAdminAuthPIN(pin);
-      if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
-      if(Object.keys(authError).length) {/*setErrors(authError)*/toast.error('invalid admin pin');return}
+      if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return}
+      if(Object.keys(authError).length>0) {/*setErrors(authError)*/toast.error('invalid admin pin');return}
       setLoading(true);
       try{
         let res = await fetch(url.urlAdmin,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pin.toString()},body:JSON.stringify({...formData,accesses})});
