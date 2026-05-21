@@ -35,7 +35,7 @@ export default () =>{
 
 
                return <div>
-                   {admin?.id&&<h4>{admin?.username}</h4><h5>Access Permission</h5><GapV x='4'/>}
+                   {/*admin?.id&&<h4>{admin?.username}</h4><h5>Access Permission</h5><GapV x='4'/>*/}
      <form onSubmit={handleForm}>
                 <FlexH x='space-between' style={{width:'100%'}}>
                     {(!admin.id||accesses.length==0)&&<Col  ><div /*x='flex-start'*/>
