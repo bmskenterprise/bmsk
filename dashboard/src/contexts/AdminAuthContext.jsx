@@ -19,9 +19,9 @@ export const AdminAuthProvider = ({ children }) => {
   const navigate = useNavigate()
   const [admin,setAdmin] = useState(null);
   const [admins, setAdmins] = useState([] );
-  const [loading, setLoading] = useState(false) 
-  //const validationErrors = {}   
   const [appData, setAppData] = useState(null);
+  const [loading, setLoading] = useState(false) 
+  const [loginError,setLoginError] = useState(false)   
   const [errors,setErrors] = useState({})
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export const AdminAuthProvider = ({ children }) => {
             body: JSON.stringify(loginData)
           })
           let data = await res.json();
-          if(res.status===400) return setErrors(data.error);
+          if(res.status===400) return setLoginError(true);
           if(!res.ok) {throw new Error(data.error || 'Login failed');}
           toast.success(data.message);
           fetchAdminData()
@@ -269,7 +269,7 @@ export const AdminAuthProvider = ({ children }) => {
 
 
     return (
-    <AdminAuthContext.Provider value={{appData, admin, handleLogin, errors,logout, authentic:!!admin,admins,fetchAdminData,changeSuperAdminPassword,changeSuperAdminPIN, resetAdminPassword,resetAdminPIN,resetSuperAdminPassword,resetSuperAdminPIN,sendRecoveryEmail,fetchAdmins,addSubAdmin,editSubAdmin,editSubAdminAccess,toggleSubAdminStatus, loading}}>{children}</AdminAuthContext.Provider>
+    <AdminAuthContext.Provider value={{appData, admin, handleLogin,loginError, errors,logout, authentic:!!admin,admins,fetchAdminData,changeSuperAdminPassword,changeSuperAdminPIN, resetAdminPassword,resetAdminPIN,resetSuperAdminPassword,resetSuperAdminPIN,sendRecoveryEmail,fetchAdmins,addSubAdmin,editSubAdmin,editSubAdminAccess,toggleSubAdminStatus, loading}}>{children}</AdminAuthContext.Provider>
   );
 };
 
