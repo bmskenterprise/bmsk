@@ -21,7 +21,7 @@ export default ()=>{
         {text:<>Setting</>,path:"/dashboard/setup",access:"setup"},
         {text:<>Store</>,path:"/dashboard/store",access:"store"},
         {text:<>Notice</>,path:"/dashboard/notice/manage",access:"notice"},
-        {text:<>API</>,path:"/dashboard/gateway-api",access:"api"},
+        {text:<>API</>,path:"/dashboard/gateway-api",access:"manage-api"},
         {text:<>Feedback</>,path:"/dashboard/feedback",access:"feedback"}
     ]
 }    
