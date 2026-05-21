@@ -74,7 +74,7 @@ export default  () =>{
             */}
         
             {/*<Notice notices={admin.notices}/>*/}
-            <FlexH x='space-between' style={{alignItems:'stretch',gap:'5rem 0',width:'100%'}}/>
+            <FlexH x='space-between' style={{alignItems:'stretch',gap:'5rem 0',width:'100%'}}>
                 <TelecomAccess/*accesses={{topupAccess:appData?.topupAccess,driveAccess:appData?.driveAccess,regularAccess:appData?.regularAccess}}*/ /*accessRegularPack={admin.regularHit}*/ />
                 <MBanks/*mbanks={appData?.mbanks}*/ />
                 <ImageSlider/*slideImages={appData?.slideImages}*/ />
