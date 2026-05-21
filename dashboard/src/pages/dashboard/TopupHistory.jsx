@@ -98,14 +98,14 @@ export default  () =>{
                               
                               
     return !accesses?.includes('topup-history')?<Center><p>don't have topup history permission</p></Center>:<div style={{background:backPrimary,color:textPrimary}} onClick={e=>setFailedID(null)}>
-                <h4 style={{marginBottom:'4rem'}}>Topup History</h4>
+                <h4>Topup History</h4><GapV x='4'/>
                 <form onSubmit={filter}><FlexH x='space-between' y='center'>
                     <Field value={filterData.limit} x='4' name='limit' onChange={filterParams}/>
                     {/*<Field   value={filterData.limit} name='limit'*/}
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                    <datalist id="levels">{appData?.userLevels.map((l,i)=> <option key={i} value={l.name}/>)}</datalist><Field  x='8' value={filterData.user} placeholder='user' name='user' onChange={filterParams} list='levels'/></div>
+                    <datalist id='levels'>{appData?.userLevels.map((l,i)=> <option key={i} value={l.name}/>)}</datalist><Field  x='8' value={filterData.user} placeholder='user' name='user' onChange={filterParams} list='levels'/></div>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                    <datalist id="telecoms">{['airtel','banglalink','grameenphone','robi','teletalk'].map((t,i)=> <option key={i} value={t}/>)}</datalist><Field   x='8' value={filterData.telecom} placeholder='telecom'name='telecom' onChange={filterParams} list='telecoms'/></div>
+                    <datalist id='telecoms'>{['airtel','banglalink','grameenphone','robi','teletalk'].map((t,i)=> <option key={i} value={t}/>)}</datalist><Field   x='8' value={filterData.telecom} placeholder='telecom'name='telecom' onChange={filterParams} list='telecoms'/></div>
                     <div style={{minWidth:'5rem',height:'auto'}}>{/*<label htmlFor=""> Number</label><br />*/}<Field   x='8' value={filterData.recipient} name='recipient' onChange={filterParams} placeholder='recipient'/></div>
                     <div style={{minWidth:'5rem',height:'auto'}}>
                         {/*<label htmlFor="from">from</label><br/>*/}<DatePicker type='date' name='fromDate' value={filterData.fromDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
@@ -119,12 +119,12 @@ export default  () =>{
                     </div><button type='submit'>filter</button>
                     </FlexH> 
                 </form>
-            {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem',fontSize:'1.3rem'}}>
+            {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem',fontSize:'1.2rem'}}>
                 <ScrollViewH style={{width:'100%'}}>
                 {/*<tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead>*/}
-                    {data?.topups?.map(({_id,updatedAt,recipient,amount,operator,user,status})=><StripedList  key={_id} style={{width:'87rem',fontSize:'1.2rem'}}>
+                    {data?.topups?.map(({_id,updatedAt,recipient,amount,operator,user,status})=> <StripedList key={_id} style={{width:'80rem',fontSize:'1.2rem'}}>
                         <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
-                        <FlexH y='center' style={{width:'25%'}}><TinyIcon src={icons[operator]}/><GapH x='0.5'/>{recipient}</div>
+                        <FlexH y='center' style={{width:'25%'}}><TinyIcon src={icons[operator]}/><GapH x='0.5'/>{recipient}</FlexH>
                         <div style={{width:'25%'}}>&#2547;{amount}</div>
                     {/*<td>{billMonth}</td>
                     <td>{billExpire}</td>*/}
