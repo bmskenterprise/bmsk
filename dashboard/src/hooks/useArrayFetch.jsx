@@ -8,6 +8,7 @@ export default (url) =>{
   useEffect(()=>{fetchData()}, [url])
   
   const fetchData = async () =>{
+    setLoading(true)
     try{
       let res = await fetch(url,{credentials:'include'});
       let data = await res.json()
