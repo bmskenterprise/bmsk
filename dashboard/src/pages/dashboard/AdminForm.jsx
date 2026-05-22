@@ -3,7 +3,7 @@ import {useLocation,useNavigate} from 'react-router-dom';
 import {FaEye,FaEyeSlash} from 'react-icons/fa';
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import {Col,GapV,GapH,FlexH,InputField,ErrorText,ThemeButton,IconButton} from '../../components/styles/Admin.style';
+import {Col,FlexH,GapV,GapH,InputField,ErrorText,ThemeButton,IconButton} from '../../components/styles/Admin.style';
 import AdminPIN from '../../components/AdminPIN';
 import SwitchItem from '../../components/Switch'
 
@@ -55,12 +55,12 @@ export default () =>{
                         <InputField name='nid' placeholder='NID Number' onChange={e=>setEditedData(prev=>({...prev,nid:e.target.value.trim()}))} value={editedData?.nid}/>
                         <ErrorText>{errors?.nid}</ErrorText>
                     </div><GapV x='3'/>
-                    {!admin.?id && <div>  {/*<label>Password</label>*/}
-                    <div /*x='flex-start'*/>
+                    {!(admin?.id) && <div>  {/*<label>Password</label>*/}
+                    <div >
                         <div style={{position:'relative',width:'100%'}}>  <InputField type={show?'text':'password'} placeholder='Password' /*onChange={e=>setAdminData(data=>({...data,password:e.target.value.trim()}))}*/ name='password'/><IconButton type='button' style={{color:textPrimary,position:'absolute',top:'10%',right:'0%'}} onClick={e=>setShow(prev=>!prev)}>{show?<FaEyeSlash/>:<FaEye/>}</IconButton></div>
                         <ErrorText>{errors?.password}</ErrorText>
                     </div><GapV x='3'/>
-                    <div /*x='flex-start'*/>
+                    <div >
                         {/*<label>PIN</label>*/}
                         <InputField placeholder='PIN' /*onChange={e=>setAdminData(data=>({...data,pin:e.target.value.trim()}))}*/ name='pin'/>
                         <ErrorText>{errors?.pin}</ErrorText>
