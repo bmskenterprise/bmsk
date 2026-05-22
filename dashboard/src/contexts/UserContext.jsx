@@ -10,7 +10,7 @@ const UserContext = createContext();
 export const UserProvider = ({children}) =>{
     const [searchParams] = useSearchParams() 
     const {pendingCounts:{users}} = useNotification();
-    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||users>0?'not-verified':'verified',searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||(users>0?'not-verified':'verified'),searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
          
     //const type = searchParams.get('type') || '';
          
