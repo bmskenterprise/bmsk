@@ -35,7 +35,7 @@ export const NotificationProvider = ({ children }) => {
         socket.off('added',onAdd);
         /*socket.off('failed',onFailed);*/clearTimeout(timer);
       };
-   },[]);
+   },[socket]);
       //setNotification(true);
       const reducePendingCounts = (type) => setPendingCounts(prev=> ({...prev,[type]:0}));
     
