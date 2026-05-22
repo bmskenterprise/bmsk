@@ -148,8 +148,10 @@ export const AdminAuthProvider = ({ children }) => {
     
     const resetAdminPassword = async ({id,password,confirm},pinSuperAdmin)=>{
             const validationErrors = validatePassword({password,confirm});
-      setErrors(validationErrors)
-            if (Object.keys(validationErrors).length>0) return 
+        setErrors(validationErrors)
+        const authError = validateAdminAuthPIN(pinSuperAdmin)
+        if(Object.keys(authError).length>0) {toast.error(authError.adminPin);return}
+        if (Object.keys(validationErrors).length>0) return 
         setLoading(true)
         try{
             let res = await fetch(`${url.urlResetSubAdminPassword}/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pinSuperAdmin},body:JSON.stringify({password})})
@@ -163,8 +165,10 @@ export const AdminAuthProvider = ({ children }) => {
 
     const resetAdminPIN = async ({id,pin,confirm},pinSuperAdmin)=>{
         const validationErrors = validatePIN({pin,confirm});
-      setErrors(validationErrors)
-        if (Object.keys(validationErrors).length>0) return 
+        setErrors(validationErrors)
+        const authError = validateAdminAuthPIN(pinSuperAdmin)
+        if(Object.keys(authError).length>0) {toast.error(authError.adminPin);return}
+        if(Object.keys(validationErrors).length>0) return
         try{
             let res = await fetch(`${url.urlResetSubAdminPIN}/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pinSuperAdmin},body:JSON.stringify(pin)}) 
             let data = await res.json() 
@@ -215,7 +219,7 @@ export const AdminAuthProvider = ({ children }) => {
       let validationErrors = validateAdminAdd(formData)
       let authError = validateAdminAuthPIN(pin);
       if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return}
-      if(Object.keys(authError).length>0) {/*setErrors(authError)*/toast.error('invalid admin pin');return}
+      if(Object.keys(authError).length>0) {/*setErrors(authError)*/toast.error(authError.adminPin||'invalid admin pin');return}
       setLoading(true);
       try{
         let res = await fetch(url.urlAdmin,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pin.toString()},body:JSON.stringify({...formData,accesses})});
@@ -230,8 +234,8 @@ export const AdminAuthProvider = ({ children }) => {
     const editSubAdmin = async ({admin:{id,username},formData,handleFormCancel},pin) => {
       let validationErrors = validateAdminEdit(username,formData)
       let authError = validateAdminAuthPIN(pin)
-      if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
-      if(Object.keys(authError)) {/*setErrors(prev=>({...prev,authError}));*/toast.error('invalid admin pin');return}
+      if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return}
+      if(Object.keys(authError).length>0) {/*setErrors(prev=>({...prev,authError}));*/toast.error(authError.adminPin||'invalid admin pin');return}
       setLoading(true);
       try {
         let res = await fetch(`${url.urlAdmin}/${id}`, {
@@ -248,6 +252,8 @@ export const AdminAuthProvider = ({ children }) => {
       finally{setLoading(false)}
     }
     const editSubAdminAccess = async ({id,editedAccesses,cancelForm},pin) => {
+      let authError = validateAdminAuthPIN(pin)
+      if(Object.keys(authError).length>0) {toast.error(authError.adminPin||'invalid admin pin');return}
       setLoading(true);
       try {
         let res = await fetch(`${url.urlAdminAccess}/${id}`, {
