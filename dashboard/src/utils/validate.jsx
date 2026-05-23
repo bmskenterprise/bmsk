@@ -1,5 +1,5 @@
+import {balanceTypes} from '../../Preferences.json';
 import validURL from './validURL';
-//let validationErrors// = {};
     let passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,32}$/;
     let pinRegex = /^\d{4,6}$/
 ///^[^\sa-zA-Z]{2}[^\s]{0,14}$/
@@ -90,7 +90,14 @@ export const validateUser= (data)=>{
     //if(!/^\d{4,6}$/.test(data.adminPIN)) validationErrors.adminPIN = "invalid admin pin";
     return validationErrors;
 }
-
+export const validateUserBalance = (data)=>{
+    let validationErrors = {};
+        if(isNaN(data.amount)) validationErrors.amount = 'invalid amount'//);return}// is required'
+        if(!data.amount) validationErrors.amount = 'amount is required'
+        if(!balanceTypes.includes(data.balanceType)) validationErrors.balanceType = 'balance type is required'
+        if(!['add','deduct'].includes(data.actionType)) validationErrors.actionType = 'action type is required'
+       return validationErrors
+}
 
 export const validateDrivePack = ({title,price,commission})=>{
     let validationErrors={}
