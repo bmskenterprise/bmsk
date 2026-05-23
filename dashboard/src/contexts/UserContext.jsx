@@ -128,7 +128,7 @@ export const UserProvider = ({children}) =>{
         finally{setLoading(false)}
     }
     
-    const resetUserPIN = async ({id,pin,confirm,pin}) =>{
+    const resetUserPIN = async ({id,pin,confirm},adminPIN) =>{
         let authErrors = validateAdminAuthPIN(pin)
         const validationErrors = validatePIN({pin,confirm});
         if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
@@ -138,7 +138,7 @@ export const UserProvider = ({children}) =>{
             let res = await fetch(`${url.urlResetUserPIN}/${id}`, {
                 method: 'PATCH',
                 credentials: 'include',
-                headers: {'Content-Type':'application/json','x-admin-pin':pin},
+                headers: {'Content-Type':'application/json','x-admin-pin':adminPIN},
                 body: JSON.stringify({pin})
             });
             let data = await res.json();
