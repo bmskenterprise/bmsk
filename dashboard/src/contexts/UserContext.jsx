@@ -1,7 +1,7 @@
 import {createContext,useContext,useEffect,useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import {toast} from 'react-toastify';
-import {validateUser,validatePassword,validatePIN} from '../utils/validate';
+import {validateUser,validateUserBalance,validatePassword,validatePIN,validateAdminAuthPIN} from '../utils/validate';
 import {useNotification} from '../contexts/NotificationContext';
 import url from '../config/url';
 
@@ -63,13 +63,15 @@ export const UserProvider = ({children}) =>{
         } catch(err) {toast.error(err.message);} 
         finally{setLoading(false)}    
     }
-    const editUserAccess = async ({id,accesses},adminPIN) =>{
+    const editUserAccess = async ({id,accesses},pin) =>{
+        const authErrors = validateAdminAuthPIN(pin)
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
         setLoading(true)
         try{
             let res = await fetch(`${url.urlManageUserAccess}/${id}`,{
                 method: 'PATCH',
                 credentials: 'include',
-                headers: {'Content-Type':'application/json','x-admin-pin':adminPIN},
+                headers: {'Content-Type':'application/json','x-admin-pin':pin},
                 body: JSON.stringify(accesses)
             });
             let data = await res.json();
@@ -79,16 +81,43 @@ export const UserProvider = ({children}) =>{
         finally{setLoading(false)}
     }
     
-    const resetUserPassword = async ({id,password,confirm},adminPIN) => {
+              
+    const modifyUserBalance = async ({id,balanceData},pin) => {
+        //()=>navigate('/transfer/confirm', {state: {{amount:amountRef.current.value,source:sourceRef.current.value,type:typeRef.current.value}}})
+        let validationErrors = validateUserBalance(balanceData);
+        let authErrors = validateAdminAuthPIN(pin) //is required'
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin||'admin pin is required');return}// is required'
+        if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return} //
+        setLoading(true);
+        try {
+            let res = await fetch(
+                `${url.urlDeposit}/${actionType}/${id}`,
+                {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: {'Content-Type':'application/json','x-admin-pin':pin},
+                    body: JSON.stringify({amount:parseInt(balanceData.amount),balanceType:balanceData.balanceType.toLowerCase(),gateway:balanceData?.gateway?.toLowerCase()})
+                }
+            )
+            let data = await res.json();
+            if(res.status==401) toast.error('auth error')
+            if(!res.ok) {throw new Error(data.error|| 'deposit failed');}
+            toast.success(data.message)
+        }catch(e) {toast.error(e.message);}
+        finally{setLoading(false);}
+    }
+    const resetUserPassword = async ({id,password,confirm},pin) => {
         //e.preventDefault();
+        let authErrors = validateAdminAuthPIN(pin)
         const validationErrors = validatePassword({password,confirm});
-        if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return}  //
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
+        if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return}
         setLoading(true);
         try {
             let res = await fetch(`${url.urlResetUserPassword}/${id}`, {
                 method: 'PATCH',
                 credentials: 'include',
-                headers: {'Content-Type':'application/json','x-admin-pin':adminPIN},
+                headers: {'Content-Type':'application/json','x-admin-pin':pin},
                 body: JSON.stringify({password})
             });
             let data = await res.json();
@@ -99,15 +128,17 @@ export const UserProvider = ({children}) =>{
         finally{setLoading(false)}
     }
     
-    const resetUserPIN = async ({id,pin,confirm,adminPIN}) =>{
+    const resetUserPIN = async ({id,pin,confirm,pin}) =>{
+        let authErrors = validateAdminAuthPIN(pin)
         const validationErrors = validatePIN({pin,confirm});
-        if (Object.keys(validationErrors).length) {return setErrors(validationErrors);}
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
+        if(Object.keys(validationErrors).length>0) {setErrors(validationErrors);return}
         setLoading(true);
-        try {
+        try{
             let res = await fetch(`${url.urlResetUserPIN}/${id}`, {
                 method: 'PATCH',
                 credentials: 'include',
-                headers: {'Content-Type':'application/json','x-admin-pin':adminPIN},
+                headers: {'Content-Type':'application/json','x-admin-pin':pin},
                 body: JSON.stringify({pin})
             });
             let data = await res.json();
@@ -118,6 +149,8 @@ export const UserProvider = ({children}) =>{
         finally{setLoading(false)}
     }
     const toggleVerification = async ({id,verified},pin) =>{
+        let authErrors = validateAdminAuthPIN(pin)
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
         setLoading(true)
         try {       
             let res = await fetch(`${url.urlUserVerify}/${id}`,{
@@ -134,6 +167,8 @@ export const UserProvider = ({children}) =>{
     }
     
     const deleteUser = async ({id},pin) =>{
+        let authErrors = validateAdminAuthPIN(pin)
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
         try{
             let res = await fetch(`${url.urlManageUser}/${id}`,
                 {
@@ -149,6 +184,8 @@ export const UserProvider = ({children}) =>{
         finally{setLoading(false)}
     }
     const deleteUserDevice = async ({id,deviceId},pin) =>{
+        let authErrors = validateAdminAuthPIN(pin)
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
         try{
             let res = await fetch(`${url.urlUserDeviceAccess}/${id}`,
                 {
@@ -166,6 +203,8 @@ export const UserProvider = ({children}) =>{
     }
     
     const toggleUserDeviceAccess = async ({id,isDeviceLock},pin) =>{
+        let authErrors = validateAdminAuthPIN(pin)
+        if(Object.keys(authErrors).length>0) {toast.error(authErrors.adminPin);return}
         try{
             let res = await fetch(`${url.urlUserDeviceAccess}/${id}`,
                 {
@@ -182,6 +221,6 @@ export const UserProvider = ({children}) =>{
         finally{setLoading(false)}
     }
     
-  return <UserContext.Provider value={{userData,fetchUsers,initFilterData,addUser,editUserAccess,resetUserPassword,resetUserPIN,toggleVerification,deleteUser,deleteUserDevice,toggleUserDeviceAccess,authError,errors,loading}}>{children}</UserContext.Provider>;
+  return <UserContext.Provider value={{userData,fetchUsers,initFilterData,addUser,editUserAccess,modifyUserBalance,resetUserPassword,resetUserPIN,toggleVerification,deleteUser,deleteUserDevice,toggleUserDeviceAccess,authError,errors,loading}}>{children}</UserContext.Provider>;
 }
 export const useUser = () => useContext(UserContext);
