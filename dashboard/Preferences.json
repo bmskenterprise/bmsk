@@ -22,7 +22,7 @@
     "serviceTypes": ["deposit","payment","withdraw", "topup","drive","regular","bill","bank","bkash","dbbl","nagad","upay","feedback"],
     "statustypes": ["pending", "Success","cancel"],
     "accessTypes": ["Web", "Apps", "Allow Oversale", "Allow API", "Active"],
-    "balanceTypes": ["topup", "drive", "bank"],
+    "balanceTypes": ["topup", "drive", "mbank"],
     "userDetail": ["Reseller", "Client Type", "Parent"],
     "MBanks": ["Bkash", "Nagad", "Rocket"],
     "logsFields": ["User", "Type", "Date", "IP", "Browser + OS", "Two Step", "Device Status", "Action"],
