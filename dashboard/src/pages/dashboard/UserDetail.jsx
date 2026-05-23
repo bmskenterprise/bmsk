@@ -77,7 +77,7 @@ export default  () =>{
                         <p>{getLocalDateFromUTC(user?.createdAt??(new Date()).toISOString())}</p><GapV x='2'/>
                         <p>{user?.regFeeRef??'N/A'}</p><GapV x='4.5'/>
                         <div>
-                            <IconButton onClick={e=>navigate(`balance/${user?._id}`,{state:{username:user?.username}})}><MdWallet/></IconButton>
+                            <IconButton onClick={e=>navigate(`/dashboard/manage-user/balance/${user?._id}`,{state:{username:user?.username}})}><MdWallet/></IconButton>
                             <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'password'}})}><MdPassword/></IconButton>
                             <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
                             <IconButton  onClick={e=>initDelete(_id)}><FaTrash/></IconButton>
@@ -85,7 +85,7 @@ export default  () =>{
                         <SwitchItem label='Device Lock' check={user?.device.lock} identity='lock' handleChange={e=>initToggleDeviceLock(e.target.checked)}/><GapV x='3.5'/>
                         <div>
                             <h5>Devices</h5><GapV x='1'/>
-                            <div>{user?.device?.allowed.map(d=> <FlexH x='space-between' y='center' style={{marginTop:'1.5rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={loading}><FaTrash/></IconButton></FlexH>)}</div>
+                            <div>{user?.device?.allowed.map((d,i)=> <FlexH x='space-between' y='center' key={i} style={{marginTop:'1.5rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={loading}><FaTrash/></IconButton></FlexH>)}</div>
                         </div>
                     
                     </div><GapV x='5'/>
