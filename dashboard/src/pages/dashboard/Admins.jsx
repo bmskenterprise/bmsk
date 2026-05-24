@@ -11,7 +11,7 @@ import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {ScrollViewV,ScrollViewH,FlexH,GapV,Col,StripedList,ThemeButton,IconButton,InputField,ErrorText,Loader,Spinner} from '../../components/styles/Admin.style';
 import {adminAccess} from '../../../Preferences';
-import adminPIN from '../../components/AdminPIN';
+import dminPIN from '../../components/AdminPIN';
 import SwitchItem from '../../components/Switch';
 
 export default  () =>{
@@ -163,9 +163,10 @@ export default  () =>{
                         <div style={{color:textPrimary,width:'50%'/*,fontSize:'2rem'*/}}>{systemIcon[device[0].toLowerCase()]} {systemIcon[device[1].toLowerCase()]}</div>
                         {/*<div style={{width:'20%'}}>{format(loginAt,'dd/MM/yyyy hh:mm aa')}</div>*/}
                         <FlexH x='flex-end' style={{width:'25%'}}>
-                            <SwitchItem  check={status} handleChange={e=>toggleSubAdminStatus(_id,e.target.checked)}/>
-                         <IconButton  onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},adminData:{phone,email,nid},accesses:[]}})}}><MdEdit/></IconButton>
-                        <IconButton onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},adminData:null,accesses}})}} ><MdAdminPanelSettings/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'password'}})} ><MdPassword/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'pin'}})} ><FaLock/></IconButton>
+                            <SwitchItem check={status} handleChange={e=>toggleSubAdminStatus(_id,e.target.checked)}/><GapH x='1'/>
+                            <IconButton onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},adminData:{phone,email,nid},accesses:[]}})}}><MdEdit/></IconButton><GapH x='1'/>
+                            <IconButton onClick={e=>{navigate('edit',{state:{admin:{id:_id,username},adminData:null,accesses}})}} ><MdAdminPanelSettings/></IconButton><IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'password'}})}><MdPassword/></IconButton><GapH x='1'/>
+                            <IconButton onClick={e=>navigate('reset-credential',{state:{id:_id,username,credentialType:'pin'}})}><FaLock/></IconButton> 
                         </FlexH>
                     </StripedList>)}
                 </ScrollViewH></ScrollViewV></>
