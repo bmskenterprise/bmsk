@@ -4,7 +4,7 @@ import {toast} from 'react-toastify';
 import {MdEdit} from 'react-icons/md';     
 import {BsPlusLg} from 'react-icons/bs';
 import {useTheme} from '../../contexts/ThemeContext';
-import {Col,FlexH,GapV,ThemeButton,InputField,ErrorText,TinyIcon,IconButton,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapV,ThemeButton,InputField,ErrorText,TinyIcon,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
 import SwitchItem from '../Switch'
@@ -86,7 +86,7 @@ export default  () =>{
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'1rem'}}>
         <h4 style={{marginBottom:'2rem'}}>SMS Gateway</h4>
         {!Object.keys(editInit).length &&<>
-            <FlexH x='flex-end' y='center'><ThemeButton onClick={()=>setEditInit(init)}><BsPlusLg/></ThemeButton></FlexH><GapV x='2'/> 
+            <FlexH x='flex-end' y='center'><PrimaryButton onClick={()=>setEditInit(init)}><BsPlusLg/></PrimaryButton></FlexH><GapV x='2'/> 
              <div>
                 {gateways?.map(({_id,name,icon,merchantID,active}) => <FlexH x='space-between' key={_id} style={{width:'100%'}}>
                     <div style={{width: '65%'}}><TinyIcon src={icon}/> {name}</div>
@@ -123,7 +123,7 @@ export default  () =>{
                 <InputField name='apiPassword' onChange={handleChange}/>
           <ErrorText>{errors?.apiPassword}</ErrorText>
             </div>*/}<GapV x='2'/>
-            <FlexH x='flex-end' y='center'><button onClick={e=>setEditInit({})}>CANCEL</button><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
+            <FlexH x='flex-end' y='center'><button onClick={e=>setEditInit({})}>CANCEL</button><GapH x='2'/><ThemeButton type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
         </form>}
         <GapV x='1'/>
     </div>
