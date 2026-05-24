@@ -1,5 +1,5 @@
 import {useTheme} from '../../contexts/ThemeContext';
-import {FlexH} from '../../components/styles/Admin.style';
+import {ScrollViewV,FlexH} from '../../components/styles/Admin.style';
 import PGW from '../../components/setting/PaymentGateways';
 import SMSGateways from '../../components/setting/SMSGateways';
 
