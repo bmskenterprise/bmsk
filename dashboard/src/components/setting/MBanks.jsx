@@ -3,7 +3,7 @@ import {useMediaQuery} from 'react-responsive'
 import {toast} from 'react-toastify'
 import {BsPlusLg} from 'react-icons/bs' //
 import {useTheme} from '../../contexts/ThemeContext'
-import {Col,FlexH,GapH,GapV,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapV,GapH,Field,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
 import {validateMBank} from '../../utils/validate';
 import url from '../../config/url'
 import Accordion from './Accordion'
@@ -81,7 +81,7 @@ export default ()=>{
     }
     
   let content= <div style={{background:backSecondary,color:textSecondary}}>
-    <h4 style={{marginBottom:'2rem'}}>MBanks</h4><GapV x='2'/>
+    <h4 >MBanks</h4><GapV x='2'/>
     {addInit?<form onSubmit={addMbank}>
       <div>
         <InputField name='name' placeholder='Name'/>
@@ -97,14 +97,14 @@ export default ()=>{
       <FlexH x='flex-end'><PrimaryButton onClick={e=>setAddInit(true)}><BsPlusLg/></PrimaryButton></FlexH><GapV x='2'/>
       <form onSubmit={handleSubmit}>
         {mobileBanks?.map(({_id,name,icon,account,active},i)=><FlexH x='space-between' y='center' key={i} style={{marginBottom:'2rem'}}>
-        <FlexH x='flex-start' y='center'>
-          <TinyIcon src={icon} alt={name}/><GapH x='1'/>
-          <div>  <InputField name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
+          <div style={{width:'20%'}}><TinyIcon src={icon} alt={name}/></div>
+        <FlexH x='flex-end' y='center' style={{width:'70%'}}>
+          <div> <Field x='15' name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
           <ErrorText>{errors?.name}</ErrorText></div>
-        </FlexH>
         <SwitchItem check={active} handleChange={e=>changeStatus(_id,e.target.checked)}/>
+        </FlexH>
         </FlexH>)}
-        <FlexH x='flex-end' y='center'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'Save Changes'}</ThemeButton></FlexH>
+        <FlexH x='flex-end' y='center'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'Save Changes'}</ThemeButton></FlexH><GapV x='4'/>
       </form>
     </div>}
   </div>
