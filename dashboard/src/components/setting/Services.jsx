@@ -50,7 +50,7 @@ export default () => {
     <h4>Services</h4><GapV x='2'/>
     <form onSubmit={editServices}>
       {serviceTypes.map((s,i)=> <div /*x='flex-start' y='center'*/ key={i}>
-        <SwitchItem label={s} check={edited?.includes(s)} v={s} identity={s} handleChange={handleChange}/><GapV x='2'/>
+        <SwitchItem label={s} check={edited?.includes(s)} v={s} identity={s} handleChange={handleChange}/><GapV x='1.5'/>
         {/*<label>{s}</label>*/}
       </div>)}
       <GapV x='2'/><FlexH x='flex-end' y='center'><ThemeButton type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
