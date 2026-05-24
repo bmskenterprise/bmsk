@@ -42,17 +42,17 @@ export default () => {
     }catch(err) {toast.error(err.message);}
     finally{setLoading(false)}
   }
-  const handleChange = (e) =>{console.log(e.target.checked,e.target.value);
+  const handleChange = (e) =>{
     if(e.target.checked) setEdited(prev=>[...prev,e.target.value])
     else setEdited(prev=>prev.filter(s=>s!==e.target.value))
   }
   let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
-    <h4 style={{marginBottom:'2rem'}}>Services</h4>
+    <h4>Services</h4><GapV x='2'/>
     <form onSubmit={editServices}>
-      {serviceTypes.map((s,i)=> <FlexH x='flex-start' y='center' key={i}>
-        <SwitchItem label={s} check={edited?.includes(s)} v={s} identity={s} handleChange={handleChange}/>
+      {serviceTypes.map((s,i)=> <div /*x='flex-start' y='center'*/ key={i}>
+        <SwitchItem label={s} check={edited?.includes(s)} v={s} identity={s} handleChange={handleChange}/><GapV x='2'/>
         {/*<label>{s}</label>*/}
-      </FlexH>)}
+      </div>)}
       <GapV x='2'/><FlexH x='flex-end' y='center'><ThemeButton type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'SAVE'}</ThemeButton></FlexH>
     </form>
   </div>
