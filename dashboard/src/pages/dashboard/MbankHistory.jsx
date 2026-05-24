@@ -3,12 +3,12 @@ import {useNavigate,useSearchParams} from 'react-router-dom'
 import {toast} from 'react-toastify';
 import {formatDistanceToNow} from 'date-fns';
 import {FaCheck} from 'react-icons/fa';
-import {ScrollViewV,ScrollViewH,FlexH,StripedList,PaginationBar,Field,Select,DatePicker,TinyIcon,ApproveButton,RejectButton,Spinner, Center} from '../../components/styles/Admin.style';
-import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {useTheme} from '../../contexts/ThemeContext';
 import {useNotification} from '../../contexts/NotificationContext';
 import {useSocket} from '../../contexts/SocketContext'
-import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
+import {ScrollViewV,ScrollViewH,FlexH,StripedList,PaginationBar,Field,Select,DatePicker,TinyIcon,ApproveButton,RejectButton,Spinner, Center} from '../../components/styles/Admin.style';
 import url from '../../config/url';
 import useFetch from '../../hooks/useFetch'
 import AdminPIN from '../../components/AdminPIN' //searchParams.get('page') || '1';
@@ -21,7 +21,7 @@ export default () =>{
     const accesses = admin?.accesses
     const {socket} = useSocket()
     const {pendingCounts:{mbank},reducePendingCounts} = useNotification()
-    const {thememode,modeData} = useTheme();
+    const {thememode,themeData:{themeBackground}} = useTheme();
     const [searchParams,] = useSearchParams();
     const navigate = useNavigate()
     const [status,user,recipient,gateway,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('recipient')||'',searchParams.get('gateway')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
@@ -88,7 +88,7 @@ export default () =>{
     const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
     const onFailed = (id,user,feedback)=>{
         setFailedID(null);
-        AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
     }
             
                       
