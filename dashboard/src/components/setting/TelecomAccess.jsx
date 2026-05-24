@@ -12,6 +12,7 @@ import SwitchItem from '../Switch'
 const opts = ['airtel','banglalink','grameenphone','robi','teletalk'];
 
 export default   () =>{
+    const {modeData:{backSecondary, textSecondary}} = useTheme()
     const [telecomAccesses, setTelecomAccesses] = useState({driveAccess:[],regularAccess:[],topupAccess:[]});
     const isMobile = useMediaQuery({maxWidth: 768});
     const {appData} = useAdminAuth()        //    
@@ -19,7 +20,6 @@ export default   () =>{
     const [switchRegularPack, setSwitchRegularPack] = useState(false);
     const [switchTopup, setSwitchTopup] = useState(false);
     const [loading, setLoading] = useState(false);
-    const {modeData:{backSecondary, textSecondary}} = useTheme()
     const [modifiedTopupAccess,setModifiedTopupAccess] = useState([])
     const [modifiedDriveAccess,setModifiedDriveAccess] = useState([])
     const [modifiedRegularAccess,setModifiedRegularAccess] = useState([]);
@@ -114,15 +114,15 @@ export default   () =>{
         }catch(err) {toast.error(err.message);setTopupMethod(prev=>prev)}
     }
 
-    let content= <FlexH x='space-between' style={{background:backSecondary,color:textSecondary,width:'100%',padding:'0.5rem'}}>
+    let content= <FlexH x='space-between' style={{background:backSecondary,color:textSecondary,gap:'3rem 0',width:'100%',padding:'0.5rem'}}>
      
         <Col /*xs={12} xl={4}*//*{span:6, offset:1}*/>
-                <FlexH x='flex-start' y='center'>
                     <h5 style={{marginBottom: '2rem'}}> topup Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchTopup(e.target.checked)}/>*/}
-                </FlexH>
             {/*<FlexH x='flex-start' y='center'>
+                <FlexH x='flex-start' y='center'>
+                </FlexH>
                 <h5>Topup Method</h5>*/}
-                <FlexH style={{marginBottom:'3rem'}} x='space-between' y='center'>
+                <FlexH style={{marginBottom:'3rem',gap:'2rem 0'}} x='space-between'>
                     <div><RadioItem style={{width:'24%'}} check={topupMethod=='manual'} n='method' identity='manual' v='manual' label='Manual' handleChange={changeTopupMethod}/></div>
                     <div><RadioItem style={{width:'24%'}} check={topupMethod=='retail'} n='method' identity='retail' v='retail' label='Retail' handleChange={changeTopupMethod}/></div>
                     <div><RadioItem style={{width:'24%'}} check={topupMethod=='mbank'} n='method' identity='mbank' v='mbank' label='MBank' handleChange={changeTopupMethod}/></div>
@@ -146,7 +146,7 @@ export default   () =>{
                     {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedDriveAccess?.includes(opt)} identity={`drive-${opt}`} handleChange={e=>toggleDriveAccess(e.target.checked,opt)}/></FlexH>)}
                     {/*switchDrivePack&& <Stack></Stack>*/}
                 </div>
-                          <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
+                <FlexH x='flex-end' y='center'><ThemeButton type='submit'>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH>             
             </form>
         </Col>
         <Col /*xs={12} xl={4}*//*{span:6, offset:1}*/>
@@ -158,9 +158,10 @@ export default   () =>{
                     {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedRegularAccess?.includes(opt)} identity={`regular-${opt}`} handleChange={e=>toggleRegularAccess(e.target.checked,opt)}/></FlexH>)}
                     {/*switchRegularPack&& <Stack/>*/}
                 </div>
-                      <FlexH x='flex-end' y='center'><ThemeButton  type='submit'>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
+                <FlexH x='flex-end' y='center'><ThemeButton type='submit'>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH>
             </form>
         </Col>
+                        <GapV x='4'/>
     </FlexH>
     
 
@@ -168,7 +169,7 @@ export default   () =>{
         <Col /*xs={12}*/>
           <Accordion title='Telecom Settings' content={content}/>
         </Col>
-      ) : <div /*md={10} xl={8}*/>{content}</div>}</>
+      ) : <div style={{width:'100%'}} /*xl={8}*/>{content}</div>}</>
 }
 
            
