@@ -99,8 +99,8 @@ export default ()=>{
         {mobileBanks?.map(({_id,name,icon,account,active},i)=><FlexH x='space-between' y='center' key={i} style={{marginBottom:'2rem'}}>
           <div style={{width:'20%'}}><TinyIcon src={icon} alt={name}/></div>
         <FlexH x='flex-end' y='center' style={{width:'70%'}}>
-          <div> <Field x='15' name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
-          <ErrorText>{errors?.name}</ErrorText></div>
+          <div> <Field x='18' name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
+          <ErrorText>{errors?.name}</ErrorText></div><GapH x='1.5'/>
         <SwitchItem check={active} handleChange={e=>changeStatus(_id,e.target.checked)}/>
         </FlexH>
         </FlexH>)}
