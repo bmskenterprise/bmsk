@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import {MdEdit} from 'react-icons/md';     
 import {BsPlusLg} from 'react-icons/bs'
 import {useTheme} from '../../contexts/ThemeContext';
-import {Col,FlexH,GapV,GapH,ThemeButton,InputField,ErrorText,TinyIcon,IconButton,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapV,GapH,ThemeButton,InputField,ErrorText,TinyIcon,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
 import Accordion from './Accordion';
@@ -127,7 +127,7 @@ export default  () =>{
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
         <h4>PGW</h4><GapV x='2'/>
         {!Object.keys(editInit).length>0 &&<>
-            <FlexH x='flex-end'><IconButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></IconButton></FlexH><GapV x='2'/>    
+            <FlexH x='flex-end'><PrimaryButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></PrimaryButton></FlexH><GapV x='2'/>    
             <div /*style={{border:'none'}}*/>
                 {gateways?.map(({_id,name,icon,merchantID,active}) => <FlexH key={_id} style={{marginBottom: '2rem!important'}}>
                     <div style={{width:'65%'}}><TinyIcon src={icon}/><GapH x='1'/>{name}</div>
@@ -173,9 +173,9 @@ export default  () =>{
             </Form.Group> */}
             <FlexH x='flex-end' y='center'><button onClick={e=>setEditInit({})}>CANCEL</button><ThemeButton type='submit' style={{marginLeft:'2rem'}} disabled={loading}>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH><GapV x='2'/>
         </form>}
+           <GapV x='4'/>
     </div>
                    
-            
     return <>{isMobile? <Col >
               <Accordion title='Payment Gateways' content={content}/>
                 </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
