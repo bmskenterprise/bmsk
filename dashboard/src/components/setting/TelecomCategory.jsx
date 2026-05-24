@@ -4,8 +4,8 @@ import {useMediaQuery} from 'react-responsive';
 import {BsPlusLg} from 'react-icons/bs'
 import {FaPen,FaTrash} from 'react-icons/fa';
 import {toast} from 'react-toastify';
-import {Col,FlexH,GapV,GapH,ScrollViewV,InputField,ErrorText,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
 import {useTheme} from '../../contexts/ThemeContext';
+import {Col,FlexH,GapV,GapH,ScrollViewV,InputField,ErrorText,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
 import Accordion from './Accordion'
 import url from '../../config/url';
 import validURL from '../../utils/validURL';
@@ -89,7 +89,7 @@ const [hover,setHover]=useState(false);
             else addTelecomCategory()
         }
 
-        let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem',minHeight:'48rem'}}>
+        let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem',minHeight:'24rem'}}>
                 <h4 style={{marginBottom:'2rem'}}>Telecom Category</h4>
                 <ScrollViewV style={{maxHeight:'32rem'}}>{!editMode&&<FlexH x='space-between' y='center' ref={categoriesRef}>
                     <FlexH x='flex-end' style={{width:'100%'}}><IconButton onClick={e=>{setEditMode(true);setTelecomCategory(init)}}><BsPlusLg/></IconButton></FlexH>
