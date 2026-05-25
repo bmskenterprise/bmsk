@@ -7,7 +7,7 @@ export default () =>{
   const {modeData:{backPrimary}} = useTheme()
   
   return <ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}><div style={{background:backPrimary,width:'100%'}}>
-    <FlexH>
+    <FlexH x='space-between' style={{alignItems:'stretch',gap:'5rem 0',width:'100%'}}>
       <PGW/>
       <SMSGateways/>
     </FlexH>
