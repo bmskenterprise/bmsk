@@ -474,6 +474,7 @@ export const StripedList = styled.div`
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
+  padding:0.5rem 0;
   &:nth-child(even){
     background: ${({theme})=>theme?.modeData?.backSecondary};
     color:${({theme})=>theme?.modeData?.textSecondary};
