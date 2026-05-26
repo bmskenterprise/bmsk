@@ -122,13 +122,23 @@ export const addBalanceByUser = async (req,res,next) =>{
 }
 
 export const depositRequest = async (req,res,next) =>{
-    const {txn,gateway,amount,ref} = req.body
+    const {txn,gateway,amount,ref,screenshot} = req.body
     try{
         let user = await User.findOne({_id:new ObjectId(req.user.id)});
         if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
         let deposit = await Deposit.findOne({txn,gateway});
         if(deposit) return res.status(409).json({error:'txn already exist',success:false});
-        await Deposit.insertOne({txn,gateway,status:'PENDING',amount,ref:ref||'',user:req.user.username,createdAt:new Date(),updatedAt:new Date()})
+        const data= {txn,gateway,status:'PENDING',amount,ref:ref||'',user:req.user.username,createdAt:new Date(),updatedAt:new Date()}
+        if(screenshot){
+            if(screenshot.length>5*1024*1024) return res.status(413).json({error:'max file size is 5MB',success:false});
+            let response = await cloudinary.uploader.upload(screenshot,{
+                folder:'deposits',
+                resource_type:'image',
+                allowed_formats:['jpg','jpeg','png','webp']
+            });
+            data.screenshot=response.secure_url
+        }
+        await Deposit.insertOne(data)
         res.status(200).json({message:'wait for admin approval',success:true});
     }catch(e) {next(e)}
 }
