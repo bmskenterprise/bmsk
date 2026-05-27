@@ -1,11 +1,11 @@
 import {useEffect,useState} from 'react';
 import {toast} from 'react-toastify';
-import {ScrollViewH,FlexH,GapV,NumberField,ThemeButton,Table,TR,TH,TD,Spinner} from '../../components/styles/Admin.style';
 import {useTheme} from '../../contexts/ThemeContext';
+import {ScrollViewH,FlexH,GapV,NumberField,ThemeButton,Table,TR,TH,TD,Spinner} from '../../components/styles/Admin.style';
 import url from '../../config/url';
 import SwitchItem from '../../components/Switch'
 import AdminPIN from '../../components/AdminPIN';
-const fields = ['Level','Bkash(topup)','DBBL(topup)','Nagad(topup)','Upay(topup)','Bkash(drive)','DBBL(drive)','Nagad(drive)','Upay(drive)','Bkash(mbank)','DBBL(mbank)','Nagad(mbank)','Upay(mbank)','Topup(min/max)','Drive(min/max)','MBank(min/max)','Reg. Fee','Self Reg','OTP']
+const fields = ['Level','Bkash(topup)','DBBL(topup)','Nagad(topup)','Upay(topup)','Bank(topup)','Bkash(drive)','DBBL(drive)','Nagad(drive)','Upay(drive)','Bank(drive)','Bkash(mbank)','DBBL(mbank)','Nagad(mbank)','Upay(mbank)','Bank(mbank)','Topup(min/max)','Drive(min/max)','MBank(min/max)','Reg. Fee','Self Reg','OTP']
 
 export default  () =>{
     const {thememode,themeData:{themeBackground},modeData:{textPrimary}} = useTheme();
@@ -101,16 +101,19 @@ export default  () =>{
                     <TD>{level}</TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].topup.commission.bkash} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,bkash:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].topup.commission.dbbl} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,dbbl:Number(e.target.value)}}}:l))} /></TD>
-                    <TD><NumberField   /*x='4'*/ type='number' value={formData[i].topup.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
+                    <TD><NumberField type='number' value={formData[i].topup.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField value={formData[i].topup.commission.upay} onChange={e=>setFormData(prev=> prev.map((l,ind)=> i==ind?({...l,topup:{...prev[i].topup,commission:{...prev[i].topup.commission,upay:e.target.value}}}):l))}/></TD>
+                    <TD><NumberField value={formData[i].topup.commission.bank} onChange={e=>setFormData(prev=> prev.map((l,ind)=> i==ind?({...l,topup:{...prev[i].topup,commission:{...prev[i].topup.commission,bank:e.target.value}}}):l))}/></TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].drive.commission.bkash} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,drive:{...formData[i].drive,commission:{...formData[i].drive.commission,bkash:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].drive.commission.dbbl} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,drive:{...formData[i].drive,commission:{...formData[i].drive.commission,dbbl:Number(e.target.value)}}}:l))} /></TD>
-                    <TD><NumberField   /*x='4'*/ type='number' value={formData[i].drive.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,drive:{...formData[i].drive,commission:{...formData[i].drive.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
+                    <TD><NumberField type='number' value={formData[i].drive.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,drive:{...formData[i].drive,commission:{...formData[i].drive.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField value={formData[i].drive.commission.upay} onChange={e=>setFormData(prev=> prev.map((l,ind)=> i==ind?({...l,drive:{...prev[i].drive,commission:{...prev[i].drive.commission,upay:e.target.value}}}):l))}/></TD>
+                    <TD><NumberField value={formData[i].drive.commission.bank} onChange={e=>setFormData(prev=> prev.map((l,ind)=> i==ind?({...l,drive:{...prev[i].drive,commission:{...prev[i].drive.commission,bank:e.target.value}}}):l))}/></TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].mbank.commission.bkash} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,mbank:{...formData[i].mbank,commission:{...formData[i].mbank.commission,bkash:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].mbank.commission.dbbl} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,mbank:{...formData[i].mbank,commission:{...formData[i].mbank.commission,dbbl:Number(e.target.value)}}}:l))} /></TD>
-                    <TD><NumberField   /*x='4'*/ type='number' value={formData[i].mbank.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,mbank:{...formData[i].mbank,commission:{...formData[i].mbank.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
+                    <TD><NumberField type='number' value={formData[i].mbank.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,mbank:{...formData[i].mbank,commission:{...formData[i].mbank.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField value={formData[i].mbank.commission.upay} onChange={e=>setFormData(prev=> prev.map((l,ind)=> i==ind?({...l,mbank:{...prev[i].mbank,commission:{...prev[i].mbank.commission,upay:e.target.value}}}):l))}/></TD>
+                    <TD><NumberField value={formData[i].mbank.commission.bank} onChange={e=>setFormData(prev=> prev.map((l,ind)=> i==ind?({...l,mbank:{...prev[i].mbank,commission:{...prev[i].mbank.commission,bank:e.target.value}}}):l))}/></TD>
                     <TD>
                         <NumberField   x='4' type='text' value={formData[i].topup.min} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,min:e.target.value}}:l))} />
                         <NumberField   x='4' type='text' value={formData[i].topup.max} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,max:e.target.value}}:l))}/>
