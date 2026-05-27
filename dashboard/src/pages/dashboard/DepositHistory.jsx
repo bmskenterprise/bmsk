@@ -171,10 +171,10 @@ export default  () =>{
             <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
             <ScrollViewH style={{width:'100%'}}>
                 {/*<thead><tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead><tbody>*/}
-                {data?.deposits?.map(({_id,updatedAt,txn,user,amount,extra,status,gateway})=> <StripedList style={{width:'87rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
+                {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:'80rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
                     <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div style={{width:'20%'}}>{user}</div>
-                    <FlexH y='center' style={{width:'30%'}}><TinyIcon src={mbankIcons[gateway]}/><GapH x='0.5'/>{txn}</FlexH>
+                    <FlexH y='center' style={{width:'30%'}}><TinyIcon src={mbankIcons[gateway]}/><GapH x='0.5'/>{txn||(screenshot&&<TinyIcon src={screenshot}/>)}</FlexH>
                     {/*<div style={{width:'15%'}}>{balanceType}</div>*/}
                     <div style={{width:'15%'}}>&#2547;{amount} {/*<small>({extra})</small>*/}</div>
                     {/*<td>{billMonth}</td>
