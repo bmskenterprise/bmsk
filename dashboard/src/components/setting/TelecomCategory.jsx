@@ -5,7 +5,7 @@ import {BsPlusLg} from 'react-icons/bs'
 import {FaPen,FaTrash} from 'react-icons/fa';
 import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
-import {Col,FlexH,GapV,GapH,ScrollViewV,InputField,ErrorText,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
+import {ScrollViewV,Col,FlexH,GapV,GapH,InputField,ErrorText,Stack,ThemeButton,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import Accordion from './Accordion'
 import url from '../../config/url';
 import validURL from '../../utils/validURL';
@@ -15,15 +15,18 @@ export default  () =>{
     let init = {id:null,category:''}
     let location = useLocation();
     const isMobile = useMediaQuery({ maxWidth: 768 });
-    let [categoriesRef,linkRef]=[useRef(null),useRef(null)];
+     const {modeData:{backSecondary,textSecondary}} = useTheme();
+    const [categoriesRef,linkRef] = [useRef(null),useRef(null)];
     const [categories,setCategories] = useState([]);
-        const [telecomCategory,setTelecomCategory] = useState(init);
-        const [editMode,setEditMode] = useState(false);
-        const {modeData:{backSecondary,textSecondary}} = useTheme();
+     const [telecomCategory,setTelecomCategory] = useState(init);
+    const [error,setError] = useState('');
+    const [hover,setHover] = useState(false);
+     const [editMode,setEditMode] = useState(false);
     const [loading,setLoading]=useState(false)
-const [error,setError]=useState('');
-const [hover,setHover]=useState(false);
+ 
+ 
     useEffect(()=> {fetchCategories()},[])
+     
     const fetchCategories = async e=>{
         try{
             let res = await fetch(url.urlTelecomCategory,{credentials:'include'})
@@ -43,7 +46,7 @@ const [hover,setHover]=useState(false);
                 body: JSON.stringify({category:telecomCategory.category,active:true})
             })
             let data = await res.json()
-            if(!res.ok) throw new Error(data.error||'failed to add image link')
+            if(!res.ok) throw new Error(data.error||'failed to add telecom category')
             setCategories(data.categories);
             toast.success(data.message)
         }catch(e) {toast.error(e.message)}
@@ -60,7 +63,7 @@ const [hover,setHover]=useState(false);
                 body: JSON.stringify({category,active})
            })
            let data = await res.json()
-           if(!res.ok) throw new Error(data.error||'failed to update image link')
+           if(!res.ok) throw new Error(data.error||'failed to edit telecom category')
            setCategories(data.categories)
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false);setTelecomCategory(init);setEditMode(false)}
@@ -84,7 +87,7 @@ const [hover,setHover]=useState(false);
         const handleSubmit = e =>{
             e.preventDefault()
             if(telecomCategory.category.length>20) {setError('category is too long');return}
-            if(telecomCategory.some(l=>l.category==telecomCategory.category))return setError('category already exists');
+            if(categories.some(l=>l.category==telecomCategory.category)) {setError('category already exists');return}
             if(telecomCategory.id) editTelecomCategory(telecomCategory.id,telecomCategory.category)
             else addTelecomCategory()
         }
@@ -92,7 +95,7 @@ const [hover,setHover]=useState(false);
         let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem',minHeight:'24rem'}}>
                 <h4 style={{marginBottom:'2rem'}}>Telecom Category</h4>
                 <ScrollViewV style={{maxHeight:'32rem'}}>{!editMode&&<FlexH x='space-between' y='center' ref={categoriesRef}>
-                    <FlexH x='flex-end' style={{width:'100%'}}><IconButton onClick={e=>{setEditMode(true);setTelecomCategory(init)}}><BsPlusLg/></IconButton></FlexH>
+                    <FlexH x='flex-end' style={{width:'100%'}}><PrimaryButton onClick={e=>{setEditMode(true);setTelecomCategory(init)}}><BsPlusLg/></PrimaryButton></FlexH>
                     {categories?.map(({_id,category,active}) => <FlexH x='space-between' y='center' key={_id} style={{width:'100%'}}>
                         <div>{category}</div>
                       <FlexH x='space-between' y='center' style={{width:'40%'}}>
