@@ -130,7 +130,7 @@ export const depositRequest = async (req,res,next) =>{
         if(deposit) return res.status(409).json({error:'txn already exist',success:false});
         const data= {txn,gateway,status:'PENDING',amount,ref:ref||'',user:req.user.username,createdAt:new Date(),updatedAt:new Date()}
         if(screenshot){
-            if(screenshot.length>5*1024*1024) return res.status(413).json({error:'max file size is 5MB',success:false});
+            //if(screenshot.length>5*1024*1024) return res.status(413).json({error:'max file size is 5MB',success:false});
             let response = await cloudinary.uploader.upload(screenshot,{
                 folder:'deposits',
                 resource_type:'image',
