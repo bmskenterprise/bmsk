@@ -67,8 +67,8 @@ export default  () =>{
             .then(data => setLinks(data))
         };*/
 
-        return <ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}>{/*<div style={{background:backPrimary, width:'100%'}}>
-            Object.keys(permission).map((p) => {
+        return <ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}><div style={{background:backPrimary, width:'100%'}}>
+            {/*Object.keys(permission).map((p) => {
                 permission[p].map((t,i)=> <div key={i}><input type='radio' name={key.split(' ')[0]} id={t} /><label htmlFor={t}>{t}</label></div>)
             })
             */}
@@ -101,6 +101,6 @@ export default  () =>{
             <Services />
         </Row></Container>*/}
         
-          
+          </div>
         </ScrollViewV>
 }
