@@ -54,7 +54,7 @@ export const validateDepositByTxn=[
     /*body('balanceType')
     .isIn(['topup','drive','mbank']).withMessage('Enter a valid Balance Type'),*/
     body('txn').escape()
-    .trim().notEmpty().withMessage('Enter Transaction ID')
+    .trim().optional({checkFalsy:true})/*.withMessage('Enter Transaction ID')*/
     .isLength({max:80}).withMessage('Txn is too long')
     .matches(/^[a-zA-Z0-9]{4,32}$/).withMessage('invalid transaction id')
 ]
