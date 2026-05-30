@@ -4,13 +4,14 @@ import {toast} from 'react-toastify';
 import {formatDistanceToNow} from 'date-fns';
 import {FaCheck} from 'react-icons/fa';
 import {MdCancel} from 'react-icons/md';
+import {useMediaQuery} from 'react-responsive'
 import {balanceTypes} from '../../../Preferences.json'
 import {useTheme} from '../../contexts/ThemeContext'
 import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
-import {FlexH,ScrollViewV,ScrollViewH,GapH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
+import {ScrollViewV,ScrollViewH,FlexH,GapH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import url from '../../config/url';
 import useFetch from '../../hooks/useFetch'
 import Reject from '../../components/Reject'
@@ -19,6 +20,7 @@ import Pages from '../../components/Pagination'
 
 export default  () =>{
     const navigate = useNavigate();
+    const isMobile = useMediaQuery({maxWidth:768});
     const {appData,admin} = useAdminAuth();
     const accesses = admin?.accesses
     const {socket} = useSocket()  ;
@@ -27,7 +29,6 @@ export default  () =>{
     const {failedCounts:{deposit},reducePendingCounts} = useNotification();
     const [searchParams] = useSearchParams()
     const [status,user,txn,gateway,type,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',searchParams.get('type')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
-    //const txn = searchParams.get('txn') || '';
     //const gateway = searchParams.get('gateway') || '';
     //const type = searchParams.get('type') || '';
     //const fromDate = searchParams.get('fromDate') || '';
@@ -171,10 +172,10 @@ export default  () =>{
             <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
             <ScrollViewH style={{width:'100%'}}>
                 {/*<thead><tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead><tbody>*/}
-                {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:'80rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
+                {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
                     <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div style={{width:'20%'}}>{user}</div>
-                    <FlexH y='center' style={{width:'30%'}}><TinyIcon src={mbankIcons[gateway]}/><GapH x='0.5'/>{txn||(screenshot&&<TinyIcon src={screenshot}/>)}</FlexH>
+                    <FlexH y='center' style={{width:'30%'}}><TinyIcon src={mbankIcons[gateway]}/><GapH x='0.5'/>{txn||(screenshot&&<TinyIcon src={screenshot} onClick={e=>window.open(screenshot)}/>)}</FlexH>
                     {/*<div style={{width:'15%'}}>{balanceType}</div>*/}
                     <div style={{width:'15%'}}>&#2547;{amount} {/*<small>({extra})</small>*/}</div>
                     {/*<td>{billMonth}</td>
