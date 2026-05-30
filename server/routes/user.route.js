@@ -1,6 +1,5 @@
 import express from 'express';
 import {authenticateAPIUser, registerUser,loginUser,verifyLoginOTP,getSliderImages,validateUserPIN,changePassword,changePIN,authenticateUser,getPGWs,deleteUser,getUserBalances,getContactList,getSocialLinks,getMBankList, getDepositLimit,getModalNotices,seenModalNotices,getNotices,validUser,getRegisterSetting,regfeeByTXN,otpGenerateAndSend,verifyRegisterByOTP,getBankNames,getFeedbacksByUser,addFeedback,addAvatar,getUserProfile,toggleNewDevice,getLoginSecurity,enableTwoStep,logout} from '../controllers/user.controller.js';
-//import { 
 import {validateUserRegister,validateUserLogin,validateTopupRequest,validateDriveHit,validateBillRequest,validateBankRequest,validateMbankTransaction,validateUserFeedback,validatePassword,validatePIN,validateUserAuthPIN} from '../validations/user.validation.js';
 import {authAPIUser,authUser,matchUserAuthPIN,authBkash} from '../middlewares/auth.middleware.js';
 import limiter from '../middlewares/rateLimit.js';
@@ -8,6 +7,7 @@ import limiter from '../middlewares/rateLimit.js';
 import {sendMoney,cashin,addBankRequest,getBankHistoryByUser,addBillRequest,requestMbankTransaction,getBillHistoryByUser,getMbankHistoryByUser,getBkashHistory,getDBBLHistory,getNagadHistory} from '../controllers/request.controller.js';
 /*import {getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser} from '../controllers/topup.controller.js';*/import {getTelecomOpts,getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser,getDriveOpts,getDrivesByUser,hitDrive,getDriveHistoryByUser,getRegularOpts,getRegularsByUser} from '../controllers/telecom.controller.js'
 import {depositByUser,addBalanceByUser,depositRequest,getDepositHistoryByUser,getWithdrawHistoryByUser,withdraw/*transferBalance*/,bkashPaymentCreate,bkashCallback,sslc,sslcSuccess,sslcCancel,sslcFail,sslcIPN,getAllGatewayDepositFee} from '../controllers/deposit.controller.js';
+import {uploadDepositScreenshot} from '../middlewares/upload.js'
 
 const router = express.Router();
 
@@ -33,7 +33,7 @@ router.get('/mbank', /*authUser,*/ getMBankList)
 router.get('/bank',authUser,getBankNames)
 router.get('/deposit-info/:level', /*authUser,*/ getDepositLimit);
 router.get('/deposit',authUser,getAllGatewayDepositFee)
-router.post('/deposit',authUser,validateUserAuthPIN,matchUserAuthPIN,depositByUser,depositRequest)
+router.post('/deposit',authUser,validateUserAuthPIN,matchUserAuthPIN,depositByUser,uploadDepositScreenshot.single('screenshot'),depositRequest)
 router.post('/deposit/payment/bkash',authUser,authBkash,bkashPaymentCreate)
 router.post('/deposit/payment/bkash/callback',authUser,authBkash,bkashCallback)
 router.post('/deposit/payment/sslcommerz', authUser, /*validateUserData,*/ sslc);
