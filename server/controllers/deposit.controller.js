@@ -61,7 +61,7 @@ export const depositByUser = async (req, res,next) => {
         //await Deposit.insertOne({txn,user:req.user.username, amount:Number(init.amount), balanceType,createdAt:new Date(),updatedAt:new Date()})
         //await DepositInit.findOneAndDelete(initFilter);
         res.status(201).json({message:'deposit success', success:true});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const getAllGatewayDepositFee = async (req, res,next) => {
@@ -82,7 +82,7 @@ const getExtra = async (level,balanceType,gateway,amount)=>{
     try{
         const admin = await Admin.findOne({role:'admin'});
         let c=admin.deposits.find(d=>d.level==level)?.[balanceType]?.commission?.[gateway]
-        return (Number(amount)*c/100).toFixed(3)
+        return !c ? 0 : (Number(amount)*Number(c)/100).toFixed(3)
     }catch(e) {}
 }
 
@@ -101,7 +101,7 @@ export const addBalanceByAdmin = async (req, res,next) => {
         await User.updateOne({_id:new ObjectId(id)},{$inc:{[`balance.${balanceType}`]:Number(amount)+parseFloat(extra)}});
         await Deposit.insertOne({txn:(new Date()).getTime().toString(16).toUpperCase(),gateway,user:user.username, amount:Number(amount), extra:parseFloat(extra), balanceType,status:'SUCCESS',createdAt:new Date(),updatedAt:new Date()});
         res.status(200).json({message:'deposit successfull' });
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
   //}
@@ -164,7 +164,7 @@ export const deductBalanceByAdmin = async (req, res,next) => {
         await User.updateOne({_id:new ObjectId(id)},{$inc:{[`balance.${balanceType}`]:(-1)*amount}});
         await Deposit.insertOne({txn:(new Date()).getTime().toString(16).toUpperCase(),user:user.username,balanceType,amount:amount*(-1),createdAt:new Date(),updatedAt:new Date()});
         res.status(200).json({message:'balance deducted' });
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const changeDepositStatus = async (req,res,next) =>{
@@ -214,7 +214,7 @@ export const withdraw/*transferBalance*/ = async (req, res, next) => {
         const txn = `${req.user.id}${seconds.toString(16).toUpperCase()}`
         await Withdraw.insertOne({txn,user:req.user.username,gateway,amount:{bkash:bkash-newBkash,dbbl:dbbl-newDbbl,nagad:nagad-newNagad},ref, status:'PENDING', createdAt:new Date(),updatedAt:new Date()})
         res.status(200).json({message:`৳${amount} withdraw request sent`, success:true})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const changeWithdrawStatus = async (req,res,next) =>{
@@ -249,7 +249,7 @@ export const changeWithdrawStatus = async (req,res,next) =>{
     const newBalance = user[balanceType] -= amount;
     await user.save();
     res.status(200).json({ newBalance });
-  }catch(err) {next(err)}
+  }catch(e) {next(e)}
 }*/
 
 
@@ -271,7 +271,7 @@ export const getDepositInit =async (req, res,next) => {
         let depositInits = await DepositInit.find(filter).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({createdAt:-1}).toArray();
         if(!depositInits) return res.status(404).json({error:'Deposit not found'})
         res.status(200).json({depositInits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(err) {next(err)}  
+    }catch(e) {next(e)}  
 }
 
 export const getDepositHistoryByAdmin = async (req, res, next) => {
@@ -292,7 +292,7 @@ export const getDepositHistoryByAdmin = async (req, res, next) => {
         const deposits = await Deposit.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({ createdAt: -1 }).toArray();
         if(!deposits) {return res.status(404).json({ message: 'No deposits found' });}
         res.status(200).json({deposits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const getWithdrawHistoryByAdmin = async (req, res, next) => {
@@ -313,7 +313,7 @@ export const getWithdrawHistoryByAdmin = async (req, res, next) => {
         const withdraws = await Withdraw.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({ createdAt: -1 }).toArray();
         if(!withdraws) {return res.status(404).json({ message: 'No deposits found' });}
         res.status(200).json({withdraws,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -325,7 +325,7 @@ export const depositInit =async (req, res,next) => {
     try{
         await DepositInit.insertOne({txn,gateway,amount,user,status:'PENDING',message:'',createdAt:new Date(),updatedAt:new Date()});
         res.status(201).json({mesage:'txn added',success:true});
-    }catch(err) {next(err)}  
+    }catch(e) {next(e)}  
 }
 
 
@@ -343,7 +343,7 @@ export const getDepositHistoryByUser = async (req, res, next) => {
         const deposits = await /*Transaction*/Deposit.find(filter,{projection:{__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
         if(!deposits) {return res.status(404).json({error:'deposit history not found',success:false});}
         res.status(200).json({deposits,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const getWithdrawHistoryByUser = async (req,res,next) =>{
     const {search,page} = req.query;
@@ -363,7 +363,7 @@ export const deleteDepositHistory = async (req,res,next) =>{
     try{
         let result = await DepositInit.deleteMany({_id:{$in:req.body.map(id=>new ObjectId(id))}},{returnDocument:'after'});
         res.status(200).json({message:`${result.deletedCount} transactions deleted`})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const getBalanceSummary = async (req, res) => {
     try{
@@ -384,7 +384,7 @@ export const getBalanceSummary = async (req, res) => {
       totalBankBalance: 0
     };
     res.status(200).json(summary);
-  }catch(err) {res.status(500).json({ error: 'Server error' });}  
+  }catch(e) {res.status(500).json({ error: 'Server error' });}  
 }
 
 
@@ -413,7 +413,7 @@ export const getTodayDepositSummary = async (req, res) => {
       todayBankDeposit: 0
     };
     res.status(200).json(total);
-  }catch(err) {res.status(500).json({error:'server error'});}
+  }catch(e) {res.status(500).json({error:'server error'});}
 }
 const bkashHeader = async ()=>{
     let admin = await Admin.findOne({role:'admin'});
@@ -438,7 +438,7 @@ export const bkashPaymentCreate = async (req,res) =>{
           merchantInvoiceNumber:`inv${uuidv4().substring(0,8)}`,
         });
         res.status(200).json({bkashURL:data.bkashURL})
-    }catch(err) {res.status(401).json({error:err.message,success:false})}
+    }catch(e) {res.status(401).json({error:err.message,success:false})}
 }
   
   
@@ -495,7 +495,7 @@ export const sslc = async (req,res) =>{
         const apiResponse = await sslcz.init(data);
         if(apiResponse?.GatewayPageURL) return res.status(200).json({url:apiResponse.GatewayPageURL})
         res.status(500).json({error:'payment initiation failed',success:false})
-    }catch(err) {res.status(500).json({error:err.message,success:false})}
+    }catch(e) {res.status(500).json({error:e.message,success:false})}
 };
 
 export const sslcSuccess = async (req,res,next) =>{
@@ -507,7 +507,7 @@ export const sslcSuccess = async (req,res,next) =>{
         await Deposit.insertOne({txn:tran_id,amount,/*extra,balanceType,*/gateway,status:'SUCCESS',user:req.user.username,createdAt:new Date(),updatedAt:new Date()});
         await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$inc:{[`balance.main.${gateway}`]:amount}});
         res.status(200).json({message:'payment success', success:true})
-    }catch(err) {next(err)} 
+    }catch(e) {next(e)} 
     
 }
 export const sslcFail = async (req,res,next) =>{
