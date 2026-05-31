@@ -53,7 +53,7 @@ export default () => {
                         </SecondaryButton>)}
                     </FlexH><ErrorText >{errors?.balanceType}</ErrorText>
                     </div><GapV x='2'/>
-                    <FlexH x='space-around' y='center'>{appData?.mbanks.map(({name},i)=> <SecondaryButton key={i} style={markGateway(name)} onClick={e=>setBalanceData(prev=>({...prev,gateway:name}))}>{/*<input type="radio" name="mb" id={name} value={name} onChange={e=>balanceData.gateway=e.target.value.toLowerCase()}/>*/} </SecondaryButton>)}</FlexH><GapV x='6'/>
+                    <FlexH x='space-around' y='center'>{appData?.mbanks.map(({name},i)=> <SecondaryButton key={i} style={markGateway(name)} onClick={e=>setBalanceData(prev=>({...prev,gateway:name}))}>{/*<input type="radio" name="mb" id={name} value={name} onChange={e=>balanceData.gateway=e.target.value.toLowerCase()}/>*/}{name} </SecondaryButton>)}</FlexH><GapV x='6'/>
         <form onSubmit={handleSubmit}>
                     <div>
                         <InputField style={{width:'100%'}} placeholder='Amount' onChange={e=>setBalanceData(prev=>({...prev,amount:e.target.value}))}/>
