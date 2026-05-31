@@ -9,6 +9,7 @@ import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
 import connectDB from '../config/db.js';
 import socket from '../config/socket.js';
+import cloudinary from '../config/cloudinary.js'
 let Admin,User,Deposit,DepositInit,SocketResponse,Withdraw
 
 
@@ -103,7 +104,6 @@ export const addBalanceByAdmin = async (req, res,next) => {
     }catch(err) {next(err)}
 }
 
-   //যায়নি',success:false})
   //}
   //}
 export const addBalanceByUser = async (req,res,next) =>{
@@ -123,7 +123,7 @@ export const addBalanceByUser = async (req,res,next) =>{
 
 export const depositRequest = async (req,res,next) =>{
     const {txn,gateway,amount,ref} = req.body
-    const screenshot = req.file;console.log(screenshot)
+    const screenshot = req.file;
     try{
         let user = await User.findOne({_id:new ObjectId(req.user.id)});
         if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
@@ -135,8 +135,8 @@ export const depositRequest = async (req,res,next) =>{
         }
         if(screenshot){
             if(screenshot.length>5*1024*1024) return res.status(413).json({error:'max file size is 5MB',success:false});
-            //const base64 = screenshot.buffer.toString('base64');
-            //const dataUri = `data:${screenshot.mimetype};base64,${base64}`;
+            const base64 = screenshot.buffer.toString('base64');
+            const dataUri = `data:${screenshot.mimetype};base64,${base64}`;
             let response = await cloudinary.uploader.upload(dataUri,{
                 folder:'deposits',
                 resource_type:'image',
