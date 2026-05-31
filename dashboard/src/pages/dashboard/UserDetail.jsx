@@ -22,6 +22,8 @@ export default  () =>{
     let services = user?.accesses
 
     useEffect(()=> {
+        /*!user &&*/ fetchUser();
+    },[/*id,user*/])
         const fetchUser = async () => {
             setLoading(true)
             try {
@@ -30,11 +32,9 @@ export default  () =>{
                 if(!res.ok) throw new Error(data.error || 'failed to fetch user');
                 setUser(data)
                 services=data.accesses
-            }catch(err) {toast.error(err.message)}
+            }catch(e) {toast.error(e.message)}
             finally{setLoading(false)}
         }
-        !user && fetchUser();
-    },[/*id,user*/])
     
     /*const deleteUser = async (data,pin) =>{
         /*e.preventDefault()
@@ -64,7 +64,7 @@ export default  () =>{
             services.splice(index,1)
         }
     }*/
-    console.log(user)
+    
     return <div>      <GapV x='3'/>
         <FlexH x='space-between'>
                     
@@ -82,7 +82,7 @@ export default  () =>{
                             <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
                             <IconButton  onClick={e=>initDelete(_id)}><FaTrash/></IconButton>
                         </div><GapV x='4.5'/>
-                        <SwitchItem label='Device Lock' check={user?.device?.lock} identity='lock' handleChange={e=>initToggleDeviceLock(e.target.checked)}/><GapV x='3.5'/>
+                        <SwitchItem label='Device Lock' check={user?.device.lock} identity='lock' handleChange={e=>initToggleDeviceLock(e.target.checked)}/><GapV x='3.5'/>
                         <div>
                             <h5>Devices</h5><GapV x='1'/>
                             <div>{user?.device?.allowed.map((d,i)=> <FlexH x='space-between' y='center' key={i} style={{marginTop:'1.5rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={loading}><FaTrash/></IconButton></FlexH>)}</div>
@@ -90,7 +90,7 @@ export default  () =>{
                     
                     </div><GapV x='5'/>
             </Col>
-                <Col /*xs={12} md={6}*/>
+                <Col><h4>Access Permissions</h4><GapV x='2'/>
             {user?.accesses?.map((a,i)=> <div key={i}>{a}<GapV x='1'/></div>)}
         {/*<Form onSubmit={updateUserAccess}>
             <FlexH x='flex-end' style={{marginTop:'4rem'}}><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner />:'SAVE'}</ThemeButton></FlexH>
