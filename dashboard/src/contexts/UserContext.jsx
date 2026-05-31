@@ -91,12 +91,12 @@ export const UserProvider = ({children}) =>{
         setLoading(true);
         try {
             let res = await fetch(
-                `${url.urlDeposit}/${actionType}/${id}`,
+                `${url.urlDeposit}/${balanceData.actionType}/${id}`,
                 {
                     method: 'PATCH',
                     credentials: 'include',
                     headers: {'Content-Type':'application/json','x-admin-pin':pin},
-                    body: JSON.stringify({amount:parseInt(balanceData.amount),balanceType:balanceData.balanceType.toLowerCase(),gateway:balanceData?.gateway?.toLowerCase()})
+                    body: JSON.stringify({amount:balanceData.amount,balanceType:balanceData.balanceType.toLowerCase(),gateway:balanceData?.gateway?.toLowerCase()})
                 }
             )
             let data = await res.json();
