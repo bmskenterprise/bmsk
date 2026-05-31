@@ -41,7 +41,7 @@ export const changeDepositMethod = async (req,res,next) =>{
 
 export const depositByUser = async (req, res,next) => {
     let {txn,gateway,balanceType,ref} = req.body;
-    //if(/*!userId||*/typeof amount!=='number') return res.status(400).json({ error: 'Invalid input' });
+    //if(/*!userId||*/ isNaN(amount)) return res.status(400).json({ error: 'Invalid Amount' });
     //if(!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({error:'invalid balance type'});
     let initFilter = {txn}
     if(ref) {initFilter.user = ref}
@@ -86,41 +86,6 @@ const getExtra = async (level,balanceType,gateway,amount)=>{
     }catch(e) {}
 }
 
-//admin
-export const addBalanceByAdmin = async (req, res,next) => {
-    const {id} = req.params
-    const {amount,balanceType,gateway} = req.body;
-    let errors = validationResult(req);
-    if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()});
-    if(!id|| isNaN(amount)) {return res.status(400).json({error:'Invalid input'});}
-    if (!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({ error: 'Invalid balance type' });
-    try{
-        const user = await User.findOne({_id:new ObjectId(id)});
-        if(!user) return res.status(404).json({ error: 'User not found' });
-        let extra = await getExtra(user.level,balanceType,gateway,amount)
-        await User.updateOne({_id:new ObjectId(id)},{$inc:{[`balance.${balanceType}`]:Number(amount)+parseFloat(extra)}});
-        await Deposit.insertOne({txn:(new Date()).getTime().toString(16).toUpperCase(),gateway,user:user.username, amount:Number(amount), extra:parseFloat(extra), balanceType,status:'SUCCESS',createdAt:new Date(),updatedAt:new Date()});
-        res.status(200).json({message:'deposit successfull' });
-    }catch(e) {next(e)}
-}
-
-  //}
-  //}
-export const addBalanceByUser = async (req,res,next) =>{
-    const {balanceType,gateway,amount} = req.body
-    try{
-        const user = await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
-        let admin = await Admin.findOne({role:'admin'})
-        let currentLevel = admin.deposits.find(l=>l.level==req.user.level)
-        if(currentLevel[balanceType].min>Number(amount)||currentLevel[balanceType].max<Number(amount)) return res.status(422).json({error:`${balanceType} amount minimum ${currentLevel[balanceType].min} and maximum ${currentLevel[balanceType].max}`,success:false})
-        let factAmount = user.balance.main[gateway]<Number(amount) ? user.balance.main[gateway] : Number(amount);
-        let extra= await getExtra(req.user.level,balanceType,gateway,factAmount);
-        await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.${balanceType}`]:parseFloat(factAmount)+parseFloat(extra),[`balance.main.${gateway}`]:factAmount*(-1)},$set:{lastActiveAt:new Date()}});
-        res.status(200).json({message:'refill success',success:false});
-    }catch(e) {next(e)}
-}
-
 export const depositRequest = async (req,res,next) =>{
     const {txn,gateway,amount,ref} = req.body
     const screenshot = req.file;
@@ -148,6 +113,41 @@ export const depositRequest = async (req,res,next) =>{
         res.status(200).json({message:'wait for admin approval',success:true});
     }catch(e) {next(e)}
 }
+
+//admin
+export const addBalanceByAdmin = async (req, res,next) => {
+    const {id} = req.params
+    const {amount,balanceType,gateway} = req.body;
+    let errors = validationResult(req);
+    if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()});
+    if(!id|| isNaN(amount)) {return res.status(400).json({error:'Invalid Amount'});}
+    if (!['topup','drive','mbank'].includes(balanceType)) return res.status(400).json({ error: 'Invalid balance type' });
+    try{
+        const user = await User.findOne({_id:new ObjectId(id)});
+        if(!user) return res.status(404).json({ error: 'User not found' });
+        let extra = await getExtra(user.level,balanceType,gateway,amount)
+        await User.updateOne({_id:new ObjectId(id)},{$inc:{[`balance.${balanceType}`]:Number(amount)+parseFloat(extra)}});
+        await Deposit.insertOne({txn:(new Date()).getTime().toString(16).toUpperCase(),gateway,user:user.username, amount:Number(amount), extra:parseFloat(extra), balanceType,status:'SUCCESS',createdAt:new Date(),updatedAt:new Date()});
+        res.status(200).json({message:'deposit successfull' });
+    }catch(e) {next(e)}
+}
+
+  //}
+  //}
+export const addBalanceByUser = async (req,res,next) =>{
+    const {balanceType,gateway,amount} = req.body
+    try{
+        const user = await User.findOne({_id:new ObjectId(req.user.id)});
+        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
+        let admin = await Admin.findOne({role:'admin'})
+        let currentLevel = admin.deposits.find(l=>l.level==req.user.level)
+        if(currentLevel[balanceType].min>Number(amount)||currentLevel[balanceType].max<Number(amount)) return res.status(422).json({error:`${balanceType} amount minimum ${currentLevel[balanceType].min} and maximum ${currentLevel[balanceType].max}`,success:false})
+        let factAmount = user.balance.main[gateway]<Number(amount) ? user.balance.main[gateway] : Number(amount);
+        let extra= await getExtra(req.user.level,balanceType,gateway,factAmount);
+        await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.${balanceType}`]:parseFloat(factAmount)+parseFloat(extra),[`balance.main.${gateway}`]:factAmount*(-1)},$set:{lastActiveAt:new Date()}});
+        res.status(200).json({message:'refill success',success:false});
+    }catch(e) {next(e)}
+}
 //admin
 export const deductBalanceByAdmin = async (req, res,next) => {
     const {id} = req.params
@@ -155,8 +155,8 @@ export const deductBalanceByAdmin = async (req, res,next) => {
     let errors = validationResult(req);
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()});
 
-    if(!id||typeof amount!=='number') {return res.status(400).json({ error: 'Invalid input' });}
-    if(!['topup','drive','bank'].includes(balanceType)) {return res.status(400).json({ error: 'Invalid balance type' });}
+    if(!id|| isNaN(amount)) {return res.status(400).json({ error: 'Invalid Amount' });}
+    if(!['topup','drive','mbank'].includes(balanceType)) {return res.status(400).json({ error: 'Invalid balance type' });}
     try{
         const user = await User.findOne({_id:new ObjectId(id)});
         if(!user) return res.status(404).json({error:'user not found'});
@@ -236,10 +236,10 @@ export const changeWithdrawStatus = async (req,res,next) =>{
 
 /*export const deductBalance = async (req, res,next) => {
     const {userId,amount,balanceType} = req.body;
-    if(!userId||typeof amount!=='number') return res.status(400).json({error:'Invalid input'});
+    if(!userId|| isNaN(amount)) return res.status(400).json({error:'Invalid Amount'});
     //return res.status(400).json({ error: 'Invalid input' });
   //}
-  //const validTypes = ['topup','drive', 'bank'];
+  //const validTypes = ['topup','drive', 'mbank'];
     if(!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({ error: 'Invalid balance type' });
     //return res.status(400).json({ error: 'Invalid balance type' });
    try{
