@@ -9,7 +9,7 @@ import {MdEdit,MdAdminPanelSettings,MdPassword} from 'react-icons/md';
 //import {useSocket} from "../../contexts/SocketContext";
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import {ScrollViewV,ScrollViewH,FlexH,GapV,Col,StripedList,ThemeButton,IconButton,InputField,ErrorText,Loader,Spinner} from '../../components/styles/Admin.style';
+import {ScrollViewV,ScrollViewH,FlexH,Col,GapV,GapH,StripedList,ThemeButton,IconButton,InputField,ErrorText,Loader,Spinner} from '../../components/styles/Admin.style';
 import {adminAccess} from '../../../Preferences';
 import dminPIN from '../../components/AdminPIN';
 import SwitchItem from '../../components/Switch';
