@@ -5,7 +5,7 @@ import {authAPIUser,authUser,matchUserAuthPIN,authBkash} from '../middlewares/au
 import limiter from '../middlewares/rateLimit.js';
 //import {getContactMedia} from '../controllers/admin.controller.js';
 import {sendMoney,cashin,addBankRequest,getBankHistoryByUser,addBillRequest,requestMbankTransaction,getBillHistoryByUser,getMbankHistoryByUser,getBkashHistory,getDBBLHistory,getNagadHistory} from '../controllers/request.controller.js';
-/*import {getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser} from '../controllers/topup.controller.js';*/import {getTelecomOpts,getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser,getDriveOpts,getDrivesByUser,hitDrive,getDriveHistoryByUser,getRegularOpts,getRegularsByUser} from '../controllers/telecom.controller.js'
+/*import {getTopupOpts,topup,changeTopupStatus,getTopupHistoryByUser} from '../controllers/topup.controller.js';*/import {getTelecomOpts,getTopupOpts,getTelecomCategories,topup,changeTopupStatus,getTopupHistoryByUser,getDriveOpts,getDrivesByUser,hitDrive,getDriveHistoryByUser,getRegularOpts,getRegularsByUser} from '../controllers/telecom.controller.js'
 import {depositByUser,addBalanceByUser,depositRequest,getDepositHistoryByUser,getWithdrawHistoryByUser,withdraw/*transferBalance*/,bkashPaymentCreate,bkashCallback,sslc,sslcSuccess,sslcCancel,sslcFail,sslcIPN,getAllGatewayDepositFee} from '../controllers/deposit.controller.js';
 import {uploadDepositScreenshot} from '../middlewares/upload.js'
 
@@ -24,6 +24,7 @@ router.patch('/device-lock', authUser, validateUserAuthPIN,matchUserAuthPIN,togg
 router.get('/auth', authUser, authenticateUser);
 router.post('/valid/:username', /*authUser,*/ validUser);
 router.get('/image-slider', authUser,  getSliderImages);
+router.get('/telecom-category',authUser,getTelecomCategories)
 router.patch('/change-password', authUser, validatePassword, limiter, changePassword);
 router.patch('/change-pin', authUser, validatePIN, limiter, changePIN);
 router.get('/balance', authUser, getUserBalances/*, limiter, topupBalance*/);
