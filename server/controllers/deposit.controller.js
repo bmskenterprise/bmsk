@@ -92,7 +92,7 @@ export const addBalanceByAdmin = async (req, res,next) => {
     const {amount,balanceType,gateway} = req.body;
     let errors = validationResult(req);
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()});
-    if(!id||typeof amount!=='number') {return res.status(400).json({error:'Invalid input'});}
+    if(!id|| isNaN(amount)) {return res.status(400).json({error:'Invalid input'});}
     if (!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({ error: 'Invalid balance type' });
     try{
         const user = await User.findOne({_id:new ObjectId(id)});
