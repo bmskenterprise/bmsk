@@ -50,7 +50,7 @@ export const getTopupOpts =async (req, res,next) => {
         let admin = await Admin.findOne({role:'admin'});
         if(!admin) throw new Error('server issue');
         res.status(200).json(admin.topupAccess.sort())
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const getTopupMethod = async (req,res,next) =>{
     try{
@@ -65,7 +65,7 @@ export const changeTopupMethod= async (req,res,next) =>{
     try{
         let result=await Admin.findOneAndUpdate({role:'admin'},{$set:{['methods.topup']:req.params.method}},{returnDocument:'after'})
         res.status(200).json({topupMethod:result.methods.topup,message:'topup method changed'})
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const topup = async (req, res) => {
     const errors = validationResult(req);
@@ -122,10 +122,10 @@ export const topup = async (req, res) => {
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
             return res.status(201).json({message:'topup request sent',success:true})
         }
-    }catch(err) {
+    }catch(e) {
     return res.status(500).json({
       error: "Failed to forward USSD request",
-      details: err.message,success:false
+      details: e.message,success:false
     });
   }
 };
@@ -151,7 +151,7 @@ export const updateTopupTelecomAccess = async (req, res,next) => {
         await Admin.findOneAndUpdate({role:'admin'},{$set:{topupAccess:req.body}})
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{topupOptChanged:true}});
         res.status(200).json({message:'updated successfully'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //admin
@@ -163,7 +163,7 @@ export const getTelecoms = async (req,res,next)=>{
         for(const element of admin.telecom) logos[element.name] =element.icon*/
         let telecoms = admin.telecoms.map(t=>({name:t.name,icon:t.icon,active:t.active}))
         res.status(200).json(telecoms);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 };
 //user
 export const getTelecomOpts = async (req,res) => {
@@ -171,7 +171,7 @@ export const getTelecomOpts = async (req,res) => {
         const admin = await Admin.findOne({role:'admin'});
         if(!admin) res.status(200).json([]);
         res.status(200).json(admin.telecoms.map(t=>({name:t.name,icon:t.icon})))
-    } catch(err) {res.status(200).json([]);} 
+    } catch(e) {res.status(200).json([]);} 
 }
 
 export const getModemRouting = async (req,res,next) =>{
@@ -195,7 +195,7 @@ export const updateModemRouting = async (req,res,next) =>{
         const admin = await Admin.findOne({role:'admin'})
         res.status(200).json({routing:admin.routing,message:'routing updated'})
     //return res.status(400).json({ error:"Missing operator, number, or amount", success:false });
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 /*export const updateModemRouting = async (req,res,next) =>{
     const {airtel,banglalink,gp,robi,teletalk} = req.body
@@ -228,7 +228,7 @@ export const getTopupHistoryByAdmin = async (req,res,next)=>{
         const topups = await Topup.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({createdAt:-1}).toArray();
         if(!topups) return res.status(404).json({error:'No topup history found'});
         res.status(200).json({topups,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
      
 
@@ -280,7 +280,7 @@ export const getAllOptDriveSummary/*Count*/ = async (req, res, next) => {
             return {opt:op,active:admin.driveAccess.includes(op), driveCount:found?found.count:0}
         })
         res.status(200).json(summary);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //call by user
@@ -291,7 +291,7 @@ export const getDriveOpts =async (req, res,next) => {
         //const driveOpts = admin.drive.optAccess.filter(op=>op.access).map(op=>({name:op.name,icon:admin.telecoms.find(t=>t.name==op.name).icon}));
         const driveOpts = admin.driveAccess.sort()//.filter(op=>op.active).map(op=>op.opt);
         res.status(200).json(driveOpts)
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //call by user
@@ -311,7 +311,7 @@ export const hitDrive = async (req, res, next) => {
         await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.drive`]:1}});
 
         res.status(201).json({message:'drive hit success', success:true});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const getDriveHistoryByUser = async (req,res,next) =>{
@@ -325,7 +325,7 @@ export const getDriveHistoryByUser = async (req,res,next) =>{
         let drives = await DriveHit.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
         if(!drives) return res.status(404).json({error:'Drive History Not Found',success:false})
         res.status(200).json({drives,pagination:{currentPage,totalPage:Math.ceil(total/20)}});
-    }catch(err) {next(err)};
+    }catch(e) {next(e)};
 }
   //}
 //call by user
@@ -344,7 +344,7 @@ export const getDrivesByUser = async (req,res,next)=>{
         const drives = await Drive.find(filter,{projection:{active:0,sold:0,expireDate:0,createdAt:0,updatedAt:0,__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!drives) return res.status(404).json({error:'drives not found', success:false});
         res.status(200).json({drives,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 };
 
 export const getDrive = async (req,res,next) =>{
@@ -352,7 +352,7 @@ export const getDrive = async (req,res,next) =>{
         let drive = await Drive.findOne({_id:new ObjectId(req.params.id)},{projection:{__v:0,active:0,expireDate:0,sold:0,createdAt:0,updatedAt:0}});
         if(!drive) return res.status(200).json({error:'drive not found'});
         res.status(200).json(drive);
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 
 //call by admin
@@ -378,7 +378,7 @@ export const getDrivesByAdmin = async (req, res, next) => {
         const drives = await Drive.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!drives) {return res.status(404).json({ error: 'No drives found' });}
         res.status(200).json({drives,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
 
 
@@ -395,7 +395,7 @@ export const addDrive = async (req, res, next) => {
         //const drive = new Drive({id,operator:operator.toLowerCase(),title, price:parseInt(price), commission:parseInt(commission)/*, expireDate*/});
         const currentPack= await Drive.insertOne({id,operator:operator.toLowerCase(),category,title, price:parseInt(price), commission:parseInt(commission),sold:0,active:true, expireDate,createdAt:new Date(),updatedAt:new Date()});
         res.status(201).json({message:'Drive added successfully', drive:currentPack});
-    }catch(err) {next(err)}// (error) {
+    }catch(e) {next(e)}// (error) {
 }
     //}
 
@@ -411,7 +411,7 @@ export const editDrive = async (req, res, next) => {
         const {id} = req.params;
         await Drive.findOneAndUpdate({_id:new ObjectId(id)},{$set: req.body}/*,{new:true}*/);
         res.status(200).json({message:'Drive updated successfully'});
-    }catch(err) {next(err)}// (error) {
+    }catch(e) {next(e)}// (error) {
 }
     //}
 
@@ -424,7 +424,7 @@ export const toggleDriveStatus = async (req, res, next) => {
     try{
         let result=await Drive.updateOne({_id:new ObjectId(req.params.id)},{$set:{active:status}}/*,{new:true}*/);
         res.status(200).json({message:` drive status updated successfully`});
-    }catch(err) {next(err)}// (error) {
+    }catch(e) {next(e)}// (error) {
 }
     //}
 
@@ -436,7 +436,7 @@ export const deleteDrive = async (req, res, next) => {
         const {ids} = req.body;
         let result=await Drive.deleteMany({_id:{$in:ids.map(id=>new ObjectId(id))}});
         res.status(203).json({message:`${result.deletedCount} Drive deleted successfully`});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
     //}
 
@@ -460,7 +460,7 @@ export const getDriveHits = async (req, res, next) => {
         const hits = await DriveHit.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({createdAt:-1}).toArray();
         if(!hits) return res.status(404).json({ error: 'No drives found' });
         res.status(200).json({hits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
     //}
 
@@ -482,7 +482,7 @@ export const changeHitStatus = async (req, res,next) => {
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','drive')
         if(socketId) io.to(socketId).emit('user:status-changed',{title:`Drive Request ${status}`,body:`Recipient:${recipient} Amount:${drive.price}`,url:`${process.env.CLIENT_URL}/drive/history`})
         res.status(200).json({message:`Drive hit status : ${status}`});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
                 //{ $inc: { sold: 1 } }
         //next(err);
@@ -494,7 +494,7 @@ export const getFailedDriveCount = async (req, res, next) => {
         let {failed} =await SocketResponse.findOne({user:req.user.username})//usersSocketConnected[req.userId].failed[0];
         if(failed?.drive>0) res.status(200).json({ failedDriveCount:failed?.drive });
         else res.status(200).json({ failedCount: 0 });
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
 
 
@@ -513,7 +513,7 @@ export const getAllOptRegularSummary/*Count*/ = async (req, res, next) => {
             return {opt:op,active:admin.regularAccess.includes(op),regularCount:found?found.count : 0}
         })
         res.status(200).json(summary);
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 //call by user
@@ -524,7 +524,7 @@ export const getRegularOpts =async (req, res,next) => {
     //const driveOpts = admin.drive.optAccess.filter(op=>op.access).map(op=>({name:op.name,icon:admin.telecoms.find(t=>t.name==op.name).icon}));
     const regularOpts = admin.regularAccess.sort()//.filter(op=>op.active).map(op=>op.opt);
     res.status(200).json(regularOpts)
-  }catch(err) {next(err);}  
+  }catch(e) {next(e);}  
 }
 
 //call by user
@@ -542,14 +542,14 @@ export const getRegularsByUser = async (req,res,next)=>{
         const regulars = await Regular.find(filter,{projection:{active:0,expireDate:0,sold:0,createdAt:0,updatedAt:0,__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!regulars) {return res.status(404).json({error:'regular packs not found', success:false});}  //
         res.status(200).json({regulars,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 };
 export const getRegular = async (req,res,next) =>{
     try{
         let regular = await Regular.findOne({_id:new ObjectId(req.params.id)},{projection:{__v:0,active:0,expireDate:0,sold:0,createdAt:0,updatedAt:0}});
         if(!regular) return res.status(404).json({error:'regular not found'})//);*/
         res.status(200).json(regular);
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 //call by admin
 export const getRegularsByAdmin = async (req, res, next) => {
@@ -574,7 +574,7 @@ export const getRegularsByAdmin = async (req, res, next) => {
         const regulars = await Regular.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
          if(!regulars) {return res.status(404).json({ error: 'No regulars found' });}
         res.status(200).json({regulars,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
     //}
 
@@ -593,7 +593,7 @@ export const addRegular = async (req, res, next) => {
         //const regular = new Regular({id,operator:operator.toLowerCase(),title, price:parseInt(price)/*, expireDate*/, });
         const currentPack= await Regular.insertOne({id,operator:operator.toLowerCase(),category,title, price:parseInt(price),sold:0,active:true,expireDate,createdAt:new Date(),updatedAt:new Date()});
         res.status(201).json({message:'Regular created successfully', regular:currentPack});
-    }catch(err) {next(err)}// (error) {
+    }catch(e) {next(e)}// (error) {
 }
         //console.error(error);
     //}
@@ -610,9 +610,8 @@ export const editRegular = async (req, res, next) => {
         const {id} = req.params;
         await Regular.findOneAndUpdate({_id:new ObjectId(id)},{$set: req.body}/*,{new:true}*/);
         res.status(200).json({message:'Regular updated successfully'});
-    }catch(err) {next(err)}// (error) {
+    }catch(e) {next(e)}// (error) {
 }
-        //console.error(error);
     //}
 
 
@@ -624,7 +623,7 @@ export const toggleRegularStatus = async (req, res, next) => {
     try {
         let result=await Regular.updateOne({_id:new ObjectId(req.params.id)},{$set:{active:status}}/*,{new:true}*/);
         res.status(200).json({message:` regular status updated successfully`});
-    }catch(err) {next(err)}// (error) {
+    }catch(e) {next(e)}// (error) {
 }
     //}
 
@@ -636,7 +635,7 @@ export const deleteRegular = async (req, res, next) => {
         const {ids} = req.body;
         let result=await Regular.deleteMany({_id:{$in:ids.map(id=>new ObjectId(id))}});
         res.status(203).json({message:`${result.deletedCount} regular deleted successfully`});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 export const getAllTelecomAccess = async (req,res,next) =>{
     try{
@@ -650,14 +649,14 @@ export const getFailedRegularCount = async (req, res, next) => {
         let {failed} = await SocketResponse.findOne({user:req.user.username})//usersSocketConnected[req.userId].failed[0];
         if(failed?.regular>0) res.status(200).json({ failedRegularCount:failed?.regular });
         else res.status(200).json({failedCount:0});
-    }catch(err) {next(err)}// (err) {
+    }catch(e) {next(e)}// (err) {
 }
 export const updateDriveTelecomAccess = async (req, res,next) => {
     try {
         await Admin.findOneAndUpdate({role:'admin'},{$set:{driveAccess:req.body}})
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{driveOptChanged:true}})
         res.status(200).json({message:'drive opt access updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 export const updateRegularTelecomAccess = async (req,res,next) =>{
@@ -665,23 +664,25 @@ export const updateRegularTelecomAccess = async (req,res,next) =>{
         await Admin.findOneAndUpdate({role:'admin'},{$set:{regularAccess:req.body}})
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{regularOptChanged:true}})  //
         res.status(200).json({message:'regular opt access updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
-        //res.status(200).json({ failedCount: 0 });
     //}
-
+//user
+export const getTelecomCategories = async (req,res,next) =>{
+    try{
+        const admin = await Admin.findOne({role:'admin'});
+        res.status(200).json(admin.telecomCategories);
+    }catch(e) {next(e)}
+}
 /*const seenFailedDriveCount = async (req, res, next) => {
-    try {
+    try{
         usersSocketConnected[req.userId].failed[2] = 0;
     }catch (err) {
         userSocketConnected[req.userId].failed[2] = 0;
     }
 }*/
-/*export {
-    getDrivesByUser,
-    getDrivesByAdmin,
+    /*getDrivesByUser,
     createDrive,
     editDrive,
     toggleDriveStatus,
-    deleteDrive,getDriveHits,updateHitStatus,driveCount,getFailedDriveCount,seenFailedDriveCount
-}*/
+    deleteDrive,getDriveHits,updateHitStatus,driveCount,getFailedDriveCount,seenFailedDriveCount*/
