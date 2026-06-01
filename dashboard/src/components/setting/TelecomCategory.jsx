@@ -43,7 +43,7 @@ export default  () =>{
                 method: 'PATCH',
                 credentials: 'include',
                 headers: { 'Content-Type':'application/json' },
-                body: JSON.stringify({category:telecomCategory.category,active:true})
+                body: JSON.stringify({category:telecomCategory.category.toLowerCase(),active:true})
             })
             let data = await res.json()
             if(!res.ok) throw new Error(data.error||'failed to add telecom category')
@@ -60,7 +60,7 @@ export default  () =>{
                 method: 'PATCH',
                 credentials: 'include',
                 headers: { 'Content-Type':'application/json' },
-                body: JSON.stringify({category,active})
+                body: JSON.stringify({category:category.toLowerCase(),active})
            })
            let data = await res.json()
            if(!res.ok) throw new Error(data.error||'failed to edit telecom category')
@@ -97,8 +97,8 @@ export default  () =>{
                 <ScrollViewV style={{maxHeight:'32rem'}}>{!editMode&&<FlexH x='space-between' y='center' ref={categoriesRef}>
                     <FlexH x='flex-end' style={{width:'100%'}}><PrimaryButton onClick={e=>{setEditMode(true);setTelecomCategory(init)}}><BsPlusLg/></PrimaryButton></FlexH>
                     {categories?.map(({_id,category,active}) => <FlexH x='space-between' y='center' key={_id} style={{width:'100%'}}>
-                        <div>{category}</div>
-                      <FlexH x='space-between' y='center' style={{width:'40%'}}>
+                       <div style={{textTransform:'capitalize'}}>{category}</div>
+                      <FlexH x='space-between' y='center' style={{width:'35%'}}>
                             <SwitchItem  check={active} handleChange={e=>editTelecomCategory(_id,undefined,e.target.checked)} />
                             <IconButton onClick={e=> {setEditMode(true);setTelecomCategory({id:_id,category})}}><FaPen /></IconButton>
                             <IconButton onClick={e=>deleteTelecomCategory(_id)}><FaTrash /></IconButton>
