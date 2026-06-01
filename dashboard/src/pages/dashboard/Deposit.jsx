@@ -35,7 +35,7 @@ export default  () =>{
             if(!res.ok) throw new Error(data.error ||'');
             setFormData (data);
             setDepositSettings(data);
-        }catch(err) {toast.error(err.message)}
+        }catch(e) {toast.error(e.message)}
     }
     
     const onSave = (e) => {
@@ -55,8 +55,8 @@ export default  () =>{
             })
             let data = await res.json();
             if(!res.ok) throw new Error(data.error ||'failed to save');
-            toast.success('saved');
-        }catch(err) {toast.error(err.message)}
+            toast.success(data.message||'saved');
+        }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }
     
@@ -71,7 +71,7 @@ export default  () =>{
     
     return <div style={{width:'100%',height:'100%'}}>{/*<div style={{width:'100rem'}}>*/}
         <form>
-            <FlexH x='space-between' style={{width:'32rem'}}>
+            <FlexH x='space-between' style={{width:'100%',maxWidth:'32rem'}}>
                 <div><SwitchItem check={depositMethod=='manual'} label='manual' v='manual' identity='manual' handleChange={changeDepositMethod}/></div>
                 <div><SwitchItem check={depositMethod=='auto'} label='auto' v='auto' identity='auto' handleChange={changeDepositMethod}/></div>
             </FlexH>
@@ -82,7 +82,7 @@ export default  () =>{
                     <thead><TR>{['level',...Object.keys(formData[0]?.fee??{})]?.map((f,i)=> <TH key={i} style={{marginRight:'1rem'}}>{f}</TH>)}</TR></thead>
                     <tbody>{formData.map(({level,fee},ind)=> <TR key={ind}>
                         <TD>{level}</TD>
-                        {Object.keys(fee).map((mb,i)=> <TD key={i}><NumberField x='4' onChange={e=>setFormData(prev=>prev.map((l,index)=> ind==index?({...l,fee:{...prev[index].fee,[mb]:Number(e.target.value)}}):l))} style={{padding:'0.5rem',border:'0',outline:'0'}} value={fee[mb]}/>{}</TD>)}
+                        {Object.keys(fee).map((mb,i)=> <TD key={i}><NumberField x='4' onChange={e=>setFormData(prev=>prev.map((l,index)=> ind==index?({...l,fee:{...prev[index].fee,[mb]:e.target.value}}):l))} style={{padding:'0.5rem',border:'0',outline:'0'}} value={fee[mb]}/>{}</TD>)}
                     </TR>)} 
                     </tbody>
                 </Table>
@@ -134,6 +134,6 @@ export default  () =>{
             </tbody></Table>
             </ScrollViewH>
             <GapV x='2'/><FlexH x='flex-end' y='center' /*style={{position:'sticky',bottom:'2rem',right:'2rem'}}*/><ThemeButton type='submit' disabled={loading}>{loading?<Spinner />:'SAVE'}</ThemeButton></FlexH>
-        </form>
+        </form><GapV x='6'/>
         {/*</div>*/}</div>
 }
