@@ -3,7 +3,7 @@ import {useMediaQuery} from 'react-responsive'
 import {toast} from 'react-toastify'
 import {BsPlusLg} from 'react-icons/bs' //
 import {useTheme} from '../../contexts/ThemeContext'
-import {Col,FlexH,GapV,GapH,Field,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapV,GapH,Field,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
 import {validateMBank} from '../../utils/validate';
 import url from '../../config/url'
 import Accordion from './Accordion'
@@ -94,11 +94,11 @@ export default ()=>{
       <FlexH x='flex-end'><ThemeButton type='submit'>ADD</ThemeButton></FlexH>
     </form>
     :<div>
-      <FlexH x='flex-end'><PrimaryButton onClick={e=>setAddInit(true)}><BsPlusLg/></PrimaryButton></FlexH><GapV x='2'/>
+      <FlexH x='flex-end'><PrimaryButton onClick={e=>setAddInit(true)}><BsPlusLg/></PrimaryButton><GapH x='1'/></FlexH><GapV x='2.5'/>
       <form onSubmit={handleSubmit}>
         {mobileBanks?.map(({_id,name,icon,account,active},i)=><FlexH x='space-between' y='center' key={i} style={{marginBottom:'2rem'}}>
-          <div style={{width:'20%'}}><TinyIcon src={icon} alt={name}/></div>
-        <FlexH x='flex-end' y='center' style={{width:'70%'}}>
+          <div style={{width:'15%'}}><TinyIcon src={icon} alt={name}/></div>
+        <FlexH x='flex-end' y='center' style={{width:'75%'}}>
           <div> <Field x='18' name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
           <ErrorText>{errors?.name}</ErrorText></div><GapH x='1.5'/>
         <SwitchItem check={active} handleChange={e=>changeStatus(_id,e.target.checked)}/>
