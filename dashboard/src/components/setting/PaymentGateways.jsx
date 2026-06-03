@@ -31,16 +31,20 @@ export default  () =>{
               setPGW(data)
         }catch(e) {toast.error(e.message)}
     }
-        //   catch(err){  toast.error(err.message)}
                   
                   
                   
                   
-                  
+              const selectIcon = e =>{
+        const file = e.target.files[0];
+        if(file && file.type.startsWith('image/')) {
+         let reader = new FileReader()
+        reader.onloadend = e => setEditInit(prev=>({...prev,link:reader.result}))
+        }
+    }
                   
                     
                     
-            
     const addPGW = async (pgwData) => {
         //const dataPGW=/*[*/{name:e.target[0].value.trim(), merchantID:e.target[1].value.trim(), apiKey:e.target[2].value.trim(), apiPassword:e.target[3].value.trim()}//] = [e.target[0].value.trim(),e.target[1].value.trim(),e.target[2].value.trim(),e.target[3].value.trim()];
         //if (!(title)) validationErrors.title = 'gateway name is required';
@@ -60,7 +64,7 @@ export default  () =>{
             let data = await res.json()
             if(!res.ok) throw new Error(data.error||'failed to add pgw');
             toast.success('payment gateway added');setEditInit({})
-        }catch(err) { toast.error(err.message)}
+        }catch(e) { toast.error(e.message)}
         finally{setLoading(false);setErrors({})}
     }
     
@@ -77,19 +81,16 @@ export default  () =>{
             )
             let data = await res.json()
             if(!res.ok) throw new Error(data.error);toast.success('toggled');
-        }catch(err) {toast.error(err.message)}
+        }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }*/
-    
 
 
     const editPGW = async (id,modifiedFields) => {
         //const validationErrors = validateEditPGW(pgws,modifiedFields);
-        //const modifiedFields = {};
         //const [merchantID, merchantPassword, apiKey, ] = [e.target[0].value.trim(),e.target[1].value.trim(),e.target[2].value.trim()/*,e.target[3].value.trim()*/];
         //else if(pgws.some(pgw=>pgw.name==title)) validationErrors.title = 'gateway name is already exist';
         //if (Object.keys(validationErrors).length) return setErrors(validationErrors);
-        //if(title!==editInit.name) modifiedFields.name = title;
         //if(apiKey && apiKey!=editInit.apiKey) modifiedFields.apiKey = apiKey;
         //if(isActive!=editInit.isActive) modifiedFields.isActive = isActive;
         if(!Object.keys(modifiedFields).length) return
@@ -105,7 +106,7 @@ export default  () =>{
             let data = await res.json()
             if(!res.ok) throw new Error(data.error || ' failed');setGateways(data.pgws)
              toast.success('edited');setEditInit({})
-        }catch(err) { toast.error(err.message)}
+        }catch(e) { toast.error(e.message)}
         finally{setLoading(false);setErrors({})}
     }
     const handleChange = (e)=> setEditInit(prev=>({...prev,[e.target.name]:e.target.value}))
@@ -127,9 +128,9 @@ export default  () =>{
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
         <h4>PGW</h4><GapV x='2'/>
         {!Object.keys(editInit).length>0 &&<>
-            <FlexH x='flex-end'><PrimaryButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></PrimaryButton></FlexH><GapV x='2'/>    
+            <FlexH x='flex-end'><PrimaryButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></PrimaryButton><GapH x='1'/></FlexH><GapV x='2'/>   
             <div /*style={{border:'none'}}*/>
-                {gateways?.map(({_id,name,icon,merchantID,active}) => <FlexH key={_id} style={{marginBottom: '2rem!important'}}>
+                {gateways?.map(({_id,name,icon,merchantID,active}) => <FlexH key={_id} style={{marginBottom: '3rem!important'}}>
                     <div style={{width:'65%'}}><TinyIcon src={icon}/><GapH x='1'/>{name}</div>
                     <FlexH x='flex-end' y='center' style={{width:'30%'}}>
                        <IconButton size='1.5' onClick={()=>setEditInit({id:_id,name,merchantID})}><MdEdit/></IconButton>
@@ -146,7 +147,7 @@ export default  () =>{
             </div><GapV x='2'/>
             <div /*x='flex-start' y='flex-start'*/>
                 <label>Gateway Icon</label>
-                <InputField name='icon' value={editInit.icon} onChange={handleChange}/>
+                <InputField type='file' accept='.jpg, .jpeg, .png, .webp' onChange={selectIcon}/>
                 <ErrorText>{errors?.icon}</ErrorText>
             </div><GapV x='2'/>
             <div /*x='flex-start' y='flex-start'*/>
@@ -171,7 +172,7 @@ export default  () =>{
                     <div><input type="radio" name="pgw" id="live" /><label htmlFor="live">production</label></div>
                 </FlexH>
             </Form.Group> */}
-            <FlexH x='flex-end' y='center'><button onClick={e=>setEditInit({})}>CANCEL</button><ThemeButton type='submit' style={{marginLeft:'2rem'}} disabled={loading}>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH><GapV x='2'/>
+            <GapV x='3'/><FlexH x='flex-end'><button onClick={e=>setEditInit({})}>CANCEL</button><GapH x='2'/><ThemeButton type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH><GapV x='2'/>
         </form>}
            <GapV x='4'/>
     </div>
