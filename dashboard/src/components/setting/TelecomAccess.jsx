@@ -131,7 +131,7 @@ export default   () =>{
             {/*</Col></FlexH>*/}
             <form onSubmit={modifyTopupTelecomAccess}>
                 <div>
-                    {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedTopupAccess?.includes(opt)} identity={`topup-${opt}`} handleChange={e=>toggleTopupAccess(e.target.checked,opt)}/></FlexH>)}
+                    {opts?.map((opt,i) => <div /*x='space-between' y='center'*/ style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedTopupAccess?.includes(opt)} identity={`topup-${opt}`} handleChange={e=>toggleTopupAccess(e.target.checked,opt)}/></div>)}
                     {/*switchTopup&& <Stack/>*/}
                 </div>
                       <FlexH x='flex-end' y='center'><ThemeButton  type="submit">{loading?<Spinner  size="1"/>:'SAVE'}</ThemeButton></FlexH>
@@ -143,7 +143,7 @@ export default   () =>{
                     <h5 style={{marginBottom: '2rem'}}>Drive Pack Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchDrivePack(e.target.checked)}/>*/}
                 </FlexH>
                 <div style={{position: 'relative'}}>
-                    {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedDriveAccess?.includes(opt)} identity={`drive-${opt}`} handleChange={e=>toggleDriveAccess(e.target.checked,opt)}/></FlexH>)}
+                    {opts?.map((opt,i) => <div /*x='space-between' y='center'*/ style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedDriveAccess?.includes(opt)} identity={`drive-${opt}`} handleChange={e=>toggleDriveAccess(e.target.checked,opt)}/></div>)}
                     {/*switchDrivePack&& <Stack></Stack>*/}
                 </div>
                 <FlexH x='flex-end' y='center'><ThemeButton type='submit'>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH>             
@@ -155,7 +155,7 @@ export default   () =>{
                     <h5 style={{marginBottom: '2rem'}}>Regular Pack Permission</h5>{/*<Form.Check type='switch' onInput={e=>setSwitchRegularPack(e.target.checked)}/>*/}
                 </FlexH>
                 <div>
-                    {opts?.map((opt,i) => <FlexH x='space-between' y='center' style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedRegularAccess?.includes(opt)} identity={`regular-${opt}`} handleChange={e=>toggleRegularAccess(e.target.checked,opt)}/></FlexH>)}
+                    {opts?.map((opt,i) => <div /*x='space-between' y='center'*/ style={{minWidth:'30%',marginBottom:'1rem'}} key={i}> <SwitchItem label={opt} check={modifiedRegularAccess?.includes(opt)} identity={`regular-${opt}`} handleChange={e=>toggleRegularAccess(e.target.checked,opt)}/></div>)}
                     {/*switchRegularPack&& <Stack/>*/}
                 </div>
                 <FlexH x='flex-end' y='center'><ThemeButton type='submit'>{loading?<Spinner size='1'/>:'SAVE'}</ThemeButton></FlexH>
