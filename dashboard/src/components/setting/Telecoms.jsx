@@ -5,7 +5,7 @@ import {BsPlusLg} from 'react-icons/bs';
 import {toast} from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext';
 import {useTelecom} from '../../contexts/TelecomContext'
-import {Col,FlexH,GapV,TelecomCard,TelecomLogo,TelecomOverlay,AddButton,InputField,ErrorText,ThemeButton,IconButton,Spinner} from '../styles/Admin.style';
+import {Col,FlexH,GapV,GapH,TelecomCard,TelecomLogo,TelecomOverlay,AddButton,InputField,ErrorText,ThemeButton,IconButton,Spinner} from '../styles/Admin.style';
 //import validURL from "../../utils/validURL";
 import {validateTelecom} from '../../utils/validate';
 import Accordion from './Accordion'
@@ -27,16 +27,18 @@ export default  () =>{
     const selectLogo = e =>{
         const file = e.target.files[0];
         const url = URL.createObjectURL(file);
-        const img = new Image(validationErrors);
-        img.onload = e => {
-            if(img.naturalWidth!=img.naturalHeight) toast.error('logo should be a square');
-            URL.revokeObjectURL(url)
-        }
-        //if(initData.name==newName&&initData.icon==icon)return toast.success('')
         if(file && file.type.startsWith('image/')) {
-            let reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onloadend = e => setInitData(prev=>({...prev,icon:reader.result}));
+           const img = new Image();
+           img.onload = e => {
+               if(img.naturalWidth!=img.naturalHeight) toast.error('logo should be a square');
+               else{
+                  let reader = new FileReader();
+                  reader.readAsDataURL(file);
+                  reader.onloadend = e => setInitData(prev=>({...prev,icon:reader.result}));
+               }
+                  URL.revokeObjectURL(url)
+           }
+           img.src = url
         }
     }
             /*const fetchTelecoms= async ()=>{
@@ -108,18 +110,18 @@ export default  () =>{
             {/*formInit &&<SimForm stateHandler={config} hideForm={e=>setEditInit(false)} />*/}
             {formInit ?<form onSubmit={handleSubmit}>
                         <div /*x='flex-start' y='flex-start'*/>
-                            {/*<Form.Label>Telecom Name</Form.Label>*/}
-                            <InputField type='text' placeholder='telecom name' value={initData.name} onChange={e=>setInitData({...initData,name:e.target.value})}  />
+                            <label htmlFor='tname'>Telecom Name</label>
+                            <InputField id='tname' placeholder='telecom name' value={initData.name} onChange={e=>setInitData({...initData,name:e.target.value})}  />
                             <ErrorText>{errors?.name}</ErrorText>
-                        </div><GapV x='1'/>
+                        </div><GapV x='1.5'/>
                         <div /*x='flex-start' y='flex-start'*/>
-                            {/*<Form.Label>Logo URL</Form.Label>*/}
-                            <InputField type='file' accept='.jpg, .jpeg, .png, .webp' onChange={selectLogo}  />
+                            <label htmlFor='logo'>Logo URL</label>
+                            <InputField type='file' accept='.jpg, .jpeg, .png, .webp' onChange={selectLogo} id='logo' />
                             <ErrorText>{errors?.icon}</ErrorText>
-                        </div><GapV x='1'/>
+                        </div><GapV x='3'/>
                         <FlexH x='flex-end' y='center'>
                             <button onClick={e=>setFormInit(false)}>CANCEL</button>
-                            {/*loading?<Button><Spinner animation="border" size="sm"></Spinner></Button>:<FlexH x='flex-end' y='center'>*/}<ThemeButton type='submit' style={{marginLeft:'2rem'}} disabled={loading}>{loading?<Spinner  size='1'/>:initData.id?'EDIT':'ADD'}</ThemeButton>{/*</FlexH>*/}
+                            {/*loading?<Button><Spinner animation="border" size="sm"></Spinner></Button>:<FlexH x='flex-end' y='center'>*/}<GapH x='2'/><ThemeButton type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:initData.id?'EDIT':'ADD'}</ThemeButton>{/*</FlexH>*/}
                         </FlexH>
                     </form>
              :<FlexH x='space-between' y='flex-start'>{/*<table>
