@@ -11,12 +11,13 @@ import SwitchItem from '../Switch';
 
 export default ()=>{
     const isMobile = useMediaQuery({maxWidth:768})
+    const {modeData:{backSecondary,textSecondary}} = useTheme();
     const [mobileBanks,setMobileBanks] = useState([]);
     const [modified,setModified] = useState([]);
     const [errors,setErrors] = useState({});
     const [loading,setLoading] = useState(false);
-    const {modeData:{backSecondary,textSecondary}} = useTheme();
     const [addInit,setAddInit] = useState(false)
+    const [icon,setIcon] = useState('')
     let mbanks
     
     useEffect(()=>{fetchMBanks();},[])
@@ -32,7 +33,32 @@ export default ()=>{
         }catch(e) {toast.error(e.message)}
     }
               
+    const selectLogo = e =>{
+        const file = e.target.files?.[0]
+        if(file&&file.type.startsWith('image/')) {
+            let img = new Image();
+            const url = URL.createObjectURL(file)
+            img.onload = e => {
+                if(img.naturalWidth!=img.naturalHeight) toast.error('logo sould be a square')
+                else {
+                    let reader = new FileReader();
+                    reader.readAsDataURL(file)
+                    reader.onloadend = e => setIcon(reader.result);
+                }
+            }
+            img.src = url
+        }
+    }
                   
+  const changeAccount=(id,value) =>{
+    setMobileBanks(prev=>prev.map(b=>b._id==id?{...b,account:value.trim()}:b))
+    setModified(prev=> prev.find(b=>b._id==id) ? prev.map(b=>b._id==id?{...b,account:value.trim()}:b) : [...prev,{_id:id,account:value.trim()}])
+  }
+  const changeStatus=(id,status) =>{
+    setMobileBanks(prev=> prev.map(b=>b._id==id?{...b,active:status}:b))
+    setModified(prev=> prev.find(b=>b._id==id) ? prev.map(b=>b._id==id?{...b,active:status}:b) : [...prev,{_id:id,active:status}])
+  }
+  
   const changeMbank = async (formData) =>{
     setLoading(true);
     try{
@@ -48,22 +74,6 @@ export default ()=>{
     }catch(err) {toast.error(err.message)}
     finally {setLoading(false)}
   }
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if(JSON.stringify(modified)==JSON.stringify(mbanks)) {toast.info('No changes made');return}
-    //let validationErrors = validateMBanks(modified.map(mb=>({name:mb.name,account:mb.account})))
-    //if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
-    changeMbank(modified)
-  }
-  const changeAccount=(id,value) =>{
-    setMobileBanks(prev=>prev.map(b=>b._id==id?{...b,account:value.trim()}:b))
-    setModified(prev=> prev.find(b=>b._id==id) ? prev.map(b=>b._id==id?{...b,account:value.trim()}:b) : [...prev,{_id:id,account:value.trim()}])
-  }
-  const changeStatus=(id,status) =>{
-    setMobileBanks(prev=> prev.map(b=>b._id==id?{...b,active:status}:b))
-    setModified(prev=> prev.find(b=>b._id==id) ? prev.map(b=>b._id==id?{...b,active:status}:b) : [...prev,{_id:id,active:status}])
-  }
-  
     const addMbank = async (e) =>{e.preventDefault()
       let formData={name:e.target.name.value.trim(),icon:e.target.icon.value.trim()}
       const validationResult = validateMBank(formData)
@@ -72,12 +82,19 @@ export default ()=>{
         let res = await fetch(url.urlMBank,{
           method:'POST',credentials:'include',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({name:e.target.name.value.trim(),icon:e.target.icon.value.trim()})
+          body:JSON.stringify({name:e.target.name.value.trim(),icon})
         })
         let data = await res.json()
         if(!res.ok) throw new Error(data.message);
         setAddInit(false);setMobileBanks(data.mbanks)
       }catch(e) {toast.error(e.message)}
+    }
+    const handleSubmit = (e) => {
+      e.preventDefault()
+      if(JSON.stringify(modified)==JSON.stringify(mbanks)) {toast.info('No changes made');return}
+      //let validationErrors = validateMBanks(modified.map(mb=>({name:mb.name,account:mb.account})))
+      //if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
+      changeMbank(modified)
     }
     
   let content= <div style={{background:backSecondary,color:textSecondary}}>
@@ -88,7 +105,7 @@ export default ()=>{
         <ErrorText>{errors?.name}</ErrorText>
       </div><GapV x='2'/>
       <div>
-        <InputField name='icon' placeholder='Icon'/>
+        <InputField type='file' accept='.jpg, .jpeg, .png, .webp' onChange={selectLogo}/>
         <ErrorText>{errors?.icon}</ErrorText>
       </div><GapV x='3'/>
       <FlexH x='flex-end'><ThemeButton type='submit'>ADD</ThemeButton></FlexH>
@@ -104,7 +121,7 @@ export default ()=>{
         <SwitchItem check={active} handleChange={e=>changeStatus(_id,e.target.checked)}/>
         </FlexH>
         </FlexH>)}
-        <FlexH x='flex-end' y='center'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'Save Changes'}</ThemeButton></FlexH><GapV x='4'/>
+        <GapV x='3'/><FlexH x='flex-end'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner size='1'/>:'Save '}</ThemeButton></FlexH><GapV x='4'/>
       </form>
     </div>}
   </div>
