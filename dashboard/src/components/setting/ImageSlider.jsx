@@ -5,7 +5,7 @@ import {BsPlusLg} from 'react-icons/bs'
 import {FaPen,FaTrash} from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
-import {Col,FlexH,FlexV,GapV,ScrollViewV,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapV,GapH,ScrollViewV,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
 import url from '../../config/url';
 import Accordion from './Accordion';
 import validURL from '../../utils/validURL';
@@ -17,30 +17,32 @@ export default  () =>{
     const isMobile = useMediaQuery({ maxWidth: 768 });
     let [imagesRef,linkRef]=[useRef(null),useRef(null)];
     const [images,setImages] = useState([]);
-        const [image,setImage] = useState(init);
-        const [editMode,setEditMode] = useState(false);
-        const {modeData:{backSecondary,textSecondary}} = useTheme();
-    const [loading,setLoading]=useState(false)
-const [linkError,setLinkError]=useState('');
-const [hover,setHover]=useState(false);
+    const [loading,setLoading] = useState(false); const [image,setImage] = useState(init);
+    const [linkError,setLinkError] = useState(''); const [editMode,setEditMode] = useState(false);
+    const [hover,setHover] = useState(false); const {modeData:{backSecondary,textSecondary}} = useTheme();
+ 
+ 
     useEffect(()=> {fetchSlides()},[])
+     
     const fetchSlides = async e=>{
         try{
             let res = await fetch(url.urlImageSlider,{credentials:'include'})
             let data = await res.json()
-            if(!res.ok) throw new Error('failed slide images')
+            if(!res.ok) throw new Error('failed to fetch slide images')
             setImages(data);
         }catch(e) {toast.error(e.message)}
     }
-          
-        
       
-          
+    const selectImage = e =>{
+        let file = e.target.files[0]
+        if(file && file.type.startsWith('image'){
+            let reader = new FileReader();
+            reader.readAsDataURL(file)
+            reader.onloadend = e => setImage(prev=>({...prev,link:reader.result}))
+        }
+    }
         //let [token, admin] = [localStorage.getItem('token'), localStorage.getItem('admin')]
-        /*navigate('/login')*/
-            /*let linkText = linkRef.current.value;
-            if(validURL(linkText.trim()))return setLinkError('');
-            if(images.some(l=>l.link==linkText))return setLinkError('link already exists');*/
+            //if(validURL(linkText.trim()))return setLinkError('');
     const addImageLink = async () =>{// =async e=>{
         setLoading(true)
         try{
@@ -54,7 +56,7 @@ const [hover,setHover]=useState(false);
             if(!res.ok) throw new Error(data.error||'failed to add image link')
             setImages(data.slides);
             toast.success(data.message)
-        }catch(err) {toast.error(err.message)}//   .catch(err => toast.error('failed to add image link'))
+        }catch(e) {toast.error(e.message)}//   .catch(err => toast.error('failed to add image link'))
         finally{setLoading(false);setImage(init);setEditMode(false)}//    .finally(()=>setLoading(false))
     };    
 
@@ -70,7 +72,7 @@ const [hover,setHover]=useState(false);
            let data = await res.json()
            if(!res.ok) throw new Error(data.error||'failed to update image link')
            setImages(data.slides)
-        }catch(err) {toast.error(err.message)}//  .catch(err => toast.error('failed to update image link'))
+        }catch(e) {toast.error(e.message)}//  .catch(err => toast.error('failed to update image link'))
         finally{setLoading(false);setImage(init);setEditMode(false)}//   .finally(()=>{setLoading(false);setEditMode(false)})
     };
 
@@ -135,8 +137,8 @@ const [hover,setHover]=useState(false);
                 </FlexH>}
                 {editMode && <form onSubmit={handleSubmit}>
                     <div  >
-                        <FlexV x='flex-start' y='flex-start'>  <InputField style={{width:'100%'}} value={image.link} placeholder='image link' onChange={e=>setImage({...image,link:e.target.value})}/><span style={{color:'red'}}>{linkError}</span></FlexV><GapV x='1'/>
-                        <FlexH x='flex-end'><button type='button' onClick={e=>setEditMode(false)}>CANCEL</button>  <ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
+                        <div><InputField type='file' style={{width:'100%'}} accept='.jpg, .jpeg, .png, .webp'   onChange={selectImage}/><span style={{color:'red'}}>{linkError}</span></div><GapV x='2'/>
+                        <FlexH x='flex-end'><button type='button' onClick={e=>setEditMode(false)}>CANCEL</button><GapH x='2'/> <ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
                     </div>
                 </form>}</ScrollViewV>
             {/*</div>*/}
