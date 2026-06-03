@@ -21,12 +21,25 @@ export default  () =>{
     const [modified,setModified] = useState(telecoms);
         const [initData, setInitData] = useState(init);
         const [formInit, setFormInit] = useState(false);
-        const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState(false);
     let telecomData = {};  
        
-        /*useEffect(()=>{
-            const fetchTelecoms= async ()=>{
+    const selectLogo = e =>{
+        const file = e.target.files[0];
+        const url = URL.createObjectURL(file);
+        const img = new Image(validationErrors);
+        img.onload = e => {
+            if(img.naturalWidth!=img.naturalHeight) toast.error('logo should be a square');
+            URL.revokeObjectURL(url)
+        }
+        //if(initData.name==newName&&initData.icon==icon)return toast.success('')
+        if(file && file.type.startsWith('image/')) {
+            let reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = e => setInitData(prev=>({...prev,icon:reader.result}));
+        }
+    }
+            /*const fetchTelecoms= async ()=>{
                 try{
                     setLoading(true)
                     let res = await fetch(telecomURL)
@@ -36,25 +49,18 @@ export default  () =>{
                     setTelecoms(data);
                     localStorage.setItem('opts',JSON.stringify(data));
                 }catch(err) { toast.error(err.message)}
-                finally{setLoading(false)}
-            }
-            (telecoms.length==0 || !telecoms) && fetchTelecoms();
-        },[])*/
+                finally{setLoading(false)}*/
 
 
-        /*const editTelecom = (data,id)=>{
-            // e.preventDefault();
-            fetch(`${operatorURL}/${id}`,{
+            /*fetch(`${operatorURL}/${id}`,{
                 method: 'POST',
                 credentials: 'include',
                 headers: {   'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             })
-            setFormInit(false);
         };*/
         const addTelecom = /*[{name:'', code:''},*/async ({name,icon})=>{
              //const validationErrors = {};
-            //else if(telecoms.some(({name})=>name===newName)) validationErrors.name='Name already exists';
             //let validationErrors= validateTelecom(telecoms, {name:initData.name, newName:telecomData.newName, icon:telecomData.icon})
             //if(Object.keys(validationErrors).length>0) {return setErrors(validationErrors);}
             setLoading(true);
@@ -69,15 +75,13 @@ export default  () =>{
                 if(!res.ok) throw new Error(data.error || 'failed to add telecom operator');
             toast.success('telecom added')
             setModified(data.telecoms);fetchTelecoms()
-            }catch(err){ toast.error(err.message)}
+            }catch(e){ toast.error(e.message)}
             finally{setLoading(false);setInitData(init);setFormInit(false)}
         }//]
         
     const editTelecom = async (id,{name,icon})=>{
 //const {newName,icon} = telecomData;
         //let validationErrors=validateTelecom({telecoms,name:initData.name,newName,icon})
-        //if(Object.keys(validationErrors).length>0) return setErrors(validationErrors);
-        //if(initData.name==newName&&initData.icon==icon)return toast.success('')
         setLoading(true);
         try{
             let res = await fetch(`${url.urlTelecom}/${id}`, {
@@ -90,17 +94,16 @@ export default  () =>{
             if(!res.ok) throw new Error(data.error ||'failed ');
 
             toast.success(data.message);setModified(data.telecoms);  /*setTelecoms(data);*/fetchTelecoms()
-        }catch(err ){ toast.error('failed to update icon link')}
+        }catch(e ){ toast.error('failed to update icon link')}
         finally{setLoading(false);setInitData(init);setFormInit(false)}
     }
     const handleSubmit= e=>{
         e.preventDefault();
         initData.id?editTelecom(initData.id,initData):addTelecom(initData)//config[1]({name:config[0].name, newName:e.target[0].value.trim(), icon:e.target[1].value.trim()})
     }                    
-    
                                
                                
-let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
+    let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
             <h4>Telecoms</h4> <GapV x='2'/>
             {/*formInit &&<SimForm stateHandler={config} hideForm={e=>setEditInit(false)} />*/}
             {formInit ?<form onSubmit={handleSubmit}>
@@ -111,7 +114,7 @@ let content = <div style={{background:backSecondary,color:textSecondary,padding:
                         </div><GapV x='1'/>
                         <div /*x='flex-start' y='flex-start'*/>
                             {/*<Form.Label>Logo URL</Form.Label>*/}
-                            <InputField type='text' placeholder='telecom icon link' value={initData.icon} onChange={e=>setInitData({...initData,icon:e.target.value.trim()})}  />
+                            <InputField type='file' accept='.jpg, .jpeg, .png, .webp' onChange={selectLogo}  />
                             <ErrorText>{errors?.icon}</ErrorText>
                         </div><GapV x='1'/>
                         <FlexH x='flex-end' y='center'>
