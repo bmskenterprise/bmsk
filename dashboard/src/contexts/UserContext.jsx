@@ -210,7 +210,7 @@ export const UserProvider = ({children}) =>{
                 {
                     method:'PATCH',
                     credentials:'include',
-                    headers:{'x-admin-pin':pin},
+                    headers:{'Content-Type':'application/json','x-admin-pin':pin},
                     body:JSON.stringify({isDeviceLock})
                 }
             );
