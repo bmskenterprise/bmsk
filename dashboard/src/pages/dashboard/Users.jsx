@@ -3,11 +3,12 @@ import {Link,useNavigate,useSearchParams} from 'react-router-dom';
 import {formatDistanceToNow} from 'date-fns'
 import {MdPassword,MdWallet} from 'react-icons/md';
 import {FaTrash,FaLock,FaPen} from 'react-icons/fa'
-import {useAdminAuth} from '../../contexts/AdminAuthContext'
+   import {toast} from 'react-toastify'
+import {useTheme} from '../../contexts/ThemeContext';
 import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
-import {useTheme} from '../../contexts/ThemeContext';
-      import {useUser} from '../../contexts/UserContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {useUser} from '../../contexts/UserContext'
 import {ScrollViewV,ScrollViewH,FlexH,GapV,GapH,Center,StripedList,PaginationBar,ThemeButton,Field,Select,DatePicker,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {serviceTypes,accessTypes} from '../../../Preferences.json';
 import {launchDate,getCurrentLocalDate} from '../../utils/date';
@@ -46,7 +47,6 @@ export default () =>{
     
     useEffect(e=>{
         setFilterData({status,user,fromDate,toDate,limit,page})
-        //fetchUsers() //i!=id))}
     },[status,user,fromDate,toDate,limit,page])
     
     useEffect(()=>{
@@ -60,13 +60,15 @@ export default () =>{
         return ()=> window.removeEventListener('popstate',handlePopState)
     },[formInit])
     
-    const initToggle = (id,verified) => AdminPIN([thememode,themeBackground],{cb:toggleVerification,data:{id,verified}},'VERIFY');
+    const initToggle = (id,verified) => {
+        if(!accesses?.includes('modify-user')) {toast.info('you dont have modify permission');return}
+          AdminPIN([thememode,themeBackground],{cb:toggleVerification,data:{id,verified}},'VERIFY');
+    };
     const initDelete = id => AdminPIN([thememode,themeBackground],{cb:deleteUser,data:{id}},'DELETE');
     /*const check = (id)=>{
     let i=selected.indexOf(id)
         if(0<=i){setSelected(selected.filter(i=>i!=id))}
-      else{setSelected([...selected,String(id)]);}
-    };
+      else{setSelected([...selected,String(id)]);}}
     let {start,clear} =useLongPress(check)*/
     const handleCancel = e => {
         setFormInit(false);setUserDetail(null);
@@ -140,8 +142,8 @@ export default () =>{
                     {/*<td>{status}</td>*/}
                     <div style={{width:'12%'}}>
                         <SwitchItem check={verified} handleChange={e=>initToggle(_id,e.target.checked)}/><GapH x='1'/>
-                        <IconButton onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}}><FaPen/></IconButton><GapH x='0.5'/>
-                        <IconButton onClick={e=>initDelete(_id)}><FaTrash/></IconButton> {/*onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}`manage-users/${_id}`}><FaPen/></IconButton><Link to='reset-credential' state={{id:_id,username,credentialType:'password'}}><FaLock/></Link>&nbsp;<Link to='reset-credential' state={{id:_id,username,credentialType:'pin'}}><MdPassword/></Link>*/}{/*<Link to=''><FaHistory/></Link>*/}{/*<Link to={}>Message</Link>*/}<Link to=''></Link>
+                        <IconButton disabled={!accesses?.includes('modify-user')} onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}}><FaPen/></IconButton><GapH x='0.5'/>
+                        <IconButton disabled={!accesses?.includes('modify-user')} onClick={e=>initDelete(_id)}><FaTrash/></IconButton> {/*onClick={e=>{setUserDetail({id:_id,username});setFormInit(true)}`manage-users/${_id}`}><FaPen/></IconButton><Link to='reset-credential' state={{id:_id,username,credentialType:'password'}}><FaLock/></Link>&nbsp;<Link to='reset-credential' state={{id:_id,username,credentialType:'pin'}}><MdPassword/></Link>*/}{/*<Link to=''><FaHistory/></Link>*/}{/*<Link to={}>Message</Link>*/}<Link to=''></Link>
         </div>
                     {/*<td></td>*/}
                     {/* <td><Link to='access'>modify</Link></td> */}
