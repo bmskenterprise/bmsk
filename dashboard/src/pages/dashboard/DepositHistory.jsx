@@ -21,10 +21,10 @@ import Pages from '../../components/Pagination'
 export default  () =>{
     const navigate = useNavigate();
     const isMobile = useMediaQuery({maxWidth:768});
+    const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {appData,admin} = useAdminAuth();
     const accesses = admin?.accesses
     const {socket} = useSocket()  ;
-    const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {backPrimary,textPrimary} = modeData
     const {failedCounts:{deposit},reducePendingCounts} = useNotification();
     const [searchParams] = useSearchParams()
@@ -72,6 +72,7 @@ export default  () =>{
             finally { setLoading(false); }
         }
     const changeStatus = async ({id,username,status,feedback},pin)=>{
+        if(!accesses?.includes('modify-deposit-history')) {toast.info('you dont have deposit modify permission');return}  //
         setLoading(true)
         try{
             let res = await fetch(`${url.urlDeposit}/${id}`,{
@@ -149,7 +150,6 @@ export default  () =>{
                     </FlexH> 
                 </form>
             {/*init&& <Form>
-                <Form.Group>
                     <Form.Control type="text" placeholder="Ref" />
                     <Form.Control.Feedback>{errors?.ref }</Form.Control.Feedback>
                 </Form.Group>
@@ -181,7 +181,7 @@ export default  () =>{
                     {/*<td>{billMonth}</td>
                     <td>{username}</td>*/}
                     {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
-                        <ApproveButton  onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton  onClick={e=>{e.stopPropagation();setFailedId(_id)}}>Reject</RejectButton>
+                        <ApproveButton onClick={e=>onSuccess(_id,user)} disabled={!accesses?.includes('modify-deposit-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedId(_id)}} disabled={!accesses?.includes('modify-deposit-history')}>Reject</RejectButton>
                         {failedId==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                             
                             
