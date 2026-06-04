@@ -71,21 +71,21 @@ export default  () =>{
      <Col /*xs={12} md={6} style={{minHeight:'80vh'}}*/>
                 <div /*x='flex-start' y='space-around' style={{height:'60%'}}*/ ><FlexH x='flex-start' y='flex-end'><h4>{user?.phone}</h4><GapH x='1'/><h5 style={{textTransform:'uppercase'}}>{user?.level}</h5></FlexH><GapV x='3'/>
                     {/*<p>{user?.level}</p><GapV x='2'/>*/}
-                        <p>{user?.fullname}</p><GapV x='2'/>
-                        <p>{user?.email}</p><GapV x='2'/>
-                        <p>{user?.nid}</p><GapV x='2'/>
-                        <p>{getLocalDateFromUTC(user?.createdAt??(new Date()).toISOString())}</p><GapV x='2'/>
-                        <p>{user?.regFeeRef??'N/A'}</p><GapV x='4.5'/>
-                        <div>
+                        <p>Fullname: {user?.fullname}</p><GapV x='1.5'/>
+                        <p>Email: {user?.email}</p><GapV x='1.5'/>
+                        <p>NID: {user?.nid}</p><GapV x='1.5'/>
+                        <p>Joined: {getLocalDateFromUTC(user?.createdAt??(new Date()).toISOString())}</p><GapV x='1.5'/>
+                        <p>Registration Ref: {user?.regFeeRef??'N/A'}</p><GapV x='4.5'/>
+                        <FlexH x='space-between' style={{width:'12rem'}}>
                             <IconButton onClick={e=>navigate(`/dashboard/manage-user/balance/${user?._id}`,{state:{username:user?.username}})}><MdWallet/></IconButton>
-                            <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'password'}})}><MdPassword/></IconButton>
-                            <IconButton onClick={e=>navigate('reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
-                            <IconButton  onClick={e=>initDelete(_id)}><FaTrash/></IconButton>
-                        </div><GapV x='4.5'/>
+                            <IconButton onClick={e=>navigate('/dashboard/manage-user/reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'password'}})}><MdPassword/></IconButton>
+                            <IconButton onClick={e=>navigate('/dashboard/manage-user/reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
+                            <IconButton  onClick={e=>initDelete(user?._id)}><FaTrash/></IconButton>
+                        </FlexH><GapV x='4.5'/>
                         <SwitchItem label='Device Lock' check={user?.device?.lock} identity='lock' handleChange={e=>initToggleDeviceLock(e.target.checked)}/><GapV x='3.5'/>
                         <div>
                             <h5>Devices</h5><GapV x='1'/>
-                            <div>{user?.device?.allowed.map((d,i)=> <FlexH x='space-between' y='center' key={i} style={{marginTop:'1.5rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={loading}><FaTrash/></IconButton></FlexH>)}</div>
+                            <div>{user?.device?.allowed.map((d,i)=> <FlexH x='space-between' y='center' key={i} style={{marginTop:'1.2rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={loading}><FaTrash/></IconButton></FlexH>)}</div>
                         </div>
                     
                     </div><GapV x='5'/>
