@@ -4,16 +4,19 @@ import {toast} from 'react-toastify'
 import {MdPassword,MdWallet} from 'react-icons/md';
 import {FaLock,FaTrash} from 'react-icons/fa';
 import {useTheme} from '../../contexts/ThemeContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext' //}*/
 import {useUser} from '../../contexts/UserContext'
 import {getLocalDateFromUTC,getLocalDateTimeFromUTC} from '../../utils/date';
-import {Col,FlexH,GapH,GapV,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
+import {Center,Col,FlexH,GapH,GapV,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import url from '../../config/url'
 import SwitchItem from '../../components/Switch'
 import AdminPIN from '../../components/AdminPIN'
 
 export default  () =>{
     const navigate = useNavigate();
-    const {thememode,themeData:{themeBackground}} = useTheme()      //setLoading(true)
+    const {thememode,themeData:{themeBackground}} = useTheme()
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
     const {id} = useParams();
     const location = useLocation();
     const {toggleUserDeviceAccess,deleteUserDevice,deleteUser} = useUser();
@@ -38,7 +41,6 @@ export default  () =>{
     
     /*const deleteUser = async (data,pin) =>{
         /*e.preventDefault()
-        if(JSON.stringify(user.accesses)==JSON.stringify(services)) return toast.success('updated')
         setLoading(true)*/
         /*try{
             let res = await fetch(
@@ -54,18 +56,22 @@ export default  () =>{
             if(!res.ok) throw new Error(data.error||'failed to delete user');
               toast.success(data.message)
             navigate(-1)
-        }catch(err) {toast.error(err.message)}
-        finally{setLoading(false)}
-    }*/
-    const initDelete = (id) => AdminPIN([thememode,themeBackground],{cb:deleteUser,data:null},'DELETE')
-    const initDeleteUserDevice = deviceId => AdminPIN([thememode,themeBackground],{cb:deleteUserDevice,data:{id,deviceId}},'DELETE')
-    const initToggleDeviceLock = isDeviceLock => AdminPIN([thememode,themeBackground],{cb:toggleUserDeviceAccess,data:{id,isDeviceLock}},'DELETE')
-            /*let index = services.indexOf(value)
+        finally{setLoading(false)}*/
+    const initDelete = (id) => {
+        if(!accesses.includes('modify-user')) {toast.info('you dont have modify permission');return}
+        AdminPIN([thememode,themeBackground],{cb:deleteUser,data:null},'DELETE')
+    }
+    const initDeleteUserDevice = deviceId => {
+        if(!accesses.includes('modify-user')) {toast.info('you dont have modify permission');return}
+        AdminPIN([thememode,themeBackground],{cb:deleteUserDevice,data:{id,deviceId}},'DELETE')
+    }
+    const initToggleDeviceLock = isDeviceLock => {
+        if(!accesses.includes('modify-user')) {toast.info('you dont have modify permission');return}
+        AdminPIN([thememode,themeBackground],{cb:toggleUserDeviceAccess,data:{id,isDeviceLock}},'TOGGLE')
+    }        /*let index = services.indexOf(value)
             services.splice(index,1)
-        }
-    }*/
-    
-    return <div>      <GapV x='3'/>
+        }*/
+    return !accesses?.includes('manage-user')?<Center><p>You dont have user permission</p></Center>:<div>  <GapV x='3'/>
         <FlexH x='space-between'>
                     
      <Col /*xs={12} md={6} style={{minHeight:'80vh'}}*/>
@@ -77,15 +83,15 @@ export default  () =>{
                         <p>Joined: {getLocalDateFromUTC(user?.createdAt??(new Date()).toISOString())}</p><GapV x='1.5'/>
                         <p>Registration Ref: {user?.regFeeRef??'N/A'}</p><GapV x='4.5'/>
                         <FlexH x='space-between' style={{width:'12rem'}}>
-                            <IconButton onClick={e=>navigate(`/dashboard/manage-user/balance/${user?._id}`,{state:{username:user?.username}})}><MdWallet/></IconButton>
-                            <IconButton onClick={e=>navigate('/dashboard/manage-user/reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'password'}})}><MdPassword/></IconButton>
-                            <IconButton onClick={e=>navigate('/dashboard/manage-user/reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
-                            <IconButton  onClick={e=>initDelete(user?._id)}><FaTrash/></IconButton>
+                            <IconButton disabled={!accesses?.includes('modify-user')} onClick={e=>navigate(`/dashboard/manage-user/balance/${user?._id}`,{state:{username:user?.username}})}><MdWallet/></IconButton>
+                            <IconButton disabled={!accesses?.includes('modify-user')} onClick={e=>navigate('/dashboard/manage-user/reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'password'}})}><MdPassword/></IconButton>
+                            <IconButton disabled={!accesses?.includes('modify-user')} onClick={e=>navigate('/dashboard/manage-user/reset-credential',{state:{id:user?._id,username:user?.username,credentialType:'pin'}})}><FaLock/></IconButton>
+                            <IconButton disabled={!accesses?.includes('modify-user')} onClick={e=>initDelete(user?._id)}><FaTrash/></IconButton>
                         </FlexH><GapV x='4.5'/>
                         <SwitchItem label='Device Lock' check={user?.device?.lock} identity='lock' handleChange={e=>initToggleDeviceLock(e.target.checked)}/><GapV x='3.5'/>
                         <div>
                             <h5>Devices</h5><GapV x='1'/>
-                            <div>{user?.device?.allowed.map((d,i)=> <FlexH x='space-between' y='center' key={i} style={{marginTop:'1.2rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={loading}><FaTrash/></IconButton></FlexH>)}</div>
+                            <div>{user?.device?.allowed.map((d,i)=> <FlexH x='space-between' y='center' key={i} style={{marginTop:'1.2rem'}}><p>{getLocalDateTimeFromUTC((new Date(Number(d)).toISOString()))}</p><IconButton onClick={e=>initDeleteUserDevice(d)} disabled={!accesses?.includes('modify-user')}><FaTrash/></IconButton></FlexH>)}</div>
                         </div>
                     
                     </div><GapV x='5'/>
