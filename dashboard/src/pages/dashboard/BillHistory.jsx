@@ -63,10 +63,11 @@ export default () =>{
             finally{setLoading(false);}
         }
 
-    const changeStatus = async ({id,username,status,feedback},pin) =>{setLoading(true);
+    const changeStatus = async ({id,username,status,feedback},pin) =>{
+          if(!accesses?.includes('modify-bill-history')) {toast.info('you dont have bill modify permission');return}
+        setLoading(true)
         try {
-            let res = await fetch(
-                `${url.urlBill}/${id}`,
+            let res = await fetch(`${url.urlBill}/${id}`,
                 {
                     method: 'PATCH',
                     credentials: 'include',
@@ -138,7 +139,7 @@ export default () =>{
                 {/*<div>{billMonth}</div>*/}
                     <div style={{width:'15%'}}>{expireDate}</div>
                     <div style={{width:'15%'}}>{user}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton  onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton  onClick={e=>{e.stopPropagation();setFailedID(_id)/*setID(_id)*/}}>Reject</RejectButton>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)} disabled={!accesses?.includes('modify-bill-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)/*setID(_id)*/}} disabled={!accesses?.includes('modify-bill-history')}>Reject</RejectButton>
                     {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                       </div>}
                       
