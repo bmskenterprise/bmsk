@@ -61,6 +61,7 @@ export default () => {
     };
 
     const changeStatus = async ({id,username,status,feedback},pin) =>{
+        if(!accesses?.includes('modify-drive-history')) {toast.info('you dont have modify permission');return}
         try{
             let res = await fetch(
                 `${url.urlDriveHit}/${id}`,
@@ -93,8 +94,7 @@ export default () => {
         e.preventDefault();
         let form=e.target
         navigate(`/dashboard/drive/history?status=${form.status.value.trim()}&telecom=${form.telecom.value.trim()}&user=${form.user.value.trim()}&recipient=${form.recipient.value.trim()}&fromDate=${form.fromDate.value}&toDate=${form.toDate.value}&limit=${form.limit.value.trim()||'20'}&page=1`);//fetchDriveHits({page:1})
-        /*let filtered=cache[statusRef.current.value].filter(d=>{
-            for(let j in filterObj){
+            /*for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
             if(fromDateRef.current.value && d.createdAt<fromDateRef.current.value)return false;
             if(toDateRef.current.value && d.createdAt>toDateRef.current.value)return false;
@@ -139,7 +139,7 @@ export default () => {
                     {/*<div>{drive.title}</div>*/}
                     <div style={{width:'10%'}}>{drive.price-drive.commission}</div>
                     <div style={{width:'12%'}}>{user}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id);setID({id:_id,user})}}>Reject</RejectButton>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>{e.stopPropagation();setFailedID(_id);setID({id:_id,user})}}>Reject</RejectButton>
                         {failedID==_id && <Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                               
                                   
