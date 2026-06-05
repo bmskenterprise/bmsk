@@ -60,6 +60,7 @@ export default () =>{
             
             
     const changeStatus= async ({id,username,status,feedback},pin) =>{
+        if(!accesses?.includes('modify-mbank-history')) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
             let res = await fetch(
@@ -85,17 +86,16 @@ export default () =>{
             
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
     const pageNav = p=> navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`);
-    const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
+                    {/*<FlexH x='space-between' y='center'>*/}
+    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
     const onFailed = (id,user,feedback)=>{
         setFailedID(null);
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
     }
-            
                       
                       
     return !accesses?.includes('mbank-history')?<Center><p>don't have MBank permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
         <h4 style={{marginBottom:'6rem'}}>MBank History</h4>
-                    {/*<FlexH x='space-between' y='center'>*/}
             <form  onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
                     <Field value={filterData.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/>
@@ -124,7 +124,7 @@ export default () =>{
                     <div style={{width:'20%'}}>{recipient}</div>
                     <div style={{width:'15%'}}>&#2547;{amount}</div>
                     <div style={{width:'15%'}}>{user}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton  onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton  onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)} disabled={!accesses?.includes('modify-mbank-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)}} disabled={!accesses?.includes('modify-mbank-history')}>Reject</RejectButton>
                         {failedID==_id && <Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                           
                               
