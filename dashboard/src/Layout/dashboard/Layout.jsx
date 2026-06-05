@@ -5,15 +5,18 @@ import {MdOutlineMenu,MdClose,MdLightMode,MdDarkMode,MdOutlineLogout} from 'reac
 import {useMediaQuery} from 'react-responsive'
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
+import {useNotification} from '../../contexts/NotificationContext'
 import {useSocket} from '../../contexts/SocketContext'
 import {useTelecom} from '../../contexts/TelecomContext';
-import {ResponsiveLayout,Header,PageContent,MenuTogglerButton,Avatar} from '../../components/styles/Admin.style';
+import {ResponsiveLayout,Header,PageContent,MenuTogglerButton,Avatar,Badge} from '../../components/styles/Admin.style';
 import Sidebar from './Sidebar';
 import AdminProfile from './AdminProfile';
 
 export default  ({children}) =>{
-    const {socket} = useSocket();
     const isMobile = useMediaQuery({maxWidth:768});
+    const {socket} = useSocket();
+    const {pendingCounts,isPending} = useNotification()
+    const total = Object.values(pendingCounts || {}).reduce((sum,val)=> sum+val,0)
     const {themeData,modeData:{backPrimary,textPrimary}} = useTheme()
     const {authentic,appData,admin,fetchAdminData,} = useAdminAuth();const [errors, setErrors] = useState({});
     const {fetchTelecoms} = useTelecom()
@@ -36,7 +39,6 @@ export default  ({children}) =>{
             window.removeEventListener('offline', handleOffline);
         };
     },[])
-                
                  
     if(!admin) return <Navigate to='/login'/>
     const handleSidebarToggle = e => setSidebarToggler(prev=> !prev)
@@ -45,7 +47,7 @@ export default  ({children}) =>{
     return <div /*x='flex-start' y='flex-start'*/ style={{background:backPrimary,/*color:textPrimary,*/width:'100%',height:'100%'}}>
       {/*<Col xs={3}></Col>*/}
         <Header  >
-          <div  >
+          <div style={{position:'relative'}}>{total>0&& <Badge>{total}</Badge>}
             <MenuTogglerButton size='2' onClick={handleSidebarToggle}>{sidebarToggler?<MdClose/>:<MdOutlineMenu />}</MenuTogglerButton>
           </div>
           <div>
