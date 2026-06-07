@@ -73,13 +73,13 @@ export const addBankRequest = async (req, res, next) => {
     const errors = validationResult(req)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})
     const io = socket.getIO();
-    const {bank,ac,acName,amount,branch} = req.body;
+    const {bank,acNumber,acHolder,amount} = req.body;
     try{
         let user =await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
         if(!user.accesses.includes('bank')) return res.status(403).json({error:'No Permission at this moment'})
         let balanceMain = Object.values(user.balance?.main|| {}).reduce((sum,val)=>sum+val,0)
         if(balanceMain<parseInt(amount)) return res.status(422).json({error:'insufficient balance'})
-        const currentBank = await Bank.insertOne({bank,acNumber:ac,acName,amount:parseInt(amount),user:req.user.username,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
+        const currentBank = await Bank.insertOne({bank,acNumber,acHolder,amount:parseInt(amount),user:req.user.username,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
         io.emit('added', {type:'bank', currentBank});
         await User.updateOne({_id:new ObjectId(req.user.id)},{$set:{[`balance.main`]:deductMainBalance(user.balance.main,amount)}});
         await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.bank`]:1}});console.log(`connected clients: ${io.engine.clientsCount}`); // Date();
