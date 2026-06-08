@@ -1,8 +1,9 @@
 import {useEffect,useState} from 'react'
 import {useMediaQuery} from 'react-responsive'
 import {toast} from 'react-toastify'
-import {BsPlusLg} from 'react-icons/bs' //
+import {BsPlusLg} from 'react-icons/bs'
 import {useTheme} from '../../contexts/ThemeContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {Col,FlexH,GapV,GapH,Field,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
 import {validateMBank} from '../../utils/validate';
 import url from '../../config/url'
@@ -12,6 +13,8 @@ import SwitchItem from '../Switch';
 export default ()=>{
     const isMobile = useMediaQuery({maxWidth:768})
     const {modeData:{backSecondary,textSecondary}} = useTheme();
+    const {admin} = useAdminAuth()
+      const accesses = admin?.accesses
     const [mobileBanks,setMobileBanks] = useState([]);
     const [modified,setModified] = useState([]);
     const [errors,setErrors] = useState({});
@@ -75,6 +78,7 @@ export default ()=>{
     finally {setLoading(false)}
   }
     const addMbank = async (e) =>{e.preventDefault()
+         if(!accesses?.ncludes('modify-setting')) {toast.info('you don\'t have modify permission');return}
       let formData={name:e.target.name.value.trim(),icon:e.target.icon.value.trim()}
       const validationResult = validateMBank(formData)
       if(Object.keys(validationResult).length) {setErrors(validationResult);return}
@@ -91,6 +95,7 @@ export default ()=>{
     }
     const handleSubmit = (e) => {
       e.preventDefault()
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
       if(JSON.stringify(modified)==JSON.stringify(mbanks)) {toast.info('No changes made');return}
       //let validationErrors = validateMBanks(modified.map(mb=>({name:mb.name,account:mb.account})))
       //if(Object.keys(validationErrors).length) {setErrors(validationErrors);return}
@@ -131,8 +136,5 @@ export default ()=>{
           </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
         }</>
 }
-            
-            
-              
                 
                  
