@@ -31,21 +31,22 @@ export const getTopupOpts =async (req, res,next) => {
     let admin = await Admin.findOne({role:'admin'});
     if(!admin) throw new Error('server issue');
     res.status(200).json(admin.topupAccess)
-  }catch(err) {next(err)}
+  }catch(e) {next(e)}
 }
 export const changeTopupMethod= async (req,res,next) =>{
     try{
         await Admin.findOneAndUpdate({role:'admin'},{$set:{topupMethod:req.params.method}})
         res.status(200).json({message:'topup method changed'})
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const topup = async (req, res) => {
     const {operator,recipient,amount} = req.body
+    let io = socket.getIO()
     let admin
-    if(!operator||!recipient||!amount) return res.status(400).json({ error:"Missing operator, number, or amount", success:false });
+    if(!operator||!recipient||!amount) return res.status(400).json({ error:'Missing operator, number, or amount', success:false });
     const now = Date.now()
     if(!routings|| (now - lastFetchedTime > CACHE_TTL_MS)) {
-      try {
+        try{
           admin = await Admin.findOne({role:'admin'});
           routings =admin.routing;
           lastFetchedTime = now;
@@ -66,17 +67,19 @@ export const topup = async (req, res) => {
 
   try{
     let user=await User.findOne({_id:new ObjectId(req.user.id)});
-    if(user.balance.topup<amount) return res.status(400).json({error:"Insufficient balance"})
+    if(user.balance.topup<amount) return res.status(400).json({error:'Insufficient balance'})
     if(admin.topupMethod=='retail'){
       /*const response = await fetch(url);
       if(!response.ok) return res.status(500).json({ error:"Failed to forward USSD request", success:false });
       let d=await response.json();*/
       await Topup.insertOne({recipient,operator,amount,user:req.user.username,status:'SUCCESS'});//console.log(`d.data ${d.data}`);
-      await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
+      await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
       return res.status(201).json({message:'topup success',success:true,operator,sim:map.slot,device:map.ip/*,gateway_response:d.data*/});
     }else if(admin.topupMethod=='manual'){
         await Topup.insertOne({recipient,operator,amount,user:req.user.username,status:'PENDING'});
-        await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
+        await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
+        io.to(req.user.adminRef).emit('added',{type:'topup'})
+        await SocketResponse.updateOne({admin:req.user.adminRef},{$inc:{['pendings.topup']:1}})
         return res.status(201).json({message:'topup request sent'}); 
     }else if(admin.topupMethod=='mbank'){
       const id = uuidv4()
@@ -87,10 +90,10 @@ export const topup = async (req, res) => {
       await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
       return res.status(201).json({message:'topup request sent',id})
     }
-  }catch(err) {
+  }catch(e) {
     return res.status(500).json({
-      error: "Failed to forward USSD request",
-      details: err.message
+      error: 'Failed to forward USSD request',
+      details: e.message
     });
   }
 };
