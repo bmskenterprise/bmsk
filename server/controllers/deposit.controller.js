@@ -111,8 +111,8 @@ export const depositRequest = async (req,res,next) =>{
             data.screenshot=response.secure_url
         }
         await Deposit.insertOne(data)
-        io.emit('added',{type:'deposit'})
-        await SocketResponse.updateOne({admin:req.user.adminRef},{$inc:{['pendings.deposit']:1}})
+        let {socketId} =await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.deposit']:1}},{returnDocument:'after'})
+        if(socketId) io.to(socketId).emit('added',{type:'deposit'})
         res.status(200).json({message:'wait for admin approval',success:true});
     }catch(e) {next(e)}
 }
