@@ -5,6 +5,7 @@ import {BsPlusLg} from 'react-icons/bs'
 import {FaPen,FaTrash} from 'react-icons/fa';
 import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {ScrollViewV,Col,FlexH,GapV,GapH,InputField,ErrorText,Stack,ThemeButton,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import Accordion from './Accordion'
 import url from '../../config/url';
@@ -15,10 +16,12 @@ export default  () =>{
     let init = {id:null,category:''}
     let location = useLocation();
     const isMobile = useMediaQuery({ maxWidth: 768 });
-     const {modeData:{backSecondary,textSecondary}} = useTheme();
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
+    const {modeData:{backSecondary,textSecondary}} = useTheme();
     const [categoriesRef,linkRef] = [useRef(null),useRef(null)];
     const [categories,setCategories] = useState([]);
-     const [telecomCategory,setTelecomCategory] = useState(init);
+    const [telecomCategory,setTelecomCategory] = useState(init);
     const [error,setError] = useState('');
     const [hover,setHover] = useState(false);
      const [editMode,setEditMode] = useState(false);
@@ -72,7 +75,8 @@ export default  () =>{
 
 
     const deleteTelecomCategory = async categoryId =>{
-            setLoading(true);
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
+        setLoading(true);
         try{
             let res= await fetch(`${url.urlTelecomCategory}/${categoryId}`, {
                 method: 'DELETE',
@@ -86,6 +90,7 @@ export default  () =>{
     };
         const handleSubmit = e =>{
             e.preventDefault()
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
             if(telecomCategory.category.length>20) {setError('category is too long');return}
             if(categories.some(l=>l.category==telecomCategory.category)) {setError('category already exists');return}
             if(telecomCategory.id) editTelecomCategory(telecomCategory.id,telecomCategory.category)
