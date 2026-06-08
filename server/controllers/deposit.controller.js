@@ -22,7 +22,7 @@ let Admin,User,Deposit,DepositInit,SocketResponse,Withdraw
         DepositInit = db.collection('depositinits');
         SocketResponse = db.collection('socketresponses')
         Withdraw = db.collection('withdraws')
-    }catch(err) {console.error(`deposit db failed ${err}`)} 
+    }catch(e) {console.error(`deposit db failed ${e}`)} 
 })()
 export const getDepositMethod =async (req,res,next) =>{
     try{
@@ -89,9 +89,10 @@ const getExtra = async (level,balanceType,gateway,amount)=>{
 export const depositRequest = async (req,res,next) =>{
     const {txn,gateway,amount,ref} = req.body
     const screenshot = req.file;
+    let io = socket.getIO()
     try{
         let user = await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'dont have deposit permission',success:false});
+        if(!user.accesses.includes('deposit')) return res.status(401).json({error:'Don\'t have deposit permission',success:false});
         const data= {gateway,status:'PENDING',amount,ref:ref||'',user:req.user.username,createdAt:new Date(),updatedAt:new Date()}
         if(txn){
             let deposit = await Deposit.findOne({txn,gateway});
@@ -110,6 +111,8 @@ export const depositRequest = async (req,res,next) =>{
             data.screenshot=response.secure_url
         }
         await Deposit.insertOne(data)
+        io.emit('added',{type:'deposit'})
+        await SocketResponse.updateOne({admin:req.user.adminRef},{$inc:{['pendings.deposit']:1}})
         res.status(200).json({message:'wait for admin approval',success:true});
     }catch(e) {next(e)}
 }
@@ -438,7 +441,7 @@ export const bkashPaymentCreate = async (req,res) =>{
           merchantInvoiceNumber:`inv${uuidv4().substring(0,8)}`,
         });
         res.status(200).json({bkashURL:data.bkashURL})
-    }catch(e) {res.status(401).json({error:err.message,success:false})}
+    }catch(e) {res.status(401).json({error:e.message,success:false})}
 }
   
   
