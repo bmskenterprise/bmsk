@@ -1,18 +1,19 @@
 import { useEffect,useState, } from 'react'
-//import {Accordion,Col,   
 import {useMediaQuery} from 'react-responsive';
 import { toast } from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext'
+ import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Spinner} from '../styles/Admin.style';
 import Accordion from './Accordion'
 import url from '../../config/url';
 
 export default  () =>{
   const isMobile = useMediaQuery({ maxWidth: 768 });
+    const {modeData:{backSecondary,textSecondary}} = useTheme()// fetch()
     const [modifiedContacts,setModifiedContacts] = useState([]);
     const [loading, setLoading] = useState(false);
-    const {modeData:{backSecondary,textSecondary}} = useTheme()// fetch()
-       // <Col md={4}>content</Col>
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
     let contacts;
     useEffect(() => {fetchContacts()},[])
     const fetchContacts = async e=>{
@@ -24,6 +25,7 @@ export default  () =>{
 
     const saveModified = async e=>{
         e.preventDefault();
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         let updates = [];
         if(JSON.stringify(modifiedContacts)===JSON.stringify(contacts)) return toast.success('saved successfully');
         contacts.forEach((contact,i)=>{
@@ -71,5 +73,4 @@ export default  () =>{
         
           
             
-             
         
