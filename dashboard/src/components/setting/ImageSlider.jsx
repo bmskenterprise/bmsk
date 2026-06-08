@@ -3,8 +3,9 @@ import {useLocation} from 'react-router-dom';
 import {useMediaQuery} from 'react-responsive';
 import {BsPlusLg} from 'react-icons/bs'
 import {FaPen,FaTrash} from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {Col,FlexH,GapV,GapH,ScrollViewV,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
 import url from '../../config/url';
 import Accordion from './Accordion';
@@ -13,7 +14,9 @@ import SwitchItem from '../Switch'
 
 export default  () =>{
     let init = {id:null,link:''}// }*/
-    let location = useLocation();     //fetch(`${sliderImagesURL}/${localStorage.getItem('admin')}`)
+    let location = useLocation();
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
     const isMobile = useMediaQuery({ maxWidth: 768 });
     let [imagesRef,linkRef]=[useRef(null),useRef(null)];
     const [images,setImages] = useState([]);
@@ -95,6 +98,7 @@ export default  () =>{
         
 
     const deleteImage = async imageId =>{// = linkText=>{
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
             setLoading(true);
         try{
             let res= await fetch(`${url.urlImageSlider}/${imageId}`, {
@@ -111,6 +115,7 @@ export default  () =>{
         const handleSubmit = e =>{//setLoading(true);
             //let link = e.target.url.value
             e.preventDefault()
+        if(!accesses?.includes('modify-setting')) {toast.info('You don\'t have modify permission');return}
             if(!validURL(image.link)) {setLinkError('enter a valid link');return}
             if(images.some(l=>l.link==image.link))return setLinkError('link already exists');
             if(image.id) editImageLink(image.id,image.link)
@@ -151,5 +156,3 @@ export default  () =>{
       ) : <Col /*md={2} xl={4}*/>{content}</Col>}</>
 }
           
-            
-             
