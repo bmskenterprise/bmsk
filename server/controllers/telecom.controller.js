@@ -23,7 +23,7 @@ let Admin,User,Topup,Drive,DriveHit,Regular,SocketResponse
         DriveHit = db.collection('drivehits')
         Regular = db.collection('regulars')
         SocketResponse = db.collection('socketresponses')
-    }catch(err){console.error(`pack db failed ${err}`);}
+    }catch(e){console.error(`pack db failed ${e}`);}
 })()
      
      
@@ -89,7 +89,7 @@ export const topup = async (req, res) => {
         try{
             routings =admin.routing;
             lastFetchedTime = now;
-        }catch(err) {return res.status(500).json({ error: 'MongoDB fetch error'+err,success:false});}
+        }catch(e) {return res.status(500).json({ error: 'MongoDB fetch error'+e,success:false});}
     }
     const opKey = operator.toLowerCase();
     const map = routings.find(r=> r.operator==opKey);
@@ -104,14 +104,14 @@ export const topup = async (req, res) => {
     };
     const url = `http://${map.ip}:8080/ussd/send?ussd=${encodeURIComponent(ussds[opKey])}&sim=${map.slot}&token=ksmb@25112025`;
             await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'SUCCESS'});//console.log(`d.data ${d.data}`);
-            await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
+            await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             return res.status(201).json({message:'topup success',success:true,operator,sim:map.slot,device:map.ip/*,gateway_response:d.data*/});
         }else if(admin.methods.topup=='manual'){
             await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
-            await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
-            let socketAdmin = await SocketResponse.findOne({admin:'socket-admin',socketId:{$exists:true,$ne:null}});
-            if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{['pending.topup']:1}});
-            io.emit('added',{type:'topup'})
+            await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
+            let {socketId} = await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.topup']:1}},{returnDocument:'after'});
+            //if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{['pending.topup']:1}});
+            if(socketId) io.to(socketId).emit('added',{type:'topup'})
             return res.status(201).json({message:'topup request sent',success:true}); 
         }else if(admin.methods.topup=='mbank'){
             const id = uuidv4()
@@ -119,12 +119,12 @@ export const topup = async (req, res) => {
             const r = emitToDevice(deviceId,'topup',{id,operator,recipient,amount})
             if(!r.ok) return res.status(400).json({error:r.error,success:false})
             await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'SUCCESS'});
-            await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.topup`]:amount*(-1)}})
+            await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             return res.status(201).json({message:'topup request sent',success:true})
         }
     }catch(e) {
     return res.status(500).json({
-      error: "Failed to forward USSD request",
+      error: 'Failed to forward USSD request',
       details: e.message,success:false
     });
   }
@@ -207,7 +207,7 @@ export const updateModemRouting = async (req,res,next) =>{
         if(robi) updateField['routing.robi'] = robi;
         if(teletalk) updateField['routing.teletalk'] = teletalk;
         let admin = await Admin.findOneAndUpdate({role:'admin'},{$set:updateField},{new:true});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }*/
 
 
@@ -344,7 +344,7 @@ export const getDrivesByUser = async (req,res,next)=>{
         const drives = await Drive.find(filter,{projection:{active:0,sold:0,expireDate:0,createdAt:0,updatedAt:0,__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!drives) return res.status(404).json({error:'drives not found', success:false});
         res.status(200).json({drives,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 };
 
 export const getDrive = async (req,res,next) =>{
@@ -369,7 +369,7 @@ export const getDrivesByAdmin = async (req, res, next) => {
     if(fromDate&&toDate) filter.updatedAt = {$gte:fromDate, $lte:toDate};
     if(fromPrice) filter.price = {$gte:fromPrice}
     if(toPrice) filter.price = {$lte:toPrice}
-    if(fromPrice&&toPrice) filter.price = {$gte:fromPrice, $lte:toPrice}//next(err);
+    if(fromPrice&&toPrice) filter.price = {$gte:fromPrice, $lte:toPrice}//next(e);
     if(search) filter.title = {$regex:queryRegex} //console.error(error);
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page) || 1
@@ -378,7 +378,7 @@ export const getDrivesByAdmin = async (req, res, next) => {
         const drives = await Drive.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!drives) {return res.status(404).json({ error: 'No drives found' });}
         res.status(200).json({drives,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
 
 
@@ -436,7 +436,7 @@ export const deleteDrive = async (req, res, next) => {
         const {ids} = req.body;
         let result=await Drive.deleteMany({_id:{$in:ids.map(id=>new ObjectId(id))}});
         res.status(203).json({message:`${result.deletedCount} Drive deleted successfully`});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
     //}
 
@@ -460,7 +460,7 @@ export const getDriveHits = async (req, res, next) => {
         const hits = await DriveHit.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({createdAt:-1}).toArray();
         if(!hits) return res.status(404).json({ error: 'No drives found' });
         res.status(200).json({hits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
     //}
 
@@ -482,10 +482,10 @@ export const changeHitStatus = async (req, res,next) => {
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','drive')
         if(socketId) io.to(socketId).emit('user:status-changed',{title:`Drive Request ${status}`,body:`Recipient:${recipient} Amount:${drive.price}`,url:`${process.env.CLIENT_URL}/drive/history`})
         res.status(200).json({message:`Drive hit status : ${status}`});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
                 //{ $inc: { sold: 1 } }
-        //next(err);
+        //next(e);
     //}
 
 //user
@@ -494,7 +494,7 @@ export const getFailedDriveCount = async (req, res, next) => {
         let {failed} =await SocketResponse.findOne({user:req.user.username})//usersSocketConnected[req.userId].failed[0];
         if(failed?.drive>0) res.status(200).json({ failedDriveCount:failed?.drive });
         else res.status(200).json({ failedCount: 0 });
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
 
 
@@ -566,7 +566,7 @@ export const getRegularsByAdmin = async (req, res, next) => {
     if(fromPrice) filter.price = {$gte:fromPrice}
     if(toPrice) filter.price={$gte:toPrice}
     if(fromPrice&&toPrice) filter.price = {$gte:fromPrice, $lte:toPrice}
-    if(search) filter.title = {$regex:queryRegex} //next(err);
+    if(search) filter.title = {$regex:queryRegex} //next(e);
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page) || 1
     try {
@@ -574,7 +574,7 @@ export const getRegularsByAdmin = async (req, res, next) => {
         const regulars = await Regular.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
          if(!regulars) {return res.status(404).json({ error: 'No regulars found' });}
         res.status(200).json({regulars,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
     //}
 
@@ -649,7 +649,7 @@ export const getFailedRegularCount = async (req, res, next) => {
         let {failed} = await SocketResponse.findOne({user:req.user.username})//usersSocketConnected[req.userId].failed[0];
         if(failed?.regular>0) res.status(200).json({ failedRegularCount:failed?.regular });
         else res.status(200).json({failedCount:0});
-    }catch(e) {next(e)}// (err) {
+    }catch(e) {next(e)}// (e) {
 }
 export const updateDriveTelecomAccess = async (req, res,next) => {
     try {
@@ -677,7 +677,7 @@ export const getTelecomCategories = async (req,res,next) =>{
 /*const seenFailedDriveCount = async (req, res, next) => {
     try{
         usersSocketConnected[req.userId].failed[2] = 0;
-    }catch (err) {
+    }catch (e) {
         userSocketConnected[req.userId].failed[2] = 0;
     }
 }*/
