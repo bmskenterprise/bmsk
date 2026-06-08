@@ -1,9 +1,10 @@
-import { useEffect,useState,useRef } from 'react';
+import {useEffect,useState,useRef} from 'react'
 import {useMediaQuery} from 'react-responsive'
 import {MdEdit} from 'react-icons/md'
 import {BsPlusLg} from 'react-icons/bs';
 import {toast} from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext'
 import {Col,FlexH,GapV,GapH,TelecomCard,TelecomLogo,TelecomOverlay,AddButton,InputField,ErrorText,ThemeButton,IconButton,Spinner} from '../styles/Admin.style';
 //import validURL from "../../utils/validURL";
@@ -19,7 +20,9 @@ export default  () =>{
     const {telecoms,fetchTelecoms} = useTelecom();
     const [errors, setErrors] = useState({});
     const [modified,setModified] = useState(telecoms);
-        const [initData, setInitData] = useState(init);
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
+    const [initData,setInitData] = useState(init);
         const [formInit, setFormInit] = useState(false);
     const [editMode, setEditMode] = useState(false);
     let telecomData = {};  
@@ -30,7 +33,7 @@ export default  () =>{
         if(file && file.type.startsWith('image/')) {
            const img = new Image();
            img.onload = e => {
-               if(img.naturalWidth!=img.naturalHeight) toast.error('logo should be a square');
+               if(img.naturalWidth!=img.naturalHeight) toast.error('logo should be a 1:1 size image');
                else{
                   let reader = new FileReader();
                   reader.readAsDataURL(file);
@@ -100,6 +103,7 @@ export default  () =>{
         finally{setLoading(false);setInitData(init);setFormInit(false)}
     }
     const handleSubmit= e=>{
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         e.preventDefault();
         initData.id?editTelecom(initData.id,initData):addTelecom(initData)//config[1]({name:config[0].name, newName:e.target[0].value.trim(), icon:e.target[1].value.trim()})
     }                    
@@ -149,4 +153,3 @@ export default  () =>{
       )}</>
 }
 
-          
