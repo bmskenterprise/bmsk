@@ -2,12 +2,15 @@ import React,{useEffect,useState} from 'react';
 import {useMediaQuery} from 'react-responsive';
 import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {ScrollViewV,Col,FlexH,GapV,ThemeButton,ErrorText,TA,Spinner} from '../styles/Admin.style';
 import Accordion from './Accordion';
 import url from '../../config/url';
 
 export default ()=>{
-  const isMobile = useMediaQuery({maxWidth:768})
+    const isMobile = useMediaQuery({maxWidth:768})
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
   const [banks,setBanks] = useState();
   const [error,setError] = useState('');
   const [loading,setLoading] = useState(false);
@@ -25,8 +28,9 @@ export default ()=>{
   }
   const saveBankNames = async(e) =>{
     e.preventDefault();
+    if(!accesses?.includes('modify-setting')) return
     let names = e.target['bank-names'].value.trim()
-    if(names.length>500) {setError('Too many characters');return}  //
+    if(names.length>500) {setError('Too many characters');return} //
     if(!names) {toast.info('Enter Bank Names');return}
     names.split(/[,\n]/).map(n=>{if(n.length>50) {setError('A bank name is greater than 50 chars');return}});
     
@@ -65,4 +69,3 @@ export default ()=>{
                 
                   
                    
-              
