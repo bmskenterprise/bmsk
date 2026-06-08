@@ -16,7 +16,7 @@ let Admin,User,Bank,Bill,SocketResponse,Transaction;
         Bill = db.collection('bills')
         SocketResponse = db.collection('socketresponses')
         Transaction = db.collection('transactions')
-    }catch(err){console.error('db failed');}
+    }catch(e){console.error('db failed');}
 })()
 
 
@@ -33,20 +33,21 @@ const deductMainBalance = (balanceMain,amount) =>{
     return {bkash:newBkash,dbbl:newDbbl,nagad:newNagad,upay:newUpay}   
 }
 
+    
 export const getBankHistoryByUser = async (req, res, next) => {
     const {search,page} = req.query;
     const s = new RegExp(search,'i')
     const currentPage = parseInt(page)||1;
     let filter = {user:req.user.username,$or:[{status:{$regex:s}},{bank:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]};
-    
     try {
         const total = await Bank.countDocuments(filter)
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{latsActiveAt:new Date()}})
         const banks = await Bank.find(filter,{projection:{user:0,__v:0}}).skip((currentPage-1)*20).limit(20).sort({updatedAt:-1}).toArray();
         if(!banks){return res.status(404).json({error:'ব্যাংক লেনদেন পাওয়া যায়নি',success:false})}
         res.status(200).json({banks,pagination:{totalPage:Math.ceil(total/20),currentPage}})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
+
 export const getBankRequestByAdmin = async (req, res, next) => {
     const {status,ac,user,from,to,limit,page} = req.query;
     let filter = {};
@@ -58,13 +59,12 @@ export const getBankRequestByAdmin = async (req, res, next) => {
     if (from&&to) filter.updatedAt = { $gte:from, $lte:to };
 let queryLimit=parseInt(limit) || 20
     const currentPage = parseInt(page) ||1
-
     try{
         const total = await Bank.countDocuments(filter)
         const banks = await Bank.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!banks){return res.status(404).json({error:'bank history not found'})}
         res.status(200).json({banks,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -80,11 +80,12 @@ export const addBankRequest = async (req, res, next) => {
         let balanceMain = Object.values(user.balance?.main|| {}).reduce((sum,val)=>sum+val,0)
         if(balanceMain<parseInt(amount)) return res.status(422).json({error:'insufficient balance'})
         const currentBank = await Bank.insertOne({bank,acNumber,acHolder,amount:parseInt(amount),user:req.user.username,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
-        io.emit('added', {type:'bank', currentBank});
         await User.updateOne({_id:new ObjectId(req.user.id)},{$set:{[`balance.main`]:deductMainBalance(user.balance.main,amount)}});
-        await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.bank`]:1}});console.log(`connected clients: ${io.engine.clientsCount}`); // Date();
-        res.status(201).json({ message: "ব্যাংক রিকোয়েস্ট ", success:true})
-    }catch(err) {next(err)}
+        //let socketAdmin = await SocketResponse.findOne({admin:'socket-admin',socketId:{$exists:true,$ne:null}})
+        const {socketId} = await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.bank']:1}},{returnDocument:'after'});// Date();
+        if(socketId) io.to(socketId).emit('added',{type:'bank', currentBank});
+        res.status(201).json({ message: 'bank request sent', success:true})
+    }catch(e) {next(e)}
 }
 
 
@@ -105,7 +106,7 @@ export const changeBankRequestStatus = async (req, res, next) => {
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', 'bank')
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Bank Request ${status}`,body:` AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/bank/history`})
         res.status(200).json({message:'status updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -115,7 +116,7 @@ export const getFailedBankCount = async (req, res, next) => {
         let failedCount = failed?.bank;
         if(failedCount>0) res.status(200).json({ failedCount });
         else res.status(200).json({ failedCount: 0 });
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -139,7 +140,7 @@ export const getBillHistoryByUser = async (req, res, next) => {
         const bills = await Bill.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
         if(!bills) return res.status(404).json({error:'বিল লেনদেন পাওয়া যায়নি', success:false})
         res.status(200).json({bills,pagination:{totalPage:Math.ceil(total/20),currentPage}})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -162,7 +163,7 @@ export const getBillRequestByAdmin = async (req, res, next) => {
         const bills = await Bill.find(filter/*{status:req.query.status}*/).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
         if(!bills){return res.status(404).json({error:'bill history not found'})}
         res.status(200).json({bills,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -181,11 +182,10 @@ export const addBillRequest = async (req, res, next) => {
         //const total = await Bill.countDocuments({user:req.user.username,...req.query})
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{[`balance.main`]:deductMainBalance(user.balance.main,amount)},})
         //await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.bank`]:(-1)*parseInt(amount)}});
-        let socketAdmin = await SocketResponse.findOne({admin:'socket-admin',socketId:{$exists:true,$ne:null}})
-        if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.bill`]:1}});
-        io.emit('added', {type:'bill', currentBill });
-        res.status(200).json({message:'utility bill request sent' , success:true})
-    }catch(err) {next(err)}
+        let {socketId} =await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.bill']:1}},{returnDocument:'after'});
+        if(socketId) io.to(socketId).emit('added',{type:'bill', currentBill });
+        res.status(201).json({message:'utility bill request sent' , success:true})
+    }catch(e) {next(e)}
 }
 
 
@@ -206,7 +206,7 @@ export const addBillRequest = async (req, res, next) => {
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', 'bill')
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Bill Request ${status}`,body:` AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/bill/history`})
         res.status(200).json({message:'status updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 
 
@@ -216,7 +216,7 @@ export const getFailedBillCount = async (req, res, next) => {
         let failedCount=failed?.bill;
         if(failedCount>0) res.status(200).json({ failedCount });
         else res.status(200).json({ failedCount: 0 });
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
 function emitToDevice (deviceId,event,payload) {
     const sid = devices.get(deviceId)
@@ -295,20 +295,20 @@ export const getNagadHistory = async (req,res,next)=>{
         res.status(200).json({history,pagination:{totalPage:Math.ceil(total/20),currentPage}})
     }catch(e){next(e)}
 }
+    
 export const requestMbankTransaction = async (req,res,next)=>{
     const errors = validationResult(req)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})
     const {recipient,amount,mbankType,transactionType} = req.body
     let io = socket.getIO();
-    
     try{
         const user = await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
         if(user.balance.mbank<parseInt(amount)) return res.status(422).json({error:'insufficient balance'})
         await Transaction.insertOne({recipient,amount:parseInt(amount),mbankType,transactionType,status:'PENDING',user:req.user.username,createdAt:new Date(),updatedAt:new Date()})
         await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.mbank`]:(-1)*parseInt(amount)}})
-        let socketAdmin = await SocketResponse.findOne({admin:'socket-admin',socketId:{$exists:true,$ne:null}})
-        if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{'pending.mbank':1}})
-        io.emit('added', {type:'mbank'})
+        let {socketId} = await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.mbank']:1}},{returnDocument:'after'})
+        //if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{'pending.mbank':1}})
+        if(socketId) io.to(socketId).emit('added',{type:'mbank'})
         res.status(201).json({message:`${transactionType} success`})
     }catch(e) {next(e)}
 }
@@ -360,6 +360,6 @@ export const changeMbankRequestStatus = async (req,res,next) =>{
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', mbankType)
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`M Bank Request ${status}`,body:`Recipient:${recipient} AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/mbank/${mbankType}/history`})
         res.status(200).json({message:'status updated'})
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
             //res.status(404).json({message:'বিল লেনদেন পাওয়া যায়নি', success:false})
