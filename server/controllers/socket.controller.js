@@ -8,16 +8,19 @@ let Admin,Notice,SocketResponse
         Admin = db.collection('admins');
         Notice = db.collection('notices');
         SocketResponse = db.collection('socketresponses');
-    }catch(err){console.error(err);}
+    }catch(e){console.error(e);}
 })()
-export const initSocketUser=async (username,level,socketId)=>{
-  try{await SocketResponse.insertOne({user:username,level,socketId,failed:{deposit:0,withdraw:0,topup:0,drive:0,regular:0,bill:0,bank:0,bkash:0,dbbl:0,nagad:0,upay:0},optChanged:false,topupOptChanged:false,regularOptChanged:false,driveOptChanged:false,notices:[],countInbox:0,seenNotice:false})}catch(e){throw new Error(e)}
+export const initSocketAdmin=async (mongoId,socketId)=>{
+  try{await SocketResponse.insertOne({admin:mongoId,socketId,pendings:{deposit:0,withdraw:0,topup:0,drive:0,mbank:0,bill:0,bank:0,user:0},failed:{deposit:0,withdraw:0,topup:0,mbank:0,bill:0,bank:0,drive:0},countInbox:0})}catch(e){throw new Error(e)}
 }
-export const findSocketAdmin =async (username,socketId)=>{
-  try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$set:{socketId}},{returnDocument:'after'});return admin;}catch(e){throw new Error(e)}
+export const initSocketUser=async (mongoId,level,socketId)=>{
+  try{await SocketResponse.insertOne({user:mongoId,level,socketId,failed:{deposit:0,withdraw:0,topup:0,drive:0,regular:0,bill:0,bank:0,bkash:0,dbbl:0,nagad:0,upay:0},optChanged:false,topupOptChanged:false,regularOptChanged:false,driveOptChanged:false,notices:[],countInbox:0,seenNotice:false})}catch(e){throw new Error(e)}
 }
-export const findSocketUser =async (username,socketId)=>{
-  try{let user = await SocketResponse.findOneAndUpdate({user:username},{$set:{socketId}},{returnDocument:'after'});return user;}catch(e){throw new Error(e)}
+export const findSocketAdmin =async (id,socketId)=>{
+  try{let admin = await SocketResponse.findOneAndUpdate({admin:id},{$set:{socketId}},{returnDocument:'after'});return admin;}catch(e){throw new Error(e)}
+}
+export const findSocketUser =async (id,socketId)=>{
+  try{let user = await SocketResponse.findOneAndUpdate({user:id},{$set:{socketId}},{returnDocument:'after'});return user;}catch(e){throw new Error(e)}
 }
 export const seenPendingByAdmin =async (type)=>{
   try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'}, {$set:{[`pending.${type}`]:0}});}catch(e){throw new Error(e)}
@@ -45,18 +48,19 @@ export default (io)=>{
         if(socketAdmin){
           const failed = {};
           const pending = {};
-          if(socketAdmin.failed.deposit>0) failed.deposit=socketAdmin.failed.deposit
-          if(socketAdmin.failed.topup>0) failed.topup=socketAdmin.failed.topup
-          if(socketAdmin.failed.regular>0) failed.regular=socketAdmin.failed.regular
-          if(socketAdmin.pending.deposit>0) pending.deposit=socketAdmin.pending.deposit
-          if(socketAdmin.pending.withdraw>0) pending.withdraw=socketAdmin.pending.withdraw
+          for(let f in socketAdmin.failed){
+          if(socketAdmin.failed[f]>0) failed[f]=socketAdmin.failed[f]
+          }//if(socketAdmin.failed.topup>0) failed.topup=socketAdmin.failed.topup
+          for(let p in socketAdmin.pending){
+          if(socketAdmin.pending[p]>0) pending[p]=socketAdmin.pending[p]
+          }/*if(socketAdmin.pending.withdraw>0) pending.withdraw=socketAdmin.pending.withdraw
           if(socketAdmin.pending.topup>0) pending.topup=socketAdmin.pending.topup
-          if(socketAdmin.pending.drive>0) pending.drive=socketAdmin.pending.drive
           if(socketAdmin.pending.mbank>0) pending.mbank=socketAdmin.pending.mbank
-          if(socketAdmin.pending.bill>0) pending.bill=socketAdmin.pending.bill
+          if(socketAdmin.pending.bill>0) pending.bill=socketAdmin.pending.bill*/
           if(Object.keys(failed).length>0) io.to(socket.id).emit('admin:failed',failed);
           if(Object.keys(pending).length>0) io.to(socket.id).emit('admin:pending',pending);
         }
+        else {initSocketAdmin(id,socket.id)}
       })
       socket.on('admin:deposit-history:seen',(obj)=> seenPendingByAdmin('deposit'))
       socket.on('admin:topup-history:seen',(obj)=> seenPendingByAdmin('topup'))
@@ -66,18 +70,18 @@ export default (io)=>{
       socket.on('admin:bill-history:seen',(obj)=> seenPendingByAdmin('bill'))
       socket.on('admin:bank-history:seen',(obj)=> seenPendingByAdmin('bank'))
       socket.on('admin:user-history:seen',(obj)=> seenPendingByAdmin('user'))
-      socket.on('user:join',async ({username,level}) => {     //
-        let socketUser=await findSocketUser(username,socket.id);
+      socket.on('user:join',async ({id,level}) => {     //
+        let socketUser=await findSocketUser(id,socket.id);
         if(socketUser) {if(socketUser.countInbox>0) io.to(socket.id).emit('user:inbox',socketUser.countInbox)
           let failed= {}//socketUser.socketId = socket.id;
           //let targetUser = socketUser
           /*if(targetUser.failed[0]>0) io.to(targetUser.socketId).emit('deposit-failed',{failedDepositCount:targetUser.failed[0]})
           if(targetUser.failed[1]>0) io.to(targetUser.socketId).emit('topup-failed',{failedTopupCount:targetUser.failed[1]})
-          if(targetUser.failed[2]>0) io.to(targetUser.socketId).emit('drive-failed',{failedDriveCount:targetUser.failed[2]})
-          if(targetUser.failed[3]>0) io.to(targetUser.socketId).emit('regular-failed',{failedRegularCount:targetUser.failed[3]})
-          if(targetUser.failed[4]>0) io.to(targetUser.socketId).emit('bill-failed',{failedBillCount:targetUser.failed[4]})
-          if(targetUser.failed[5]>0) io.to(targetUser.socketId).emit('bank-failed',{failedBankCount:targetUser.failed[5]})*/
-          if(socketUser.failed.deposit>0) failed.deposit=socketUser.failed.deposit
+          if(targetUser.failed[2]>0) io.to(targetUser.socketId).emit('drive-failed',{failedDriveCount:targetUser.failed[2]})*/
+          for(let f in socketUser.failed){
+          if(socketUser.failed[f]>0) failed[f]=socketUser.failed[f]
+          }//if(targetUser.failed[5]>0) io.to(targetUser.socketId).emit('bank-failed',{failedBankCount:targetUser.failed[5]})
+          /*if(socketUser.failed.deposit>0) failed.deposit=socketUser.failed.deposit
           if(socketUser.failed.topup>0) failed.topup=socketUser.failed.topup
           if(socketUser.failed.drive>0) failed.drive=socketUser.failed.drive
           if(socketUser.failed.withdraw>0) failed.withdraw=socketUser.failed.withdraw
@@ -85,7 +89,7 @@ export default (io)=>{
           if(socketUser.failed.bkash>0) failed.bkash=socketUser.failed.bkash
           if(socketUser.failed.dbbl>0) failed.dbbl=socketUser.failed.dbbl
           if(socketUser.failed.nagad>0) failed.nagad=socketUser.failed.nagad
-          if(socketUser.failed.upay>0) failed.upay=socketUser.failed.upay
+          if(socketUser.failed.upay>0) failed.upay=socketUser.failed.upay*/
           if(Object.keys(failed).length>0) io.to(socket.id).emit('user:failed',failed)
           
           if(socketUser.optChanged) io.to(socket.id).emit('user:telecoms',true)
@@ -95,7 +99,7 @@ export default (io)=>{
           if(socketUser.notices.length>0) io.to(socket.id).emit('user:notice',getNotice(socketUser.notices.length-1))
         }
         //else {usersSocketConnected[userId]={socketId:socket.id, failed:[null,null,null,null,null,null]}}
-        else {initSocketUser(username,level,socket.id )}
+        else {initSocketUser(id,level,socket.id )}
       });
       /*socket.on('seen-failed-deposit',({userId})=> usersSocketConnected[userId].failed[0]=null)
       socket.on('seen-failed-bill',({userId})=> usersSocketConnected[userId].failed[4]=null)
