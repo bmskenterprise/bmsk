@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 //BsPlusLg  } from 'react-icons/bs';
 //import url from '../../config/url';// from "";
 import {useTheme} from '../../contexts/ThemeContext';
-//import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {ScrollViewV,FlexH,Loader,Spinner} from '../../components/styles/Admin.style';
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import {Center,ScrollViewV,FlexH,Loader,Spinner} from '../../components/styles/Admin.style';
 import ImageSlider from '../../components/setting/ImageSlider';
 import TelecomAccess from '../../components/setting/TelecomAccess';
 import Bank from '../../components/setting/Banks';
@@ -21,7 +21,8 @@ import Services from '../../components/setting/Services';
 
 
 export default  () =>{
-    //const isMobile = useMediaQuery({ maxWidth: 768 });
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses;
     const {themeData, modeData:{backPrimary,backSecondary,textPrimary}} = useTheme();
         /*const permission = config['permission'];*///let [imagesRef,linkRef]=[useRef(null),useRef(null)];
         //const {appData/*:{topupAccess,driveAccess,regularAccess,mbanks,slideImages,routing,contacts,bankNames,pgws}*/} = useAdminAuth();
@@ -67,7 +68,7 @@ export default  () =>{
             .then(data => setLinks(data))
         };*/
 
-        return <ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}><div style={{background:backPrimary, width:'100%'}}>
+        return !accesses?.includes('setting')?<Center><p>You don't have permission</p></Center>:<ScrollViewV style={{width:'100%',height:'100%',position:'relative'}}><div style={{background:backPrimary, width:'100%'}}>
             {/*Object.keys(permission).map((p) => {
                 permission[p].map((t,i)=> <div key={i}><input type='radio' name={key.split(' ')[0]} id={t} /><label htmlFor={t}>{t}</label></div>)
             })
