@@ -4,6 +4,7 @@ import {toast} from 'react-toastify';
 import {MdEdit} from 'react-icons/md';     
 import {BsPlusLg} from 'react-icons/bs';
 import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {Col,FlexH,GapV,ThemeButton,InputField,ErrorText,TinyIcon,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
@@ -14,8 +15,10 @@ export default  () =>{
     const isMobile = useMediaQuery({maxWidth:768})
     const [gateways,setGateways] = useState([])
     const init = {id:null,name:'',merchantID:''}
-    const [editInit, setEditInit] = useState({});
-    const [errors, setErrors] = useState({});
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
+    const [editInit,setEditInit] = useState({});
+    const [errors,setErrors] = useState({});
     const [loading,setLoading] = useState(false)
     const {modeData:{backSecondary,textSecondary}} = useTheme()
     let [SMSGateways,setSMSGateways] = useState([])
@@ -52,7 +55,7 @@ export default  () =>{
     
 
     const editSMSGateway = async (id,modifiedFields) => {
-        if(!Object.keys(modifiedFields).length) return
+        if(!Object.keys(modifiedFields).length>0) return
         setLoading(true)
         try{
             let res = await fetch(`${url.urlSMSGateway}/${id}`,
@@ -72,6 +75,7 @@ export default  () =>{
     
     const handleSubmit = e =>{
         e.preventDefault()
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         let validationErrors
         if(editInit.id){
           validationErrors = validateEditAPIGateway(SMSGateways,editInit);
@@ -83,6 +87,7 @@ export default  () =>{
           addSMSGateway(editInit)
         }
     }
+    
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'1rem'}}>
         <h4 style={{marginBottom:'2rem'}}>SMS Gateway</h4>
         {!Object.keys(editInit).length &&<>
