@@ -3,11 +3,11 @@ import {NavLink,useLocation} from 'react-router-dom';
 import {useMediaQuery} from 'react-responsive';
 import {BsChevronUp,BsChevronRight} from 'react-icons/bs';
 //import logo from '../../assets/logo.svg';
-import bell from '../../assets/audio/notification-sound-349341.mp3';
+import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {ScrollViewV,InlineBadge,SidebarContainer,Rotate} from '../../components/styles/Admin.style';
-import {useTheme} from '../../contexts/ThemeContext';
 import {useNotification} from '../../contexts/NotificationContext';
+import bell from '../../assets/audio/notification-sound-349341.mp3';
 import navs from './Navs'
 
 const Sidebar = ({handleSidebarToggle}) =>{
@@ -20,9 +20,9 @@ const Sidebar = ({handleSidebarToggle}) =>{
     let accesses = admin?.accesses
     const {pendingCounts:{drive,bank,bill,user},failedCounts:{deposit,topup,regular},isPending} = useNotification();
     const activeLink= ({isActive})=> isActive?'active':''
-    useEffect(()=>{
+    /*useEffect(()=>{
         if(isPending){bellRef.current.click();}
-    },[isPending])
+    },[isPending])*/
     
     const handleNavClick = (i) =>{
         if(isMobile) handleSidebarToggle()   //
@@ -31,7 +31,7 @@ const Sidebar = ({handleSidebarToggle}) =>{
     }
     
     return <SidebarContainer /*sidebarToggler={sidebarToggler}*/  >
-        <div style={{height:'4rem'}}>{/*<img src={logo} className=" " style={{width:'auto',height:'3rem'}}/>*/}<button ref={bellRef} onClick={e=>{(new Audio(bell)).play()}} hidden></button></div>
+        <div style={{height:'4rem'}}>{/*<img src={logo} className=" " style={{width:'auto',height:'3rem'}}/><button ref={bellRef} onClick={e=>{(new Audio(bell)).play()}} hidden></button>*/}</div>
         <ScrollViewV style={{height:'calc(100vh - 4rem)'}}>
         <ul className='sidebar'>
             {/*<li><NavLink to='/dashboard' className={activeLink}>Dashboard</NavLink></li>
