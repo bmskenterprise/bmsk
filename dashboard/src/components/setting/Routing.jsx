@@ -2,7 +2,8 @@ import {useEffect,useState} from 'react'
 import {useMediaQuery} from 'react-responsive'
 import {toast} from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext' 
-import {useTelecom} from '../../contexts/TelecomContext'       //
+import {useTelecom} from '../../contexts/TelecomContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext'    //
 import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Select,Spinner} from '../styles/Admin.style';
 import Accordion from './Accordion'
 import url from '../../config/url'
@@ -14,7 +15,9 @@ export default  () =>{
     const [modified,setModified] = useState([])
     const [loading,setLoading] = useState(false) 
     const {icons} = useTelecom()
-          //
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
+    
     useEffect(()=>{fetchRouting()}, [])  //
     const fetchRouting = async e =>{
         try{
@@ -24,8 +27,12 @@ export default  () =>{
             setModemRouting(data)
         }catch(e) {toast.error(e.message)}
     }
+                 
+                
+              
     const saveRouting = async (e) => {
         e.preventDefault();
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         //let form=e.target;
         /*let edited={
             airtel:{ip:form['airtel-ip'].value.trim(),slot:form['airtel-slot'].value},
@@ -80,10 +87,6 @@ export default  () =>{
     return <>{isMobile ? (
             <Col >
               <Accordion title='Routing' content={content}/>
-                 
-                
-              
-            
             </Col>
           ) :<Col /*md={6} xl={4}*/>{content}</Col>}</>
 }
