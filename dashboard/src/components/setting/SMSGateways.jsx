@@ -75,7 +75,7 @@ export default  () =>{
     
     const handleSubmit = e =>{
         e.preventDefault()
-        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
+        if(!accesses?.includes('modify-api')) {toast.info('you don\'t have modify permission');return}
         let validationErrors
         if(editInit.id){
           validationErrors = validateEditAPIGateway(SMSGateways,editInit);
@@ -88,8 +88,8 @@ export default  () =>{
         }
     }
     
-    let content = <div style={{background:backSecondary,color:textSecondary,padding:'1rem'}}>
-        <h4 style={{marginBottom:'2rem'}}>SMS Gateway</h4>
+    let content = <div style={{background:backSecondary,color:textSecondary,minHeight:'24rem',padding:'0.5rem'}}>
+        <h4>SMS Gateway</h4><GapV x='1.5'/>
         {!Object.keys(editInit).length &&<>
             <FlexH x='flex-end' y='center'><PrimaryButton onClick={()=>setEditInit(init)}><BsPlusLg/></PrimaryButton></FlexH><GapV x='2'/> 
              <div>
