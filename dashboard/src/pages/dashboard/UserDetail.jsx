@@ -79,7 +79,7 @@ export default  () =>{
                     {/*<p>{user?.level}</p><GapV x='2'/>*/}
                         <p>Fullname: {user?.fullname}</p><GapV x='1.5'/>
                         <p>Email: {user?.email}</p><GapV x='1.5'/>
-                        <p>NID: {user?.nid}</p><GapV x='1.5'/>
+                        <p>NID: <span onClick={e=>{window.open(user?.nid)}}>Front Photo</span></p><GapV x='1.5'/>
                         <p>Joined: {getLocalDateFromUTC(user?.createdAt??(new Date()).toISOString())}</p><GapV x='1.5'/>
                         <p>Registration Ref: {user?.regFeeRef??'N/A'}</p><GapV x='4.5'/>
                         <FlexH x='space-between' style={{width:'12rem'}}>
