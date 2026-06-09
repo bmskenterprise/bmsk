@@ -11,6 +11,8 @@ import SwitchItem from '../Switch';
 
 export default () => {
   const isMobile = useMediaQuery({maxWidth:768})
+  const {admin} = useAdminAuth()
+          const accesses = admin?.accesses
   const {modeData:{backSecondary,textSecondary}} = useTheme();
   const [loading,setLoading] = useState(false);
   const [edited,setEdited]= useState([])
@@ -28,6 +30,9 @@ export default () => {
   
   const editServices = async (e) => {
     e.preventDefault()
+         if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
+                  
+                   
     //if(JSON.stringify(edited.sort())===JSON.stringify(services.sort())) {toast.info('No changes made');return};
     setLoading(true);
     try {
@@ -63,7 +68,3 @@ export default () => {
               </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
       }</>
 }
-              
-                
-                  
-                   
