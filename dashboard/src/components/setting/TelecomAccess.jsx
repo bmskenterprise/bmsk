@@ -15,11 +15,12 @@ export default   () =>{
     const {modeData:{backSecondary, textSecondary}} = useTheme()
     const [telecomAccesses, setTelecomAccesses] = useState({driveAccess:[],regularAccess:[],topupAccess:[]});
     const isMobile = useMediaQuery({maxWidth: 768});
-    const {appData} = useAdminAuth()        //    
+    const {appData,admin} = useAdminAuth()        //    
+    const accesses = admin?.accesses
     //const {topupAccess, regularAccess,driveAccess} = telecomAccesses;
     const [switchRegularPack, setSwitchRegularPack] = useState(false);
     const [switchTopup, setSwitchTopup] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [loading,setLoading] = useState(false);
     const [modifiedTopupAccess,setModifiedTopupAccess] = useState([])
     const [modifiedDriveAccess,setModifiedDriveAccess] = useState([])
     const [modifiedRegularAccess,setModifiedRegularAccess] = useState([]);
@@ -42,6 +43,7 @@ export default   () =>{
     },[])
     const modifyDriveTelecomAccess = async e => {
         e.preventDefault();
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\t have modify permission');return}
         if(JSON.stringify(telecomAccesses.driveAccess.sort()) == JSON.stringify(modifiedDriveAccess.sort())) return toast.info('no changes')
         setLoading(true);
         try{
@@ -60,6 +62,7 @@ export default   () =>{
 
     const modifyRegularTelecomAccess = async e => {
         e.preventDefault();
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\t have modify permission');return}
         if(JSON.stringify(telecomAccesses.regularAccess.sort()) == JSON.stringify(modifiedRegularAccess.sort())) return toast.info('no changes')
         setLoading(true);
         try{
@@ -77,6 +80,7 @@ export default   () =>{
     }
     const modifyTopupTelecomAccess = async e => {
         e.preventDefault();
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\t have modify permission');return}
         if(JSON.stringify(telecomAccesses.topupAccess.sort()) == JSON.stringify(modifiedTopupAccess.sort())) return toast.info('no changes')
         setLoading(true);
         try{
@@ -93,25 +97,30 @@ export default   () =>{
         finally{setLoading(false);}
     }
     const toggleTopupAccess = (status,opt) =>{
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\t have modify permission');return}
         if(status) setModifiedTopupAccess(prev=>[...prev,opt])
         else setModifiedTopupAccess(prev=>prev.filter(el=>el!=opt))
     }
     const toggleDriveAccess = (status,opt) =>{
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\t have modify permission');return}
         if(status) setModifiedDriveAccess(prev=>[...prev,opt])
         else setModifiedDriveAccess(prev=>prev.filter(el=>el!=opt))
     }
     const toggleRegularAccess = (status,opt) => {
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         if(status) setModifiedRegularAccess(prev=>[...prev,opt])
         else setModifiedRegularAccess(prev=>prev.filter(el=>el!=opt))
     }
     const changeTopupMethod = async (e)=>{
+
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         try{
             let res= await fetch(`${url.urlTopup}/method/${e.target.value}`,{method:'PATCH',credentials:'include'})
             let data = await res.json()
             if(!res.ok) throw new Error(data.error)
             //setTopupGateway(data.topupMethod)
             toast.success(data.message) 
-        }catch(err) {toast.error(err.message);setTopupMethod(prev=>prev)}
+        }catch(e) {toast.error(e.message);setTopupMethod(prev=>prev)}
     }
 
     let content= <FlexH x='space-between' style={{background:backSecondary,color:textSecondary,gap:'3rem 0',width:'100%',padding:'0.5rem'}}>
@@ -171,7 +180,3 @@ export default   () =>{
         </Col>
       ) : <div style={{width:'100%'}} /*xl={8}*/>{content}</div>}</>
 }
-
-           
-            
-          
