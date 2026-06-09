@@ -28,7 +28,7 @@ export default ()=>{
   }
   const saveBankNames = async(e) =>{
     e.preventDefault();
-    if(!accesses?.includes('modify-setting')) return
+    if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
     let names = e.target['bank-names'].value.trim()
     if(names.length>500) {setError('Too many characters');return} //
     if(!names) {toast.info('Enter Bank Names');return}
