@@ -1,9 +1,10 @@
 import {useEffect,useState} from 'react';
 import {useMediaQuery} from 'react-responsive'
-import { toast } from 'react-toastify';
+import {toast} from 'react-toastify';
 import {MdEdit} from 'react-icons/md';     
 import {BsPlusLg} from 'react-icons/bs'
 import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {Col,FlexH,GapV,GapH,ThemeButton,InputField,ErrorText,TinyIcon,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
@@ -13,6 +14,8 @@ import SwitchItem from '../Switch'
 export default  () =>{
     const isMobile = useMediaQuery({maxWidth:786})
     const {modeData:{backSecondary,textSecondary}} = useTheme()
+          const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
     const init = {id:null,name:'',merchantID:''}
     const [gateways,setGateways] = useState([])
     const [editInit, setEditInit] = useState({});
@@ -111,8 +114,11 @@ export default  () =>{
     }
     const handleChange = (e)=> setEditInit(prev=>({...prev,[e.target.name]:e.target.value}))
     
+
+                  
     const handleSubmit = e =>{
         e.preventDefault()
+           if(!accesses?.includes('modify-api')) {toast.info('you don\'t have modify permission');return}
         let validationErrors// = validatePGW(pgws,editInit);
         //if (Object.keys(validationErrors).length) {return setErrors(validationErrors);}
         if(editInit.id){
@@ -126,7 +132,7 @@ export default  () =>{
         }
     }
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
-        <h4>PGW</h4><GapV x='2'/>
+        <h4>PGW</h4><GapV x='1.5'/>
         {!Object.keys(editInit).length>0 &&<>
             <FlexH x='flex-end'><PrimaryButton onClick={()=>setEditInit(init/*{name:'', merchantID:''}*/)}><BsPlusLg/></PrimaryButton><GapH x='1'/></FlexH><GapV x='2'/>   
             <div /*style={{border:'none'}}*/>
@@ -182,7 +188,3 @@ export default  () =>{
                 </Col>:<Col /*md={6} xl={4}*/>{content}</Col>
     }</>
 }
-
-                
-                  
-                
