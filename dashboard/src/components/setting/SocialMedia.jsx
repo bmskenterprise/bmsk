@@ -2,16 +2,19 @@ import { useEffect,useState, } from 'react'
 import {useMediaQuery} from 'react-responsive';
 import { toast } from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext'
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Spinner} from '../styles/Admin.style';
-/*import {Accordion,Col,*/   import Accordion from './Accordion'
+ import Accordion from './Accordion'
 import url from '../../config/url';
 
 export default  () =>{
-     const isMobile = useMediaQuery({maxWidth:768});
+    const isMobile = useMediaQuery({maxWidth:768});
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses
     const [socialLinks,setSocialLinks] = useState([]);
     const [modified,setModified] = useState([]);
     const [loading, setLoading] = useState(false);
-    const {modeData:{backSecondary,textSecondary}} = useTheme()// fetch()
+    const {modeData:{backSecondary,textSecondary}} = useTheme()
            
     useEffect(() => {fetchSocialLinks()},[])
     
@@ -24,6 +27,7 @@ export default  () =>{
 
     const saveModified = async e=>{
         e.preventDefault();
+        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         let updates = [];
         if(JSON.stringify(modified)===JSON.stringify(socialLinks)) return toast.success('saved successfully');
         socialLinks.forEach((link,i)=>{
@@ -70,4 +74,3 @@ export default  () =>{
 }
 
           
-            
