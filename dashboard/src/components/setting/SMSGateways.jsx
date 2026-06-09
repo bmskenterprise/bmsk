@@ -5,7 +5,7 @@ import {MdEdit} from 'react-icons/md';
 import {BsPlusLg} from 'react-icons/bs';
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import {Col,FlexH,GapV,ThemeButton,InputField,ErrorText,TinyIcon,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,GapH,GapV,ThemeButton,InputField,ErrorText,TinyIcon,PrimaryButton,IconButton,Spinner} from '../styles/Admin.style'
 import {validateAddAPIGateway,validateEditAPIGateway} from '../../utils/validate';
 import url from '../../config/url'
 import SwitchItem from '../Switch'
