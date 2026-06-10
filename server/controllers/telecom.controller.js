@@ -103,11 +103,11 @@ export const topup = async (req, res) => {
         teletalk: `*727*${recipient}*${amount}#`
     };
     const url = `http://${map.ip}:8080/ussd/send?ussd=${encodeURIComponent(ussds[opKey])}&sim=${map.slot}&token=ksmb@25112025`;
-            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'SUCCESS'});//console.log(`d.data ${d.data}`);
+            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:{id:req.user.id,username:req.user.username},status:'SUCCESS'});//console.log(`d.data ${d.data}`);
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             return res.status(201).json({message:'topup success',success:true,operator,sim:map.slot,device:map.ip/*,gateway_response:d.data*/});
         }else if(admin.methods.topup=='manual'){
-            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
+            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:{id:req.user.id,username:req.user.username},status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             let {socketId} = await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.topup']:1}},{returnDocument:'after'});
             //if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{['pending.topup']:1}});
@@ -118,7 +118,7 @@ export const topup = async (req, res) => {
             const {deviceId,operator,recipient,amount} = req.body;
             const r = emitToDevice(deviceId,'topup',{id,operator,recipient,amount})
             if(!r.ok) return res.status(400).json({error:r.error,success:false})
-            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.username,status:'SUCCESS'});
+            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:{id:req.user.id,username:req.user.username},status:'SUCCESS'});
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             return res.status(201).json({message:'topup request sent',success:true})
         }
@@ -131,14 +131,14 @@ export const topup = async (req, res) => {
 };
 
 export const changeTopupStatus = async (req,res,next)=>{
-    const {username,status,feedback} = req.body;
+    const {userId,status,feedback} = req.body;
     let io = socket.getIO()
     try{
-        const {socketId} = await SocketResponse.findOne({user:username})
+        const {socketId} = await SocketResponse.findOne({user:userId})
         let {recipient,amount}= await Topup.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}});
         if(status=='FAILED') {
-            await User.findOneAndUpdate({username},{$inc:{[`balance.topup`]:parseInt(amount)}})
-            await SocketResponse.findOneAndUpdate({user:username},{$inc:{['failed.topup']:1}});
+            await User.findOneAndUpdate({username},{$inc:{['balance.topup']:parseInt(amount)}})
+            await SocketResponse.findOneAndUpdate({user:userId},{$inc:{['failed.topup']:1}});
         }
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Topup Request ${status}`,body:`Recipient:${recipient} Amount:৳${amount} `,url:`${process.env.CLIENT_URL}/topup/history`})
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','topup')
@@ -216,16 +216,24 @@ export const getTopupHistoryByAdmin = async (req,res,next)=>{
     const filter = {};
     if(status) filter.status=status
     if(txn) filter.txn=txn
-    if(user) filter.user=user
+    if(user) filter['user.username']=user
     if(opt) filter.operator=opt
     if(from) filter.createdAt={$gte:from}
     if(to) filter.createdAt={$lte:to}
     if(from&&to) filter.createdAt={$gte:from,$lte:to}
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page)||1
+    let skip=queryLimit*(currentPage-1)
     try{
-        const total = await Topup.countDocuments(filter);
-        const topups = await Topup.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({createdAt:-1}).toArray();
+        let topups,total
+        if(req.admin.role=='admin') {
+            total = await Topup.countDocuments(filter);
+            topups = await Topup.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({createdAt:-1}).toArray();
+        }else{
+            const [result] = await Topup.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            topups = result.data
+            total = result.metadata[0]?.total ?? 0;
+        }
         if(!topups) return res.status(404).json({error:'No topup history found'});
         res.status(200).json({topups,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
     }catch(e) {next(e)}
@@ -306,7 +314,7 @@ export const hitDrive = async (req, res, next) => {
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.drive`]:Number(drive.price-drive.commission)*(-1)}})
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}});
         //const hit = new DriveHit({drive, recipient, user:req.user.username});
-        const currentPack= await DriveHit.insertOne({drive, recipient, user:req.user.username,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
+        const currentPack= await DriveHit.insertOne({drive, recipient, user:{id,req.user.id,username:req.user.username},status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
         io.emit('added', {type:'drive', currentPack });
         await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.drive`]:1}});
 
@@ -415,6 +423,33 @@ export const editDrive = async (req, res, next) => {
 }
     //}
 
+//call by admin
+export const getDriveHits = async (req, res, next) => {
+    const {status, user,telecom,fromDate,toDate,limit,page} = req.query;
+    const filter = {};
+    if(status) filter.status = status.toUpperCase();
+    if(user) filter['user.username'] = user;
+    if(telecom) filter['drive.operator'] = telecom;
+    if(fromDate) filter.createdAt = {$gte:fromDate};
+    if(toDate) filter.createdAt = {$lte:toDate};
+    if(fromDate&&toDate) filter.createdAt = {$gte:fromDate,$lte:toDate};
+    let queryLimit=parseInt(limit) || 20
+    let currentPage=parseInt(page) || 1
+    let skip=queryLimit*(currentPage-1)
+    try{
+        let hits,total
+        if(req.admin.role=='admin') {
+            total = await DriveHit.countDocuments(filter);
+            hits = await DriveHit.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({createdAt:-1}).toArray();
+        }else{
+            const [result] = await DriveHit.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            hits = result.data
+            total = result.metadata[0]?.total ?? 0;
+        }
+        if(!hits) return res.status(404).json({ error: 'No drives found' });
+        res.status(200).json({hits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
+    }catch(e) {next(e)}
+}
 
 
 //call by admin
@@ -467,16 +502,16 @@ export const getDriveHits = async (req, res, next) => {
 
 //call by admin
 export const changeHitStatus = async (req, res,next) => {
-    const {username,status,feedback} = req.body;
+    const {userId,status,feedback} = req.body;
     let io = socket.getIO() 
     try{
         let {drive,recipient} = await DriveHit.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||''}});
-        const {socketId} =await SocketResponse.findOne({user:username})//usersSocketConnected[username];
+        const {socketId} =await SocketResponse.findOne({user:userId})//usersSocketConnected[username];
 
         //if(socketId) io.to(socketId).emit('drivehit-status', { title:'Drive', message:`drive ${status=='failed'?feedback:status}`});
         if(status=='SUCCESS') await Drive.findOneAndUpdate({_id:new ObjectId(drive.id)},{$inc:{sold:1}});
         if( status=='FAILED'){
-            await User.findOneAndUpdate({username}, {$inc:{[`balance.drive`]:drive.price}})
+            await User.findOneAndUpdate({username}, {$inc:{['balance.drive']:drive.price}})
             await SocketResponse.findOneAndUpdate({user:username},{$inc:{['failed.drive']:1}})
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','drive')
