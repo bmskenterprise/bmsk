@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const SSLCommerzPayment = require('sslcommerz-lts')
 import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
+import pipeline from '../utils/aggregatePipe.js' //if(!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({error:'invalid balance type'});
 import connectDB from '../config/db.js';
 import socket from '../config/socket.js';
 import cloudinary from '../config/cloudinary.js'
@@ -42,7 +43,6 @@ export const changeDepositMethod = async (req,res,next) =>{
 export const depositByUser = async (req, res,next) => {
     let {txn,gateway,balanceType,ref} = req.body;
     //if(/*!userId||*/ isNaN(amount)) return res.status(400).json({ error: 'Invalid Amount' });
-    //if(!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({error:'invalid balance type'});
     let initFilter = {txn}
     if(ref) {initFilter.user = ref}
     else {initFilter.user = req.user.username}
@@ -290,9 +290,17 @@ export const getDepositHistoryByAdmin = async (req, res, next) => {
     if(from&&to) filter.createdAt={$gte:from,$lte:to}
     let queryLimit=parseInt(limit) || 20
     let currentPage = parseInt(page) || 1;
+    let skip=queryLimit*(currentPage-1)
     try{
-        const total = await Deposit.countDocuments(filter);
-        const deposits = await Deposit.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({ createdAt: -1 }).toArray();
+        let deposits,total
+        if(req.admin.role=='admin'){
+            deposits = await Deposit.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({ createdAt: -1 }).toArray();
+            total= await Deposit.countDocuments(filter);
+        }else{
+            const [result] = await Deposit.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            deposits = result.data
+            total = result.metadata[0]?.total ?? 0;
+        }
         if(!deposits) {return res.status(404).json({ message: 'No deposits found' });}
         res.status(200).json({deposits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
     }catch(e) {next(e)}
@@ -311,9 +319,17 @@ export const getWithdrawHistoryByAdmin = async (req, res, next) => {
     if(from&&to) filter.createdAt={$gte:from,$lte:to}
     let queryLimit=parseInt(limit) || 20
     let currentPage = parseInt(page) || 1;
+    let skip=queryLimit*(currentPage-1)
     try{
-        const total = await Withdraw.countDocuments(filter);
-        const withdraws = await Withdraw.find(filter,{projection:{__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({ createdAt: -1 }).toArray();
+        let withdraws,total
+        if(){
+            total = await Withdraw.countDocuments(filter);
+            withdraws = await Withdraw.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({ createdAt: -1 }).toArray();
+        }else{
+            const [result] = await Withdraw.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            withdraws = result.data
+            total = result.metadata[0]?.total ?? 0;
+        }
         if(!withdraws) {return res.status(404).json({ message: 'No deposits found' });}
         res.status(200).json({withdraws,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
     }catch(e) {next(e)}
