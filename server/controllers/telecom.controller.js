@@ -3,10 +3,10 @@ import {validationResult} from 'express-validator';
 import axios from 'axios';
 import {v4 as uuidv4} from 'uuid'
 import dotenv from 'dotenv';dotenv.config()
+import {aggregatePipeSuperAdmin,aggregatePipeSubAdmin} from '../utils/aggregatePipe.js';
 import connectDB from '../config/db.js';
 //import SocketResponse from '../models/socketResponse.model.js'
 import socket from '../config/socket.js';
-//import userModel from '../models/user.model.js';
 //let io = socket.getIO()
 let CACHE_TTL_MS = 24*1000*60*60;
 let routings = null
@@ -103,11 +103,11 @@ export const topup = async (req, res) => {
         teletalk: `*727*${recipient}*${amount}#`
     };
     const url = `http://${map.ip}:8080/ussd/send?ussd=${encodeURIComponent(ussds[opKey])}&sim=${map.slot}&token=ksmb@25112025`;
-            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:{id:req.user.id,username:req.user.username},status:'SUCCESS'});//console.log(`d.data ${d.data}`);
+            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.id,status:'SUCCESS'});//console.log(`d.data ${d.data}`);
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             return res.status(201).json({message:'topup success',success:true,operator,sim:map.slot,device:map.ip/*,gateway_response:d.data*/});
         }else if(admin.methods.topup=='manual'){
-            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:{id:req.user.id,username:req.user.username},status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
+            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             let {socketId} = await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.topup']:1}},{returnDocument:'after'});
             //if(!socketAdmin) await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{['pending.topup']:1}});
@@ -118,7 +118,7 @@ export const topup = async (req, res) => {
             const {deviceId,operator,recipient,amount} = req.body;
             const r = emitToDevice(deviceId,'topup',{id,operator,recipient,amount})
             if(!r.ok) return res.status(400).json({error:r.error,success:false})
-            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:{id:req.user.id,username:req.user.username},status:'SUCCESS'});
+            await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.id,status:'SUCCESS'});
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
             return res.status(201).json({message:'topup request sent',success:true})
         }
@@ -131,14 +131,14 @@ export const topup = async (req, res) => {
 };
 
 export const changeTopupStatus = async (req,res,next)=>{
-    const {userId,status,feedback} = req.body;
+    const {status,feedback} = req.body;
     let io = socket.getIO()
     try{
-        const {socketId} = await SocketResponse.findOne({user:userId})
-        let {recipient,amount}= await Topup.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}});
+        let {recipient,amount,user}= await Topup.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}});
+        const {socketId} = await SocketResponse.findOne({user})
         if(status=='FAILED') {
             await User.findOneAndUpdate({username},{$inc:{['balance.topup']:parseInt(amount)}})
-            await SocketResponse.findOneAndUpdate({user:userId},{$inc:{['failed.topup']:1}});
+            await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.topup']:1}});
         }
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Topup Request ${status}`,body:`Recipient:${recipient} Amount:৳${amount} `,url:`${process.env.CLIENT_URL}/topup/history`})
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','topup')
@@ -214,23 +214,31 @@ export const updateModemRouting = async (req,res,next) =>{
 export const getTopupHistoryByAdmin = async (req,res,next)=>{
     const {status,txn,user,opt,from,to,limit,page} = req.query;
     const filter = {};
-    if(status) filter.status=status
-    if(txn) filter.txn=txn
-    if(user) filter['user.username']=user
-    if(opt) filter.operator=opt
-    if(from) filter.createdAt={$gte:from}
-    if(to) filter.createdAt={$lte:to}
-    if(from&&to) filter.createdAt={$gte:from,$lte:to}
+    if(status) filter.status = status??'PENDING'
+    if(txn) filter.txn = txn
+    if(user) filter.user = user
+    if(opt) filter.operator = opt
+    let fromDate,toDate
+    if(from) {
+        fromDate = new Date(from)
+        filter.createdAt={$gte:fromDate}
+    }
+    if(to) {
+        toDate = new Date(to)
+        filter.createdAt={$lte:toDate}
+    }
+    if(from&&to) filter.createdAt={$gte:fromDate,$lte:toDate}
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page)||1
     let skip=queryLimit*(currentPage-1)
     try{
         let topups,total
         if(req.admin.role=='admin') {
-            total = await Topup.countDocuments(filter);
-            topups = await Topup.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({createdAt:-1}).toArray();
+            const [result] = await Topup.aggregate(aggregatePipeSuperAdmin(filter,skip,queryLimit)).toArray();
+            topups=result.data
+            total = result.metadata[0]?.total ?? 0;
         }else{
-            const [result] = await Topup.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            const [result] = await Topup.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
             topups = result.data
             total = result.metadata[0]?.total ?? 0;
         }
@@ -242,9 +250,9 @@ export const getTopupHistoryByAdmin = async (req,res,next)=>{
 
 
 export const getTopupHistoryByUser = async (req,res,next)=>{
-  const {id,search,page} =req.query
+  const {id,status,search,page} =req.query
   const s =new RegExp(search,'i');
-  let filter ={user:req.user.username,$or:[{status:{$regex:s}},{recipient:{$regex:s}},{transactionType:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
+  let filter ={user:req.user.id,status,$or:[{recipient:{$regex:s}},{operator:{$regex:s}},{amount:{$regex:s}},{updatedAt:{$regex:s}}]}
   //filter.user=req.user.id
   //if(status) filter.status =status;
   let currentPage=parseInt(page)||1
@@ -314,7 +322,7 @@ export const hitDrive = async (req, res, next) => {
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{[`balance.drive`]:Number(drive.price-drive.commission)*(-1)}})
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}});
         //const hit = new DriveHit({drive, recipient, user:req.user.username});
-        const currentPack= await DriveHit.insertOne({drive, recipient, user:{id,req.user.id,username:req.user.username},status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
+        const currentPack= await DriveHit.insertOne({drive, recipient, user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
         io.emit('added', {type:'drive', currentPack });
         await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.drive`]:1}});
 
@@ -323,9 +331,9 @@ export const hitDrive = async (req, res, next) => {
 }
 
 export const getDriveHistoryByUser = async (req,res,next) =>{
-    const {search,/*recipient,*/page} = req.query
+    const {status,search,page} = req.query
     const s = new RegExp(search,'i')
-    const filter ={user:req.user.username,$or:[{status:{$regex:s}},{recipient:{$regex:s}},{operator:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
+    const filter ={user:req.user.id,status,$or:[{recipient:{$regex:s}},{operator:{$regex:s}},{amount:{$regex:s}},{updatedAt:{$regex:s}}]}
     //if(status) filter.status = status
     let currentPage=parseInt(page) || 1
     try{
@@ -425,24 +433,32 @@ export const editDrive = async (req, res, next) => {
 
 //call by admin
 export const getDriveHits = async (req, res, next) => {
-    const {status, user,telecom,fromDate,toDate,limit,page} = req.query;
+    const {status, user,telecom,from,to,limit,page} = req.query;
     const filter = {};
+    let fromDate,toDate
     if(status) filter.status = status.toUpperCase();
     if(user) filter['user.username'] = user;
     if(telecom) filter['drive.operator'] = telecom;
-    if(fromDate) filter.createdAt = {$gte:fromDate};
-    if(toDate) filter.createdAt = {$lte:toDate};
-    if(fromDate&&toDate) filter.createdAt = {$gte:fromDate,$lte:toDate};
+    if(from) {
+        fromDate = new Date(from)
+        filter.updatedAt = {$gte:fromDate};
+    }
+    if(to) {
+        toDate = new Date(to)
+        filter.updatedAt = {$lte:toDate};
+    }
+    if(fromDate&&toDate) filter.updatedAt = {$gte:fromDate,$lte:toDate};
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page) || 1
     let skip=queryLimit*(currentPage-1)
     try{
         let hits,total
         if(req.admin.role=='admin') {
-            total = await DriveHit.countDocuments(filter);
-            hits = await DriveHit.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({createdAt:-1}).toArray();
+            const [result] = await DriveHit.aggregate(aggregatePipeSuperAdmin(filter,skip,queryLimit)).toArray();
+            hits = result.data
+            total = result.metadata[0]?.total ?? 0;
         }else{
-            const [result] = await DriveHit.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            const [result] = await DriveHit.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
             hits = result.data
             total = result.metadata[0]?.total ?? 0;
         }
