@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 const SSLCommerzPayment = require('sslcommerz-lts')
 import {v4 as uuidv4} from 'uuid';
 import axios from 'axios';
-import pipeline from '../utils/aggregatePipe.js' //if(!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({error:'invalid balance type'});
+import {aggregatePipeSuperAdmin,aggregatePipeSubAdmin} from '../utils/aggregatePipe.js' //if(!['topup','drive','bank'].includes(balanceType)) return res.status(400).json({error:'invalid balance type'});
 import connectDB from '../config/db.js';
 import socket from '../config/socket.js';
 import cloudinary from '../config/cloudinary.js'
@@ -93,7 +93,7 @@ export const depositRequest = async (req,res,next) =>{
     try{
         let user = await User.findOne({_id:new ObjectId(req.user.id)});
         if(!user.accesses.includes('deposit')) return res.status(401).json({error:'Don\'t have deposit permission',success:false});
-        const data= {gateway,status:'PENDING',amount,ref:ref||'',user:req.user.username,createdAt:new Date(),updatedAt:new Date()}
+        const data= {gateway,status:'PENDING',amount,ref:ref||'',user:req.user.id,createdAt:new Date(),updatedAt:new Date()}
         if(txn){
             let deposit = await Deposit.findOne({txn,gateway});
             if(deposit) return res.status(409).json({error:'txn already exist',success:false});
@@ -171,18 +171,18 @@ export const deductBalanceByAdmin = async (req, res,next) => {
 }
 
 export const changeDepositStatus = async (req,res,next) =>{
-    const {username,status,feedback} = req.body
+    const {status,feedback} = req.body
     let io = socket.getIO()
     try{
-        
-        let user = await User.findOne({username})
-        if(!user.verified) return res.status(422).json({error:'user not verified'});
+        let {user}=await Deposit.findOne({_id:new ObjectId(req.params.id),status:'PENDING'})
+        let {verified} = await User.findOne({_id:new ObjectId(user)})
+        if(!verified) return res.status(422).json({error:'user not verified'});
         let {gateway,amount,txn}=await Deposit.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
         let deductedAmount = getDepositFee(user.level,gateway,amount)
-        let {socketId} = await SocketResponse.findOne({user:username})
+        let {socketId} = await SocketResponse.findOne({user})
         if(socketId) io.to(socketId).emit('user:status-changed',{title:`Deposit ${status}`,body:`TXN:${txn} Amount:${deductedAmount}`,url:`${process.env.CLIENT_URL}/deposit/history`});
-        if(status=='SUCCESS') await User.findOneAndUpdate({username},{$inc:{[`balance.main.${gateway}`]:deductedAmount}})
-        if(status=='FAILED') await SocketResponse.findOneAndUpdate({user:username},{$inc:{[`failed.deposit`]:1}});
+        if(status=='SUCCESS') await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{[`balance.main.${gateway}`]:deductedAmount}})
+        if(status=='FAILED') await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.deposit']:1}});
      
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','deposit')
         
@@ -215,20 +215,20 @@ export const withdraw/*transferBalance*/ = async (req, res, next) => {
 
         const seconds = Math.floor((new Date()).getTime()/1000)
         const txn = `${req.user.id}${seconds.toString(16).toUpperCase()}`
-        await Withdraw.insertOne({txn,user:req.user.username,gateway,amount:{bkash:bkash-newBkash,dbbl:dbbl-newDbbl,nagad:nagad-newNagad},ref, status:'PENDING', createdAt:new Date(),updatedAt:new Date()})
+        await Withdraw.insertOne({txn,user:req.user.id,gateway,amount:{bkash:bkash-newBkash,dbbl:dbbl-newDbbl,nagad:nagad-newNagad},ref, status:'PENDING', createdAt:new Date(),updatedAt:new Date()})
         res.status(200).json({message:`৳${amount} withdraw request sent`, success:true})
     }catch(e) {next(e)}
 }
 
 export const changeWithdrawStatus = async (req,res,next) =>{
-    const {username,status,feedback} = req.body
+    const {status,feedback} = req.body
     let io = socket.getIO()
     try{
-        let {gateway,amount,txn} = await Withdraw.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
-        let {socketId} = await SocketResponse.findOne({user:username})
+        let {gateway,amount,txn,user} = await Withdraw.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
+        let {socketId} = await SocketResponse.findOne({user})
         if(status=='FAILED') {
-            await User.findOneAndUpdate({username},{$inc:{[`balance.main.bkash`]:Number(amount.bkash),[`balance.main.dbbl`]:Number(amount.dbbl),[`balance.main.nagad`]:Number(amount.nagad),[`balance.main.upay`]:Number(amount.upay)}})
-            await SocketResponse.findOneAndUpdate({user:username},{$inc:{[`failed.withdraw`]:1}});
+            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}})
+            await SocketResponse.findOneAndUpdate({user},{$inc:{[`failed.withdraw`]:1}});
         }
         if(socketId) io.to(socketId).emit('user:status-changed',{title:`Withdraw ${status}`,body:`TXN:${txn} Amount:${amount}`,url:`${process.env.CLIENT_URL}/withdraw/history`});
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','withdraw')
@@ -285,19 +285,27 @@ export const getDepositHistoryByAdmin = async (req, res, next) => {
     if(user) filter.user=user
     if(type) filter.balanceType=type
     if(gateway) filter.gateway =gateway
-    if(from) filter.createdAt={$gte:from}
-    if(to) filter.createdAt={$lte:to}
-    if(from&&to) filter.createdAt={$gte:from,$lte:to}
+    let fromDate,toDate
+    if(from) {
+        fromDate=new Date(from)
+        filter.createdAt={$gte:fromDate}
+    }
+    if(to) {
+        toDate=new Date(to)
+        filter.createdAt={$lte:toDate}
+    }
+    if(from&&to) filter.createdAt={$gte:fromDate,$lte:toDate}
     let queryLimit=parseInt(limit) || 20
     let currentPage = parseInt(page) || 1;
     let skip=queryLimit*(currentPage-1)
     try{
         let deposits,total
         if(req.admin.role=='admin'){
-            deposits = await Deposit.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({ createdAt: -1 }).toArray();
-            total= await Deposit.countDocuments(filter);
+            const [result] = await Deposit.aggregate(aggregatePipeSuperAdmin(filter,skip,queryLimit)).toArray();
+            deposits = result.data
+            total = Deposit.metadata[0]?.total ?? 0;
         }else{
-            const [result] = await Deposit.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            const [result] = await Deposit.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
             deposits = result.data
             total = result.metadata[0]?.total ?? 0;
         }
@@ -312,21 +320,28 @@ export const getWithdrawHistoryByAdmin = async (req, res, next) => {
     if(status) filter.status=status.toUpperCase()
     if(txn) filter.txn=txn
     if(user) filter.user=user
-    //if(type) filter.balanceType=type
+    let fromDate,toDate
     if(gateway) filter.gateway =gateway
-    if(from) filter.createdAt={$gte:from}
-    if(to) filter.createdAt={$lte:to}
-    if(from&&to) filter.createdAt={$gte:from,$lte:to}
+    if(from) {
+        fromDate=new Date(from)
+        filter.updatedAt={$gte:fromDate}
+    }
+    if(to) {
+        toDate=new Date(to)
+        filter.updatedAt={$lte:toDate}
+    }
+    if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
     let queryLimit=parseInt(limit) || 20
     let currentPage = parseInt(page) || 1;
     let skip=queryLimit*(currentPage-1)
     try{
         let withdraws,total
-        if(){
-            total = await Withdraw.countDocuments(filter);
-            withdraws = await Withdraw.find(filter,{projection:{__v:0}}).skip(skip).limit(queryLimit).sort({ createdAt: -1 }).toArray();
+        if(req.admin.role=='admin'){
+            const [result] = await Withdraw.aggregate(aggregatePipeSuperAdmin(filter,skip,queryLimit)).toArray();
+            withdraws = result.data
+            total = result.metadata[0]?.total ??0;
         }else{
-            const [result] = await Withdraw.aggregate(pipeline(filter,req.admin.id,skip,queryLimit)).toArray()
+            const [result] = await Withdraw.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
             withdraws = result.data
             total = result.metadata[0]?.total ?? 0;
         }
@@ -352,7 +367,7 @@ export const depositInit =async (req, res,next) => {
 export const getDepositHistoryByUser = async (req, res, next) => {
     const {/*id,*/search,page} = req.query;
     const s = new RegExp(search,'i')
-    const filter ={user:req.user.username,$or:[{status:{$regex:s}},{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
+    const filter ={user:req.user.id,$or:[{status:{$regex:s}},{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
     const currentPage = parseInt(page)||1;
   //if(txn) filter.txn =txn;
   //filter.user=id
@@ -367,7 +382,7 @@ export const getDepositHistoryByUser = async (req, res, next) => {
 export const getWithdrawHistoryByUser = async (req,res,next) =>{
     const {search,page} = req.query;
     const s = new RegExp(search,'i')
-    const filter ={user:req.user.username,$or:[{status:{$regex:s}},{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
+    const filter ={user:req.user.id,$or:[{status:{$regex:s}},{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
     const currentPage = parseInt(page)||1;
     try{
         const withdraws = await Withdraw.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
