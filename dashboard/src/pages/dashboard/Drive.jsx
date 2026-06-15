@@ -45,8 +45,8 @@ export default () => {
         reducePendingCounts('drive')
         //filterData = {status:'PENDING',telecom:form.telecom.value,user:form.user.value,fromDate:form['from-date'].value,toDate:form['to-date'].value,recipient:form.recipient.value,limit:20}
         document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
-        socket.emit('admin:drive-history:seen',null)
-    },[]);
+        if(admin) socket.emit('admin:drive-history:seen',admin?.id)
+    },[admin]);
     
     const fetchDriveHits = async (/*{page}*/)=>{
         setLoading(true)
@@ -60,15 +60,15 @@ export default () => {
         finally{setLoading(false)}
     };
 
-    const changeStatus = async ({id,username,status,feedback},pin) =>{
-        if(!accesses?.includes('modify-drive-history')) {toast.info('you dont have modify permission');return}
+    const changeStatus = async ({id,status,feedback},pin) =>{
+        if(!accesses?.includes('modify-drive-history')) {toast.info('you don\'t have modify permission');return}
         try{
             let res = await fetch(
                 `${url.urlDriveHit}/${id}`,
                 {
                     method: 'PATCH',
                     credentials: 'include',headers:{'Content-Type':'application/json','x-admin-pin':pin},
-                    body: JSON.stringify({id,username,status,feedback})
+                    body: JSON.stringify({status,feedback})
                 }
             )
             let data = await res.json();
@@ -76,13 +76,13 @@ export default () => {
             //let moved = cache['pending'].splice(cache['pending'].findIndex(i=>i.id===hitId),1)[0]
             //if(cache[status]) cache[status].unshift(moved)
             /*setHitData(cache['pending'])*///setHitData(data);setID(null)
-        }catch(err){toast.error(err.message)}
+        }catch(e){toast.error(e.message)}
         finally{setLoading(false)}
     }
-    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK')
-    const onFailed = async (id,user,feedback)=>{
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK')
+    const onFailed = async (id,feedback)=>{
         setFailedID(null)
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
         
         /*try{
@@ -139,7 +139,7 @@ export default () => {
                     {/*<div>{drive.title}</div>*/}
                     <div style={{width:'10%'}}>{drive.price-drive.commission}</div>
                     <div style={{width:'12%'}}>{user}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>{e.stopPropagation();setFailedID(_id);setID({id:_id,user})}}>Reject</RejectButton>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>{e.stopPropagation();setFailedID(_id);setID({id:_id,user})}}>Reject</RejectButton>
                         {failedID==_id && <Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                               
                                   
