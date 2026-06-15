@@ -38,11 +38,13 @@ export default () =>{
     const {data} = useFetch(`${url.urlMBankHistory}?status=${status.toUpperCase()}&mbankType=${gateway}&user=${user}&recipient=${recipient}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
     
     useEffect(()=>{
-        reducePendingCounts('mbank')
-        socket.emit('admin:mbank-history:seen', {userId:null});
         //document.addEventListener('click',e=>{if(failedID){setFailedID(null)}})
         navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=1`)
     },[]);
+    useEffect(()=>{
+        reducePendingCounts('mbank')
+        if(admin) socket.emit('admin:mbank-history:seen', admin?.id);
+    },[admin]);
     useEffect(()=>{
         setFilterData({status,recipient,gateway,fromDate,toDate,user,limit,page})
     },[status,user,recipient,gateway,fromDate,toDate,limit,page]);
@@ -59,7 +61,7 @@ export default () =>{
     }
             
             
-    const changeStatus= async ({id,username,status,feedback},pin) =>{
+    const changeStatus= async ({id,status,feedback},pin) =>{
         if(!accesses?.includes('modify-mbank-history')) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
@@ -68,13 +70,13 @@ export default () =>{
                 {
                     method: 'PATCH',
                     credentials: 'include',headers:{'Content-Type':'application/json','x-admin-pin':pin},
-                    body: JSON.stringify({username,status,feedback})
+                    body: JSON.stringify({status,feedback})
                 }
             )
             let data = await res.json();
             if(!res.ok) throw new Error(data.error ||'')//Error(data.error || '');
             toast.success(data.message);//fetchMBankHistory(/*{page:history.pagination.currentPage}*/);
-        }catch(err) {toast.error(err.message)}
+        }catch(e) {toast.error(e.message)}
         finally{setLoading(false);}
     }    
             
@@ -87,10 +89,10 @@ export default () =>{
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
     const pageNav = p=> navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`);
                     {/*<FlexH x='space-between' y='center'>*/}
-    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
-    const onFailed = (id,user,feedback)=>{
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onFailed = (id,feedback)=>{
         setFailedID(null);
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
                       
                       
@@ -123,8 +125,8 @@ export default () =>{
                     <div style={{width:'20%'}}><TinyIcon src={mbankIcon[mbankType]}/> {transactionType}</div>
                     <div style={{width:'20%'}}>{recipient}</div>
                     <div style={{width:'15%'}}>&#2547;{amount}</div>
-                    <div style={{width:'15%'}}>{user}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)} disabled={!accesses?.includes('modify-mbank-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)}} disabled={!accesses?.includes('modify-mbank-history')}>Reject</RejectButton>
+                    <div style={{width:'15%'}}>{user?.username}</div>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id)} disabled={!accesses?.includes('modify-mbank-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)}} disabled={!accesses?.includes('modify-mbank-history')}>Reject</RejectButton>
                         {failedID==_id && <Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                           
                               
