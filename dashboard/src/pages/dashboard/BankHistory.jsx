@@ -35,14 +35,16 @@ export default () =>{
     let [filterData,setFilterData] = useState({status,ac,fromDate,toDate,user,limit,page});
 
     useEffect(()=>{
-        reducePendingCounts('bank')
-        //filterData= {status:'PENDING',ac:'',fromDate:'',toDate:'',user:'',limit:20};
-        socket.emit('admin:bank-history:seen', null);
         navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
     },[]);
+    useEffect(()=>{
+        reducePendingCounts('bank')
+        //filterData= {status:'PENDING',ac:'',fromDate:'',toDate:'',user:'',limit:20};
+        if(admin) socket.emit('admin:bank-history:seen', admin?.id);
+    },[admin]);
          
     useEffect(()=>{
-        fetchBankHistory()
+        //fetchBankHistory()
         setFilterData({status,ac,fromDate,toDate,user,limit,page})
     },[status,user,ac,fromDate,toDate,limit,page]);
 
@@ -60,15 +62,15 @@ export default () =>{
         }
 
 
-    const changeStatus= async (id,status,username,feedback) =>{
+    const changeStatus= async (id,status,feedback) =>{
+           if(!accesses.includes('modify-bank-history')) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
-            let res = await fetch(
-                `${url.urlBank}/${id}`,
+            let res = await fetch(`${url.urlBank}/${id}`,
                 {
                     method: 'PATCH',
                     credentials: 'include',headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({status,feedback,username})
+                    body: JSON.stringify({status,feedback})
                 }
             )
             let data = await res.json();
@@ -91,10 +93,10 @@ export default () =>{
          
     const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`);
 
-    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,user,status:'SUCCESS'}},'OK');
-    const onFailed = (id,user,feedback)=>{
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onFailed = (id,feedback)=>{
         setFailedID(null);//changeStatus(id,'FAILED',feedback,user)
-         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
                       
                       
@@ -138,8 +140,8 @@ export default () =>{
                         <div style={{width:'25%'}}>{acNumber} {acName}</div>
                         <div style={{width:'15%'}}>{Object.values(amount||{}).reduce((a,b)=>a+b,0)}</div>
                 {/*<div style={{width:'10%'}}>{acName}</div>*/}
-                        <div style={{width:'10%'}}>{user}</div>
-                        {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>  
+                        <div style={{width:'10%'}}>{user?.username}</div>
+                        {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!accesses?.includes('modify-bank-history')} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-bank-history')} onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>  
                         {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                         </div>}
                     </StripedList>)}
