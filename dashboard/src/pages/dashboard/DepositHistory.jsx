@@ -52,10 +52,12 @@ export default  () =>{
     const {data} = useFetch(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
-        reducePendingCounts('deposit')
-        socket.emit('admin:deposit-history:seen',null)
         navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=1`)
     }, [])
+    useEffect(()=>{
+        reducePendingCounts('deposit')
+        if(admin) socket.emit('admin:deposit-history:seen',admin?.id)
+    }, [admin])
     
     useEffect(()=>{
         setFilterData ({status,user,txn,gateway,type,fromDate,toDate,limit,page});
@@ -71,8 +73,8 @@ export default  () =>{
             }catch(err) {toast.error(err.message)}
             finally { setLoading(false); }
         }
-    const changeStatus = async ({id,username,status,feedback},pin)=>{
-        if(!accesses?.includes('modify-deposit-history')) {toast.info('you dont have deposit modify permission');return}  //
+    const changeStatus = async ({id,status,feedback},pin)=>{
+        if(!accesses?.includes('modify-deposit-history')) {toast.info('you don\'t have deposit modify permission');return}  //
         setLoading(true)
         try{
             let res = await fetch(`${url.urlDeposit}/${id}`,{
@@ -104,10 +106,10 @@ export default  () =>{
                     finally{setLoading(false)}
                 }*/
                       
-    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
-    const onFailed = (id,user,feedback) => {
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onFailed = (id,feedback) => {
         setFailedId(null);
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
                           
     const filter = (e) =>{e.preventDefault()
@@ -174,14 +176,14 @@ export default  () =>{
                 {/*<thead><tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead><tbody>*/}
                 {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
                     <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
-                    <div style={{width:'20%'}}>{user}</div>
+                    <div style={{width:'20%'}}>{user?.username}</div>
                     <FlexH y='center' style={{width:'30%'}}><TinyIcon src={mbankIcons[gateway]}/><GapH x='0.5'/>{txn||(screenshot&&<TinyIcon src={screenshot} onClick={e=>window.open(screenshot)}/>)}</FlexH>
                     {/*<div style={{width:'15%'}}>{balanceType}</div>*/}
                     <div style={{width:'15%'}}>&#2547;{amount} {/*<small>({extra})</small>*/}</div>
                     {/*<td>{billMonth}</td>
                     <td>{username}</td>*/}
                     {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
-                        <ApproveButton onClick={e=>onSuccess(_id,user)} disabled={!accesses?.includes('modify-deposit-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedId(_id)}} disabled={!accesses?.includes('modify-deposit-history')}>Reject</RejectButton>
+                        <ApproveButton onClick={e=>onSuccess(_id)} disabled={!accesses?.includes('modify-deposit-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedId(_id)}} disabled={!accesses?.includes('modify-deposit-history')}>Reject</RejectButton>
                         {failedId==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                             
                             
