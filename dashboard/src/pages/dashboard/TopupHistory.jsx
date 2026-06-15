@@ -40,24 +40,27 @@ export default  () =>{
     const {data} = useFetch(`${url.urlTopupHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
     //let today = (new Date()).toISOString().split('T')[0];
     useEffect(()=>{
-        reducePendingCounts('topup') ;
-        socket.emit('admin:topup-history:seen', null);
+        //socket.emit('admin:topup-history:seen', null);
         navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=1`)
     }, [])
-    //useEffect(()=>{socket.emit('admin:topup-history:seen')}, [socket])
+    useEffect(()=>{
+        reducePendingCounts('topup') ;
+        if(admin) socket.emit('admin:topup-history:seen',admin?.id)
+    }, [admin])
 
     useEffect(()=>{
         setFilterData({status,recipient,telecom,fromDate,toDate,user,limit,page})
     },[status,user,recipient,telecom,fromDate,toDate,limit,page])
     
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value})) //Date()).toISOString().split('T')[0]);
-    const changeStatus = async ({id,username,status,feedback},pin)=>{
+    const changeStatus = async ({id,status,feedback},pin)=>{
+        if(!accesses?.includes('modify-topup-history')) {toast.info('you don\'t have modify permission');return}
         setLoading(true)
         try{
             let res = await fetch(`${url.urlTopup}/${id}`,{
                 method:'PATCH',
                 credentials:'include',headers:{'Content-Type':'application/json','x-admin-pin':pin},
-                body:JSON.stringify({username,status,feedback})
+                body:JSON.stringify({status,feedback})
             });
             let data = await res.json();
             if(!res.ok) throw new Error(data.error)
@@ -65,10 +68,10 @@ export default  () =>{
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }
-    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK');
-    const onFailed = (id,user,feedback)=>{
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onFailed = (id,feedback)=>{
         setFailedID(null);
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
     const fetchTopupHistory = async (/*{page}*/) => {
             try {
@@ -87,8 +90,7 @@ export default  () =>{
         navigate(`/dashboard/topup/history?status=${e.target.status.value}&recipient=${e.target.recipient.value.trim()}&telecom=${e.target.telecom.value.trim()}&user=${e.target.user.value.trim()}&fromDate=${e.target.fromDate.value}&toDate=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);
         /*let filtered=cache[statusRef.current.value].filter(d=>{
             for(let j in filterObj){
-                if(!d[j].includes(filterObj[j]))return false;
-            }
+                if(!d[j].includes(filterObj[j]))return false;}
             if(fromDateRef.current.value && d.createdAt<fromDateRef.current.value)return false;
             if(toDateRef.current.value && d.createdAt>toDateRef.current.value)return false;
             return true;
@@ -128,9 +130,9 @@ export default  () =>{
                         <div style={{width:'25%'}}>&#2547;{amount}</div>
                     {/*<td>{billMonth}</td>
                     <td>{billExpire}</td>*/}
-                        <div style={{width:'15%'}}>{user}</div>
+                        <div style={{width:'15%'}}>{user?.username}</div>
                         {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
-                        <ApproveButton  onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton  onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>
+                        <ApproveButton disabled={!accesses?.includes('modify-topup-history')} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-topup-history')} onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>
                         {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                               
                         </div>}
