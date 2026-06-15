@@ -21,7 +21,7 @@ export default  () =>{
     const {appData,admin} = useAdminAuth();
     const accesses = admin?.accesses
     const {socket} = useSocket();
-    const {thememode,modeData:{backPrimary,backSecondary}} = useTheme();
+    const {thememode,themeData:{themeBackground},modeData:{backPrimary,backSecondary}} = useTheme();
     const {reducePendingCounts} = useNotification();
     const [searchParams] = useSearchParams()
     const [loading,setLoading] = useState(false)
@@ -40,26 +40,28 @@ export default  () =>{
     }, [])
     
     useEffect(()=>{
-        if(admin) socket.emit('admin:withdraw-history:seen',admin.username)
+        if(admin) socket.emit('admin:withdraw-history:seen',admin?.id)
     }, [admin])
     
     useEffect(()=>{
         setFilterData ({status,user,search,gateway,fromDate,toDate,limit,page});
     },[status,user,search,gateway,fromDate,toDate,limit]);
     
-    const onSuccess = (id,user) => AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'SUCCESS'}},'OK')
-    const onFailed = (id,user,feedback) => {
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK')
+    const onFailed = (id,feedback) => {
         setFailedId(null);
-        AdminPIN(thememode,{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
-    const changeStatus = async ({id,username,status,feedback},pin)=>{
+    const changeStatus = async ({id,status,feedback},pin)=>{
+                            
+                       if(!accesses?.includes('modify-withdraw-history')) toast.info('you don\'t have modify permission');return}
         setLoading(true)
         try{
             let res = await fetch(`${url.urlWithdraw}/${id}`,{
                 method: 'PATCH',
                 credentials: 'include',
                 headers: {'Content-Type':'application/json','x-admin-pin':pin},
-                body: JSON.stringify({username,status,feedback})
+                body: JSON.stringify({status,feedback})
             })
             let data = await res.json()
             if(!res.ok) throw new Error(data.error||'failed to change status')
@@ -106,15 +108,13 @@ export default  () =>{
                     <ScrollViewH style={{width:'100%'}}>
                         {data?.withdraws?.map(({_id,updatedAt,ref,user,amount,status,gateway},i)=> <StripedList  key={_id} style={{width:'87rem'}} >
                             <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
-                            <div style={{width:'25%'}}>{ref||user}</div>
+                            <div style={{width:'25%'}}>{ref||user?.username}</div>
                             <div style={{width:'25%'}}><TinyIcon src={mbankIcons[gateway]}/> {gateway}</div>
                     {/*<div style={{width:'15%'}}>{balanceType}</div>*/}
                             <div style={{width:'15%'}}>{Object.values(amount|| {}).reduce((sum,val)=>sum+val,0)} {/*<small>({extra})</small>*/}</div>
                             {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
-                        <ApproveButton  onClick={e=>onSuccess(_id,user)}>OK</ApproveButton><RejectButton  onClick={e=>{e.stopPropagation();setFailedId(_id)}}>Reject</RejectButton>
+                        <ApproveButton disabled={!accesses?.includes('modify-withdraw-history')} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-withdraw-history')} onClick={e=>{e.stopPropagation();setFailedId(_id)}}>Reject</RejectButton>
                         {failedId==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
-                            
-                            
                             </div>}
                         </StripedList>)}
                     </ScrollViewH>
