@@ -29,7 +29,7 @@ export default () => {
          
     const [hovered,setHovered] = useState(false);
     const {telecoms,icons} = useTelecom();
-    const {modeData,thememode} = useTheme();
+    const {thememode,modeData,themeData:{themeBackground}} = useTheme();
     //const [hitData, setHitData] = useState({hits:[],pagination:{limit:20,currentPage:1,totalPage:1}});
     const [loading, setLoading] = useState(false);
     const [ID, setID] = useState(null);const [failedID,setFailedID] = useState(null);
@@ -39,12 +39,14 @@ export default () => {
     const {data} = useFetch(`${url.urlDriveHit}?status=${status.toUpperCase()}&telecom=${telecom}&user=${user}&recipient=${recipient}&to=${toDate}&from=${fromDate}&page=${page}&limit=${limit}`)  
 
     useEffect(e=>{
+        reducePendingCounts('drive')
+        navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`);document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
+    },[]);
+    useEffect(e=>{
         setFilterData({status,telecom,user,fromDate,toDate,recipient,limit,page})       //<td>{}</td>
     }, [status,telecom,user,recipient,fromDate,toDate,limit,page])
     useEffect(()=>{
-        reducePendingCounts('drive')
         //filterData = {status:'PENDING',telecom:form.telecom.value,user:form.user.value,fromDate:form['from-date'].value,toDate:form['to-date'].value,recipient:form.recipient.value,limit:20}
-        document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
         if(admin) socket.emit('admin:drive-history:seen',admin?.id)
     },[admin]);
     
@@ -56,7 +58,7 @@ export default () => {
             if(!res.ok) throw new Error(data.error || 'failed')
             //setHitData(data/*hits.map(i=> ({...i,selected:false}))*/)
             //if(data.length)cache[statusRef.current.value] = data;setDrives(cache[statusRef.current.value])
-        }catch(err){toast.error(err.message)}
+        }catch(e){toast.error(e.message)}
         finally{setLoading(false)}
     };
 
@@ -138,7 +140,7 @@ export default () => {
                     <div style={{width:'33%'}} onClick={e=>copyToClipboard(`${drive.operator} ${recipient} ${drive.title}`)}>{drive.title}</div>
                     {/*<div>{drive.title}</div>*/}
                     <div style={{width:'10%'}}>{drive.price-drive.commission}</div>
-                    <div style={{width:'12%'}}>{user}</div>
+                    <div style={{width:'12%'}}>{user?.username}</div>
                     {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-drive-history')} onClick={e=>{e.stopPropagation();setFailedID(_id);setID({id:_id,user})}}>Reject</RejectButton>
                         {failedID==_id && <Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                               
