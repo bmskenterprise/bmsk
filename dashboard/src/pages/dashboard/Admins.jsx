@@ -160,7 +160,7 @@ export default  () =>{
                 <ScrollViewV style={{width:'100%',height:'80%'}}><ScrollViewH style={{width:'100%'}}>
                     {admins.map(({_id,username,email,phone,nid,device,loginStatus,status,accesses} ) => <StripedList key={_id} style={{width:'70rem'}}>
                         <div style={{width:'25%',fontSize:'1.2rem'}}>{username}&nbsp;{loginStatus&&<svg height='8' width='8' xmlns='http://www.w3.org/2000/svg'><circle r='4' cx='4' cy='4' fill='lightgreen'/></svg>}</div>
-                        <div style={{color:textPrimary,width:'50%'/*,fontSize:'2rem'*/}}>{systemIcon[device[0].toLowerCase()]} {systemIcon[device[1].toLowerCase()]}</div>
+                        <div style={{color:textPrimary,width:'50%'/*,fontSize:'2rem'*/}}>{systemIcon[device[0]?.toLowerCase()]} {systemIcon[device[1]?.toLowerCase()]}</div>
                         {/*<div style={{width:'20%'}}>{format(loginAt,'dd/MM/yyyy hh:mm aa')}</div>*/}
                         <FlexH x='flex-end' style={{width:'25%'}}>
                             <SwitchItem check={status} handleChange={e=>toggleSubAdminStatus(_id,e.target.checked)}/><GapH x='1'/>
