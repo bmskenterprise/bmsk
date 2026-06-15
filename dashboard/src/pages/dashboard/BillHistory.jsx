@@ -42,12 +42,14 @@ export default () =>{
     const {data} = useFetch(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
-        reducePendingCounts('bill')
-        socket.emit('admin:bill-history:seen', {userId:null});
         //const removePop = (e)=>{if(hover)setHover(null)}
         navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
         //return ()=>document.removeEventListener('click',removePop)
     },[]);
+    useEffect(()=>{
+        reducePendingCounts('bill')
+        if(admin) socket.emit('admin:bill-history:seen', admin?.id);
+    },[admin]);
     useEffect(()=>{
         //fetchBillHistory(/*{page:1}*/);
         setFilterData( {status,user,type,ac,fromDate,toDate,limit,page});
@@ -63,8 +65,8 @@ export default () =>{
             finally{setLoading(false);}
         }
 
-    const changeStatus = async ({id,username,status,feedback},pin) =>{
-          if(!accesses?.includes('modify-bill-history')) {toast.info('you dont have bill modify permission');return}
+    const changeStatus = async ({id,status,feedback},pin) =>{
+          if(!accesses?.includes('modify-bill-history')) {toast.info('you don\'t have bill modify permission');return}
         setLoading(true)
         try {
             let res = await fetch(`${url.urlBill}/${id}`,
@@ -72,7 +74,7 @@ export default () =>{
                     method: 'PATCH',
                     credentials: 'include',
                     headers:{'Content-Type':'application/json','x-admin-pin':pin},
-                    body: JSON.stringify({username,status,feedback}),
+                    body: JSON.stringify({status,feedback}),
                 }
             )
             let data = await res.json();
@@ -88,11 +90,11 @@ export default () =>{
         navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&fromDate=${fd.fromDate}&toDate=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
     }
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}));
-    const onSuccess = (id,user) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,user,status:'SUCCESS'}},'OK');
+    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
                       
-    const onFailed = (id,user,feedback) =>{
+    const onFailed = (id,feedback) =>{
         setFailedID(null);
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,username:user,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
     const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
                           
@@ -138,8 +140,8 @@ export default () =>{
                     <div style={{width:'15%'}}>{Object.values(amount||{}).reduce((a,b)=>a+b,0)}</div>
                 {/*<div>{billMonth}</div>*/}
                     <div style={{width:'15%'}}>{expireDate}</div>
-                    <div style={{width:'15%'}}>{user}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id,user)} disabled={!accesses?.includes('modify-bill-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)/*setID(_id)*/}} disabled={!accesses?.includes('modify-bill-history')}>Reject</RejectButton>
+                    <div style={{width:'15%'}}>{user?.username}</div>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id)} disabled={!accesses?.includes('modify-bill-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)/*setID(_id)*/}} disabled={!accesses?.includes('modify-bill-history')}>Reject</RejectButton>
                     {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                       </div>}
                       
