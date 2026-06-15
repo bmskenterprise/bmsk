@@ -54,7 +54,7 @@ export default  () =>{
     }
     const changeStatus = async ({id,status,feedback},pin)=>{
                             
-                       if(!accesses?.includes('modify-withdraw-history')) toast.info('you don\'t have modify permission');return}
+                       if(!accesses?.includes('modify-withdraw-history')) {toast.info('you don\'t have modify permission');return}
         setLoading(true)
         try{
             let res = await fetch(`${url.urlWithdraw}/${id}`,{
