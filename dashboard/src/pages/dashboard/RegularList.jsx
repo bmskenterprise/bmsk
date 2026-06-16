@@ -22,30 +22,31 @@ export default  () =>{const [selected,setSelected] = useState([]);
     let {opt} = useParams()
     const [hovered,setHovered] = useState(false);
     const [filterData,setFilterData] = useState({status,category,search,fromDate,toDate,fromPrice,toPrice,limit,page});
-    const {regularData,fetchRegulars,} = useTelecom();
+    const {regularData,fetchRegulars,telecomCategories} = useTelecom();
     const fields = ['Date','ID','Price','Pack','Expire','Sold','Action'];
 const [loading, setLoading] = useState(false);
-    const {thememode,themeData} =useTheme();
+    const {thememode,themeData:{themeBackground,themeText}} =useTheme();
     /*const selectedPacks = packList.map(pack=>{{id:pack.id,selected:false}})*/
     const {admin} = useAdminAuth()
     const accesses = admin?.accesses
     let today = (new Date).toISOString().split('T')[0]
-    const categories = ['bundle','internet','minute','gift']   
-    const check = (id)=>{
+    //const categories = ['bundle','internet','minute','gift']   
+    /*const check = (id)=>{
         let i=selected.indexOf(id)
         if(0<=i){setSelected(prev=> prev.filter(i=>i!=id))}
         else{setSelected(prev=> [...prev,String(id)]);}//  
     };
-    let {start,clear} =useLongPress(check)
-    useEffect(()=>{
-        /*initRegularFilter({opt,status:searchParams.get('status'),search:searchParams.get('search'),fromDate:searchParams.get('fromDate'),toDate:searchParams.get('toDate'),fromPrice:searchParams.get('fromPrice'),toPrice:searchParams.get('toPrice'),limit:searchParams.get('limit'),page:searchParams.get('page')});*/fetchRegulars({opt}); setFilterData({status,category,search,fromDate,toDate,fromPrice,toPrice,limit,page});
-        //toDateRef.current.setAttribute('max',new Date().toISOString().split('T')[0]);
-    },[status,category,search,fromDate,toDate,fromPrice,toPrice,limit,page])
+    let {start,clear} =useLongPress(check)*/
     const onClickOrHold = (id)=>{
         if(selected[0]) check(id)
         else{start(id)}
     }
+    useEffect(()=>{
+        /*initRegularFilter({opt,status:searchParams.get('status'),search:searchParams.get('search'),fromDate:searchParams.get('fromDate'),toDate:searchParams.get('toDate'),fromPrice:searchParams.get('fromPrice'),toPrice:searchParams.get('toPrice'),limit:searchParams.get('limit'),page:searchParams.get('page')});*/fetchRegulars({opt}); setFilterData({status,category,search,fromDate,toDate,fromPrice,toPrice,limit,page});
+        //toDateRef.current.setAttribute('max',new Date().toISOString().split('T')[0]);
+    },[status,category,search,fromDate,toDate,fromPrice,toPrice,limit,page])
     const toggleStatus = async (id,status)=>{
+                if(!accesses?.includes('modify-regular')) {toast.info('you don\'t have modify permission');return}
         /*const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
         if(selectedIDs.length>0){*/setLoading(true);
         try{
@@ -59,13 +60,14 @@ const [loading, setLoading] = useState(false);
             let data = await res.json();
             if(!res.ok) throw new Error(data.error||'failed to toggle regular status');
             toast.success(data.message);fetchRegulars({opt})
-        }catch(err){toast.error(err.message);}
+        }catch(e){toast.error(e.message);}
         finally{setLoading(false);}
             //toast.info('select at least one pack');
     };
 
 
     const deleteDrivePack = async e=>{
+            if(!accesses?.includes('modify-regular')) {toast.info('you don\'t have modify permission');return}
         //const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
         try{
             let res =await fetch(url.urlRegular,{
@@ -79,7 +81,7 @@ const [loading, setLoading] = useState(false);
             if(!res.ok) throw new Error(data.error||'failed to delete');
             toast.success(data.message||'regular pack deleted');setSelected([])  //
             fetchRegulars({opt})
-        }catch(err) {toast.error(err.message);}
+        }catch(e) {toast.error(e.message);}
         finally{setLoading(false);}
     };
 
@@ -87,9 +89,7 @@ const [loading, setLoading] = useState(false);
     /*const editPack = async e=>{
         await fetch(`/${pack}`,{
                 method:'PATCH',
-                // headers:{
-                //     'Content-Type':'application/json'
-                // },
+                // headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({title,price,commission,expire,status})
         })
         toast.success('Pack Updated');
@@ -118,8 +118,8 @@ const [loading, setLoading] = useState(false);
     const pageNav = p=> navigate(`/dashboard/manage-package/regular/${opt}?status=${status}&category=${category}&search=${search}&fromDate=${fromDate}&toDate=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit||'20'}&page=${p}`)
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))    
             //toast.info('select one pack');
-    const markedRowText = id => selected.includes(String(id))?themeData.themeText:''
-    const markedRow = id => ({baxckground:selected.includes(String(id))?themeData.themeBackground:'',color:selected.includes(String(id))?themeData.themeText:'',width:'87rem'})
+    const markedRowText = id => selected.includes(String(id))?themeText:''
+    const markedRow = id => ({baxckground:selected.includes(String(id))?themeBackground:'',color:selected.includes(String(id))?themeText:'',width:isMobile?'64rem':'87rem'})
                   
                  
                   
@@ -147,7 +147,7 @@ const [loading, setLoading] = useState(false);
             <form onSubmit={filter}><FlexH x='space-between' y='center'>
                 <Field value={filterData.limit} min="10" max='100' step='5' x='5' name='limit' onChange={filterParams}/>
                 {/*<Field x='5' list='cat' name="category" value={regularFilter.category} onChange={filterParams}/>*/}
-                <Select name='category' value={filterData.category} onChange={filterParams}>{categories.map((c,i)=> <option value={c} key={i}>{c}</option>)}</Select>
+                <Select name='category' value={filterData.category} onChange={filterParams}>{telecomCategories.map((c,i)=> <option value={c} key={i}>{c}</option>)}</Select>
                 {/*<div><DatePicker type="date" value={regularFilter.toDate} name="toDate"  onChange={filterParams}/></div>*/}
                 <div>  
                 <Field value={filterData.fromPrice} name='fromPrice' placeholder='price from' x='6' onChange={filterParams}/>  
@@ -170,13 +170,13 @@ const [loading, setLoading] = useState(false);
             
             {/*list*/regularData.regulars.map(({_id,updatedAt,id,title,price,operator,active,category,expire,sold},i)=> <StripedList style={markedRow(_id)} key={_id} onMouseDown={e=>onClickOrHold(String(_id))} onMouseUp={clear} onMouseLeave={clear} /*onTouchStart={e=>start(_id,e.target)}*/ onTouchEnd={clear} onTouchCancel={clear} /*onClick={e=>{selected[0] &&check(_id)}}*/>
                 {/* <td><input type="checkbox" name="" onInput={e=>{selectedPacks.find(pack=>pack.id===id).selected=e.target.checked}} /></td> */}
-                <div style={{width:'10%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateFromUTC(updatedAt)}</div>
-                <div style={{width:'15%'}}>{id}</div>
-                <div style={{width:'10%'}}>{price}</div>
-                <div style={{width:'35%'}}>{title}</div>
+                <div style={{width:'8%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateFromUTC(updatedAt)}</div>
+                <div style={{width:'10%'}}>{id}</div>
+                <div style={{width:'5%'}}>{price}</div>
+                <div style={{width:'54%'}}>{title}</div>
                 {/*<td>{commission}</td>*/}
-                <div style={{width:'10%'}}>{expire??''}</div>
-                <div style={{width:'10%'}}>{sold}</div>
+                <div style={{width:'8%'}}>{expire??''}</div>
+                <div style={{width:'5%'}}>{sold}</div>
                 <div style={{width:'10%'}}><SwitchItem check={active} handleChange={e=>toggleStatus(_id,e.target.checked)}/>&nbsp;<IconButton onClick={e=>navigate(`/dashboard/manage-package/regular/edit/${_id}`,{state:{id:_id,operator,category,title,price}})}><FaPen/></IconButton><IconButton onClick={e=>deleteConfirmation(thememode,deleteDrivePack,[_id])}><FaTrash/></IconButton></div>  
             </StripedList>)}{/*</tbody></table>*/}
         </ScrollViewH>
