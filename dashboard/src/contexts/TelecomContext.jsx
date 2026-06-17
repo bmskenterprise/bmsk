@@ -16,7 +16,7 @@ export const TelecomProvider = ({children})=>{
     const [loading,setLoading] = useState(false)
     const [errors,setErrors] = useState({});
     const [regularSummary,setRegularSummary] = useState([])
-    const [regularData,setRegularData] = useState({regulars:[],pagination:{currentPage:1,totalPage:1,limit:20},search:''})
+    const [telecomCategories,setTelecomCategories] = useState([])
     const [driveData,setDriveData] = useState({drives:[],pagination:{currentPage:1,totalPage:1,limit:20},search:''})
     const [driveSummary,setDriveSummary] = useState([])
     const {opt} = useParams()
@@ -59,7 +59,7 @@ export const TelecomProvider = ({children})=>{
         finally{setLoading(false)}
     }
     
-    const fetchRegulars = async ({opt}) =>{
+    /*const fetchRegulars = async ({opt}) =>{
         setLoading(true)
         try{
             let res = await fetch(`${url.urlRegular}/${opt}?status=${status}&category=${category}&search=${search}&fromDate=${fromDate}&toDate=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`,{credentials:'include'});
@@ -68,15 +68,15 @@ export const TelecomProvider = ({children})=>{
             setRegularData(data);
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
-    }
+    }*/
     
-    const fetchRegular = async (id) =>{
+    const fetchTelecomCategories = async (id) =>{
         setLoading(true)
         try{
-            let res = await fetch(`${url.urlRegular}/${id}`,{credentials:'include'});
+            let res = await fetch(url.urlTelecomCategory,{credentials:'include'});
             let data = await res.json()
             if(!res.ok) throw new Error(data.error)
-            return {id:data._id,title:data.title,price:data.price,commission:data.commission}
+             setTelecomCategories({id:data._id,title:data.title})
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }
@@ -159,7 +159,6 @@ export const TelecomProvider = ({children})=>{
         }catch(e) {toast.error(e.message)}// null
         finally{setLoading(false)}
     }
-         
         
         
                 
@@ -167,9 +166,6 @@ export const TelecomProvider = ({children})=>{
                
             
          
-        
-    
-    
     const fetchDrive = async (id) =>{
         setLoading(true)
         try{
@@ -249,11 +245,15 @@ export const TelecomProvider = ({children})=>{
     }
     
     useEffect(()=>{
+        if(telecomCategories.length==0) fetchTelecomCategories()
+    })
+        
+    useEffect(()=>{
         ///*telecoms = */opts?setTelecoms(JSON.parse(opts)):fetchTelecoms();
         ///*icons = */logos?setIcons(JSON.parse(logos)):fetchTelecoms();
         socket.on('telecoms',data=>{fetchTelecoms();})
         return ()=> socket.off('telecoms')
     },[socket])
-    return <TelecomContext.Provider value={{telecoms,icons,fetchTelecoms,fetchRegularSummary,regularSummary,fetchDriveSummary,driveSummary,fetchRegulars,regularData,fetchRegular,addRegularPack,editRegularPack,toggleRegularStatus,deleteRegularPack,driveData,fetchDrive,addDrivePack,editDrivePack,toggleDriveStatus,deleteDrivePack,errors,loading}}>{children}</TelecomContext.Provider>
+    return <TelecomContext.Provider value={{telecoms,icons,fetchTelecoms,fetchRegularSummary,regularSummary,fetchDriveSummary,driveSummary,/*fetchRegulars,fetchRegular,*/telecomCategories,addRegularPack,editRegularPack,toggleRegularStatus,deleteRegularPack,driveData,fetchDrive,addDrivePack,editDrivePack,toggleDriveStatus,deleteDrivePack,errors,loading}}>{children}</TelecomContext.Provider>
 }
 export const useTelecom = () => useContext(TelecomContext);
