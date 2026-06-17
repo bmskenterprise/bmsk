@@ -1,24 +1,24 @@
-import React,{useEffect,useState} from 'react'
+import {useEffect,useState} from 'react'
 import {useLocation,useNavigate,useParams} from 'react-router-dom';
 import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
-import {FlexH,FlexV,GapV,Icon,InputField,DatePicker,Select,ErrorText,ThemeButton,Spinner} from '../../components/styles/Admin.style';
-//import {usePack} from '../../contexts/PackContext'
 import {useTelecom} from '../../contexts/TelecomContext';
+import {FlexH,FlexV,GapV,Icon,InputField,DatePicker,Select,ErrorText,ThemeButton,Spinner} from '../../components/styles/Admin.style';
+import {fetchObject} from '../../hooks/useFetch'
+import url from '../../utils/url' //const categories = ['bundle','internet','minute','gift']
 
 export default () =>{
-    const categories = ['bundle','internet','minute','gift']
     const navigate = useNavigate()
     const location = useLocation()
     const {id} = useParams()
     const regular = {id:location.state?.id,operator:location.state?.operator,category:location.state?.category,title:location.state?.title,price:location.state?.price,expireDate:location.state?.expireDate}
     const [formData,setFormData] = useState(regular);
-    const {icons,fetchRegular,addRegularPack,editRegularPack,errors,loading}=useTelecom()
+    const {icons,telecomCategories,addRegularPack,editRegularPack,errors,loading}=useTelecom()
     const {themeData,modeData} = useTheme()
     
     useEffect(e=>{
-        if(!location.state){
-            let data= fetchRegular(id)
+        if(!location?.state){
+            let {data}= fetchObject(`${url.urlRegular}/${id}`)
             setFormData(data)
         }
     },[])
@@ -58,7 +58,7 @@ export default () =>{
                     </div>
                     <div style={{width:'14rem'}}>
                         <Select name='category' style={{width:'100%'}} value={formData.category} onChange={handleChange}>
-                            {categories.map((c,i)=> <option key={i} value={c}>{c}</option>)}
+                            {telecomCategories.map(({id,category})=> <option key={id} value={category}>{category}</option>)}
                         </Select>
                     </div>
                     <div style={{width:'14rem'}}>
