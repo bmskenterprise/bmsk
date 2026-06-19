@@ -10,7 +10,7 @@ import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {ScrollViewV,ScrollViewH,FlexH,Field,Center,StripedList,PaginationBar,ApproveButton,RejectButton,Select,DatePicker,Spinner, Loader} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
-import useFetch from '../../hooks/useFetch'
+import {fetchObject} from '../../hooks/useFetch'
 import AdminPIN from '../../components/AdminPIN'
 import Reject from '../../components/Reject'
 import Pages from '../../components/Pagination'
@@ -35,20 +35,20 @@ export default () =>{
     let [filterData,setFilterData] = useState({status,ac,fromDate,toDate,user,limit,page});
 
     useEffect(()=>{
+        reducePendingCounts('bank')
         navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
     },[]);
     useEffect(()=>{
-        reducePendingCounts('bank')
         //filterData= {status:'PENDING',ac:'',fromDate:'',toDate:'',user:'',limit:20};
         if(admin) socket.emit('admin:bank-history:seen', admin?.id);
     },[admin]);
          
+     const hasAccess = accesses?.includes('modify-bank-history')
     useEffect(()=>{
-        //fetchBankHistory()
-        setFilterData({status,ac,fromDate,toDate,user,limit,page})
+        //fetchBankHistory()setFilterData({status,ac,fromDate,toDate,user,limit,page})
     },[status,user,ac,fromDate,toDate,limit,page]);
 
-    const {data} = useFetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
+    const {data} = fetchObject(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
 
         const fetchBankHistory = async (/*{page}*/) => {setLoading(true);
             try {
@@ -63,7 +63,7 @@ export default () =>{
 
 
     const changeStatus= async (id,status,feedback) =>{
-           if(!accesses.includes('modify-bank-history')) {toast.info('you don\'t have modify permission');return}
+           if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
             let res = await fetch(`${url.urlBank}/${id}`,
@@ -141,7 +141,7 @@ export default () =>{
                         <div style={{width:'15%'}}>{Object.values(amount||{}).reduce((a,b)=>a+b,0)}</div>
                 {/*<div style={{width:'10%'}}>{acName}</div>*/}
                         <div style={{width:'10%'}}>{user?.username}</div>
-                        {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!accesses?.includes('modify-bank-history')} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!accesses?.includes('modify-bank-history')} onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>  
+                        {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton disabled={!hasAccess} onClick={e=>onSuccess(_id)}>OK</ApproveButton><RejectButton disabled={!hasAccess} onClick={e=>{e.stopPropagation();setFailedID(_id)}}>Reject</RejectButton>  
                         {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                         </div>}
                     </StripedList>)}
