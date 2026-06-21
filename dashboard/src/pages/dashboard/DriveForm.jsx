@@ -2,30 +2,31 @@ import {useState} from 'react';
 //import { 
 import {useLocation,useNavigate} from 'react-router-dom';
 import { toast } from 'react-toastify';
-import {FlexH,FlexV,GapV,ThemeButton,Icon,DatePicker,ErrorText,Spinner, InputField,Select} from '../../components/styles/Admin.style';
+import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext'
-//import {usePack} from '../../contexts/PackContext';
-import { useTheme } from '../../contexts/ThemeContext';
+import {FlexH,FlexV,GapV,ThemeButton,Icon,DatePicker,ErrorText,Spinner, InputField,Select} from '../../components/styles/Admin.style';
+import {addData,editData} from '../../hooks/useModify';
 
 export default  (/*{initialData:{id,opt,title,price,commission,expireDate},handleCancel}*/) =>{
     let location = useLocation()
     let navigate = useNavigate();
     let drive= {id:location.state?.id,operator:location.state?.operator,category:location.state?.category,title:location.state?.title,price:location.state?.price,commission:location.state?.commission,expireDate:location.state?.expireDate}
+    let {admin:{accesses}} = useAdminAuth();
+    let hasAccess = accesses?.includes('modify-drive');
+    const {icons,telecomCategories,errors,loading} = useTelecom();
     const [formData, setFormData] = useState(drive);
-    let {themeData,modeData} = useTheme();
-    const categories = ['bundle','internet','minute','gift'];
-    const {icons,addDrivePack,editDrivePack,errors,loading} = useTelecom();
     
     const handleSubmit=e=>{
         e.preventDefault();
+                 if(!hasAccess) {toast.info('you don\'t have modify permission');return}
     const {id,operator,category,title,price,commission,expireDate}=formData/* = {operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim(),commission:e.target.commission.value.trim()//,expireDate:e.target.expire.value//};*/
         if(JSON.stringify(formData)==JSON.stringify(drive)) {toast.info('No Changes');return}
-        //let validationErrors = validatePack(formData);
-        //if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
+        let validationErrors = validatePack(formData);
+        if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
         if(id){
-            editDrivePack(id,{category,title,price,commission,expireDate})
+            editData(`${url.urlDrive}/${id}`,{category,title,price,commission,expireDate},'Drive Edited','Failed to Edit Pack')
             navigate(-1)
-        }else addDrivePack({operator,category,title,price,commission,expireDate});
+        }else addData(url.urlDrive,{operator,category,title,price,commission,expireDate},'Drive Added','Failed to Add Pack');
     }
     const handleChange = e=> setFormData({...formData,[e.target.name]:e.target.value})
                        
@@ -36,7 +37,6 @@ export default  (/*{initialData:{id,opt,title,price,commission,expireDate},handl
                           
                       
                          
-                      
     return <div>
       <div>{formData.operator&& <div><Icon src={icons[formData.operator]} x='1.5'/><h3 style={{marginBottom:'4rem'}}>{formData.title?'Edit':'Add'}  Package</h3></div>}
             <form onSubmit={/*e=>addDrivePack(formData)*/handleSubmit}>
@@ -48,23 +48,23 @@ export default  (/*{initialData:{id,opt,title,price,commission,expireDate},handl
                     <ErrorText>{errors?.title}</ErrorText>
                 </div><GapV x='3'/>
                 <FlexH x='space-between' y='center'>
-                        <div   style={{width:'14rem'}}>
+                        <div   style={{width:'12rem'}}>
                 {/*<InputGroup.Text>&#2547;</InputGroup.Text>*/}
                             <InputField  name='price' value={formData.price} onChange={handleChange} placeholder='Price'/>
                             <ErrorText>{errors?.price}</ErrorText>
                         </div>
-                        <div   style={{width:'14rem'}}>
+                        <div   style={{width:'12rem'}}>
                 {/*<InputGroup.Text>&#2547;</InputGroup.Text>*/}
                             <InputField  name='commission' value={formData.commission} onChange={handleChange} placeholder='Commission'/>
                             <ErrorText>{errors?.commission}</ErrorText>
                         </div>
                     {/* </FlexV> */}
-                    <div   style={{width:'14rem'}}>
+                    <div   style={{width:'12rem'}}>
                         <DatePicker type='date' name='expireDate' style={{width:'100%'}}  value={formData.expireDate} onChange={handleChange} />
                     </div>
-                    <div style={{width:'14rem'}}>
+                    <div style={{width:'12rem'}}>
                         <Select name='category' style={{width:'100%'}} value={formData.category} onChange={handleChange}>
-                            {categories.map((c,i)=> <option key={i} value={c}>{c}</option>)}
+                            {telecomCategories.map((c,i)=> <option key={i} value={c}>{c}</option>)}
                         </Select>
                     </div>
                 </FlexH><GapV x='5'/>
