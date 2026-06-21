@@ -1,11 +1,13 @@
 import {useEffect,useState} from 'react'
 import {useLocation,useNavigate,useParams} from 'react-router-dom';
 import {toast} from 'react-toastify';
-import {useTheme} from '../../contexts/ThemeContext';
+import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext';
 import {FlexH,FlexV,GapV,Icon,InputField,DatePicker,Select,ErrorText,ThemeButton,Spinner} from '../../components/styles/Admin.style';
+import {validatePack} from '../../utils/validate'
 import {fetchObject} from '../../hooks/useFetch'
-import url from '../../utils/url' //const categories = ['bundle','internet','minute','gift']
+import {addData,editData} from '../../hooks/useModify' //['bundle','internet','minute','gift']
+import url from '../../utils/url'
 
 export default () =>{
     const navigate = useNavigate()
@@ -13,8 +15,9 @@ export default () =>{
     const {id} = useParams()
     const regular = {id:location.state?.id,operator:location.state?.operator,category:location.state?.category,title:location.state?.title,price:location.state?.price,expireDate:location.state?.expireDate}
     const [formData,setFormData] = useState(regular);
-    const {icons,telecomCategories,addRegularPack,editRegularPack,errors,loading}=useTelecom()
-    const {themeData,modeData} = useTheme()
+    const {icons,telecomCategories,errors,loading}=useTelecom()
+    const {admin:{accesses}} = useAdminAuth()
+    const hasAccess = accesses?.includes('modify-regular')
     
     useEffect(e=>{
         if(!location?.state){
@@ -24,14 +27,15 @@ export default () =>{
     },[])
     const handleSubmit = e=>{
         e.preventDefault();
+                   if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         const {id,operator,category,title,price,expireDate}=formData/* = {operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim()//,expireDate:e.target.expire.value//};*/
         if(JSON.stringify(formData)==JSON.stringify(regular)) {toast.info('No Changes');return}
-      //let validationErrors = validatePack(formData);
-      //if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
-      if(id){
-        editRegularPack(id,{category,title,price,expireDate});
+        let validationErrors = validatePack(formData);
+        if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
+        if(id){
+            editData(`${url.urlRegular}/${id}`,{category,title,price,expireDate},'Pack Edited','Failed to Edit Pack');
+        }else addData(url.urlRegular,{operator,category,title,price,expireDate},'Pack Added','Failed to Add Pack')
         navigate(-1)
-      }else addRegularPack({operator,category,title,price,expireDate})
     };
     const handleChange = e=>setFormData({...formData,[e.target.name]:e.target.value})
                        
@@ -40,7 +44,6 @@ export default () =>{
                           
                          
                           
-                      
     return <div>{formData.operator&& <div><h3><Icon src={icons[formData.operator]} x='1.5'/></h3><h4 style={{marginBottom:'4rem'}}>{formData.title?'Edit':'Add'} Package</h4></div>}
             <form onSubmit={/*e=>addRegularPack(formData)*/handleSubmit/*(formData)*/}>
                 {/*operator? <h2>Edit {operator} package</h2>: <Flex>
@@ -51,17 +54,17 @@ export default () =>{
                     <ErrorText>{errors?.title}</ErrorText>
                 </div><GapV x='3'/>
                 <FlexH x='space-between' y='center'>
-                    <div style={{width:'14rem'}} >
+                    <div style={{width:'12rem'}} >
             {/*<InputGroup.Text>&#2547;</InputGroup.Text>*/}
                         <InputField  placeholder='Price' value={formData.price} name='price' onChange={handleChange}/>
                         <ErrorText>{errors?.price}</ErrorText>
                     </div>
-                    <div style={{width:'14rem'}}>
+                    <div style={{width:'12rem'}}>
                         <Select name='category' style={{width:'100%'}} value={formData.category} onChange={handleChange}>
-                            {telecomCategories.map(({id,category})=> <option key={id} value={category}>{category}</option>)}
+                            {telecomCategories?.map(({id,category})=> <option key={id} style={{textTransform:'capitalize'}} value={category}>{category}</option>)}
                         </Select>
                     </div>
-                    <div style={{width:'14rem'}}>
+                    <div style={{width:'12rem'}}>
                         <DatePicker type='date' style={{width:'100%'}}   value={formData.expireDate} name='expireDate' onChange={handleChange}/>
                     </div>
                 </FlexH><GapV x='5'/>
