@@ -8,7 +8,7 @@ import {validatePack} from '../../utils/validate'
 import {fetchObject} from '../../hooks/useFetch'
 import {addData,editData} from '../../hooks/useModify'
 import {validateRegularPack} from '../../utils/validate'
-import url from '../../utils/url'
+import url from '../../config/url'
 
 export default () =>{
     const navigate = useNavigate()
