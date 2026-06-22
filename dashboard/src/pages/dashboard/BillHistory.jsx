@@ -28,7 +28,8 @@ export default () =>{
     const [searchParams] = useSearchParams()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {pendingCounts:{bill},reducePendingCounts} = useNotification();
-    const [status,user,type,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'1']  ;
+    const [status,user,type,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'',searchParams.get('page')||'1'];
+      
     //const type = searchParams.get('type') || '';
     //const ac = searchParams.get('ac') || '';
     const errorlist = {width:'100%',marginBottom:'1.5rem'}  ;
@@ -36,7 +37,7 @@ export default () =>{
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({bills:[],pagination:{totalPage:1,currentPage:1}});
-    const [filterData,setFilterData] = useState({status,user,type,ac,fromDate,toDate,limit,page});
+    const [filterTerm,setFilterTerm] = useState({status,user,type,ac,fromDate,toDate,limit,page});
     //const today = (new Date()).toISOString().split('T')[0]
     const [hover,setHover] = useState(false);
     let hasAccess = accesses?.includes('modify-bill-history');
@@ -45,7 +46,7 @@ export default () =>{
 
     useEffect(()=>{
         reducePendingCounts('bill')
-        navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
+        navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
         //return ()=>document.removeEventListener('click',removePop)
     },[]);
     useEffect(()=>{
@@ -53,7 +54,7 @@ export default () =>{
     },[admin]);
     useEffect(()=>{
         //fetchBillHistory(/*{page:1}*/);
-        setFilterData( {status,user,type,ac,fromDate,toDate,limit,page});
+        setFilterTerm( {status,user,type,ac,fromDate,toDate,limit,page});
     }, [status,user,type,ac,fromDate,toDate,limit,page]) 
         const fetchBillHistory = async (/*{page}*/) => {setLoading(true);
             try {
@@ -86,10 +87,10 @@ export default () =>{
     }
     const filter = (e) =>{
         e.preventDefault();let fd={status:e.target.status.value.trim(),user:e.target.user.value.trim(),type:e.target.type.value.toLowerCase(),ac:e.target.ac.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,limit:e.target.limit.value.trim(),page:1}
-        navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&fromDate=${fd.fromDate}&toDate=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
+        navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
     }
-    const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}));
-    const onSuccess = (id) => 
+    const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}));
+    const onSuccess = (id) => {
                if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
     }
@@ -99,7 +100,7 @@ export default () =>{
                if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
-    const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
                           
                       
     return !accesses?.includes('bill-history')?<Center><p>don't have bill history permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
@@ -107,25 +108,25 @@ export default () =>{
         {/*<FlexH x='space-between' y='center'>*/}
             <form  onSubmit={filter}>
                 <FlexH x='space-between' y='center' style={{width:'100%'}}>
-                <div>  <Field value={filterData.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/></div>
-                    {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor="reseller">reseller</label><br /></div>*/}
+                <div>  <Field value={filterTerm.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/></div>
+                    {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor='reseller'>reseller</label><br /></div>*/}
                     
-                    <Field x='8' value={filterData.user} name='user' placeholder='user' onChange={filterParams}/>
+                    <Field x='8' value={filterTerm.user} name='user' placeholder='user' onChange={filterParams}/>
                     <div>
-                        <Field x='8' name='type' value={filterData.type} list='bill-types' placeholder='Bill Types' onChange={filterParams}/>
+                        <Field x='8' name='type' value={filterTerm.type} list='bill-types' placeholder='Bill Types' onChange={filterParams}/>
                         <datalist id='bill-types'>
-                            {/*<option value="">bill type</option>*/}
+                            {/*<option value=''>bill type</option>*/}
                             {billTypes.map((type,i)=> <option key={i} value={type}/>)}
                         </datalist>
                     </div>
-                    {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor="ac">AC Number</label><br /></div>*/}
-                    <Field x='8' value={filterData.ac} name='ac' placeholder='AC' onChange={filterParams}/>
+                    {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor='ac'>AC Number</label><br /></div>*/}
+                    <Field x='8' value={filterTerm.ac} name='ac' placeholder='AC' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor="from">from</label><br/>*/}<DatePicker onChange={filterParams} value={filterData.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
-                        {/*<label htmlFor="to">to</label><br/>*/}<DatePicker onChange={filterParams} value={filterData.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
                     </div>
                 <div>
-                    <Select name='status' onChange={filterParams} value={filterData.status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
+                    <Select name='status' onChange={filterParams} value={filterTerm.status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
                         <option value='pending'>Pending</option>
                         <option value='success'>Success</option>
                         <option value='failed'>Failed</option>
@@ -135,7 +136,7 @@ export default () =>{
                 </FlexH>
         
             </form>{/*</FlexH>*/}
-        {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
+        {/*<List collection={history}>*/}{/*loading?<Spinner animation='border' role='status'></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
             <ScrollViewH style={{width:'100%'}}>{/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
                 {data?.bills?.map(({_id,billType,updatedAt,acNumber,amount,expireDate,user,status},i)=> <StripedList  style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={i}>
                     <div style={{width:'20%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
@@ -166,9 +167,9 @@ export default () =>{
                 <span>{customer}</span><br /><br />
                 <span>{amount}</span><br /><br />
                 <select ref={feedbackRef}>
-                    <option value="expired">unavailable</option>
-                    <option value="invalid">invalid</option>
-                    <option value="error">error</option>
+                    <option value='expired'>unavailable</option>
+                    <option value='invalid'>invalid</option>
+                    <option value='error'>error</option>
                 </select><br />
             </Col><FlexH>
                 <Button onClick={e=>setCancel(false)}>cancel</Button>
