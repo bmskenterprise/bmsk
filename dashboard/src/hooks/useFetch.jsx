@@ -17,7 +17,7 @@ import {toast} from 'react-toastify'
                       
                        
                   
-export const fetchArray = (url) =>{
+export const fetchArray = async (url) =>{
     const [data,setData] = useState([])
     try{
         let res = await fetch(url, {credentials:'include'}); let data = await res.json()
