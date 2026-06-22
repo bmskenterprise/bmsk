@@ -15,7 +15,7 @@ import {toast} from 'react-toastify';
   }
   
   //return {data,loading}
-}
+//}
 
 export const editData = async (url,formData,successMsg,errMsg) =>{
     try{
