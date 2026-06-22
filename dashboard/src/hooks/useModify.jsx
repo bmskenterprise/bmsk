@@ -1,5 +1,5 @@
-import {useEffect,useState} from 'react';
 import {toast} from 'react-toastify';
+   
  export const addData = async (url,formData,successMsg,errMsg) =>{
     try{
       let res = await fetch(url,{
@@ -14,10 +14,10 @@ import {toast} from 'react-toastify';
     }catch(e) {toast.error(e.message)}
   }
   
-  return {data,loading}
+  //return {data,loading}
 }
 
-export const editData = async (url,successMsg,errMsg) =>{
+export const editData = async (url,formData,successMsg,errMsg) =>{
     try{
       const res = await fetch(url,{
         method:'PATCH',
@@ -35,7 +35,7 @@ export const deleteData = async (url,formData,successMsg,errMsg) =>{
   try{
       const res = await fetch(url,{
         method:'DELETE',
-        credentials:'include',
+        credentials:'include'
       });
       const data = await res.json()
       if(!res.ok) {throw new Error(data.error||errMsg)}
