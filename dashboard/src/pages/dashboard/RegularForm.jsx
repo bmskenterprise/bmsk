@@ -6,7 +6,8 @@ import {useTelecom} from '../../contexts/TelecomContext';
 import {FlexH,FlexV,GapV,Icon,InputField,DatePicker,Select,ErrorText,ThemeButton,Spinner} from '../../components/styles/Admin.style';
 import {validatePack} from '../../utils/validate'
 import {fetchObject} from '../../hooks/useFetch'
-import {addData,editData} from '../../hooks/useModify' //['bundle','internet','minute','gift']
+import {addData,editData} from '../../hooks/useModify'
+import {validateRegularPack} from '../../utils/validate'
 import url from '../../utils/url'
 
 export default () =>{
@@ -14,9 +15,10 @@ export default () =>{
     const location = useLocation()
     const {id} = useParams()
     const regular = {id:location.state?.id,operator:location.state?.operator,category:location.state?.category,title:location.state?.title,price:location.state?.price,expireDate:location.state?.expireDate}
-    const [formData,setFormData] = useState(regular);
-    const {icons,telecomCategories,errors,loading}=useTelecom()
+    const {icons,telecomCategories,loading}=useTelecom()
     const {admin:{accesses}} = useAdminAuth()
+    const [formData,setFormData] = useState(regular);
+    const [errors,setErrors] = useState({});
     const hasAccess = accesses?.includes('modify-regular')
     
     useEffect(e=>{
@@ -30,7 +32,7 @@ export default () =>{
                    if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         const {id,operator,category,title,price,expireDate}=formData/* = {operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim()//,expireDate:e.target.expire.value//};*/
         if(JSON.stringify(formData)==JSON.stringify(regular)) {toast.info('No Changes');return}
-        let validationErrors = validatePack(formData);
+        let validationErrors = validateRegularPack(formData);
         if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
         if(id){
             editData(`${url.urlRegular}/${id}`,{category,title,price,expireDate},'Pack Edited','Failed to Edit Pack');
