@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useState,useRef} from 'react';
 import {Navigate} from 'react-router-dom'
 import {toast} from 'react-toastify'
 import {MdOutlineMenu,MdClose,MdLightMode,MdDarkMode,MdOutlineLogout} from 'react-icons/md';
@@ -11,22 +11,19 @@ import {useTelecom} from '../../contexts/TelecomContext';
 import {ResponsiveLayout,Header,PageContent,MenuTogglerButton,Avatar,Badge} from '../../components/styles/Admin.style';
 import Sidebar from './Sidebar';
 import AdminProfile from './AdminProfile';
+import bell from '../../assets/audio/notification-sound-349341.mp3'
 
 export default  ({children}) =>{
     const isMobile = useMediaQuery({maxWidth:768});
+    const bellRef = useRef()
     const {socket} = useSocket();
-    const {pendingCounts,isPending} = useNotification()
+    const {pendingCounts,isPending,seenPendings} = useNotification()
     const total = Object.values(pendingCounts || {}).reduce((sum,val)=> sum+val,0)
     const {themeData,modeData:{backPrimary,textPrimary}} = useTheme()
     const {authentic,appData,admin,fetchAdminData,} = useAdminAuth();const [errors, setErrors] = useState({});
     const {fetchTelecoms} = useTelecom()
-    const [sidebarToggler, setSidebarToggler] = useState(false);
+    const [sidebarToggler,setSidebarToggler] = useState(false);
     const [adminProfileCard, setAdminProfileCard] = useState(false);
-    
-    useEffect(()=>{
-        fetchTelecoms()
-        socket.emit('admin:join',admin?.id)
-    },[socket])
       
     useEffect(()=>{
         if(!authentic) fetchAdminData()
@@ -40,12 +37,21 @@ export default  ({children}) =>{
         };
     },[])
                  
+    useEffect(()=>{
+        fetchTelecoms()
+        socket.emit('admin:join',admin?.id)
+    },[socket])
+    useEffect(()=>{
+        if(isPending){bellRef.current.click();}
+        seenPendings()
+    },[isPending])
+    
     if(!admin) return <Navigate to='/login'/>
     const handleSidebarToggle = e => setSidebarToggler(prev=> !prev)
 
 
     return <div /*x='flex-start' y='flex-start'*/ style={{background:backPrimary,/*color:textPrimary,*/width:'100%',height:'100%'}}>
-      {/*<Col xs={3}></Col>*/}
+      <button ref={bellRef} onClick={e=>{(new Audio(bell).play())}} hidden></button>
         <Header  >
           <div style={{position:'relative'}}>{total>0&& <Badge>{total}</Badge>}
             <MenuTogglerButton size='2' onClick={handleSidebarToggle}>{sidebarToggler?<MdClose/>:<MdOutlineMenu />}</MenuTogglerButton>
