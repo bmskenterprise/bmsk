@@ -293,7 +293,7 @@ export const InlineBadge = styled.span`
   font-size: 0.5rem;
   padding: 0.25rem 0.5rem;
 `;
-export const InlineBadge = styled(InlineBadge)`
+export const Badge = styled(InlineBadge)`
   border-radius: 50%;
   position: absolute;right: -0.4rem;top: -0.4rem;
 `;
