@@ -1,29 +1,29 @@
-import {useEffect,useState,useRef} from 'react';
+import {useEffect,useState} from 'react';
 import {useNavigate} from 'react-router-dom'
 //import {Form,Button,} from 'react-bootstrap';
 import {BsPlusLg} from 'react-icons/bs';
 //import Pages from "../../components/Pagination";
-import {FlexH,Icon,TinyIcon,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'// 'react-toastify';
-import DriveForm from './DriveForm';
-import DriveList from './DriveList';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTelecom } from '../../contexts/TelecomContext';
+import {FlexH,Icon,TinyIcon,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'// 'react-toastify';
 import {getAheadLocalDate} from '../../utils/date'
-import useArrayFetch from '../../hooks/useArrayFetch';
+import DriveForm from './DriveForm';
+import DriveList from './DriveList';
+//import useArrayFetch from '../../hooks/useArrayFetch';
 
  export default () =>{
     const navigate = useNavigate() 
     const init = {opt:'',icon:''/*,expireDate:(new Date()).setDate((new Date()).getDate()+30).toISOString().slice(0, 10)title:'', price:'',  commission:'',  expireDate: new Date()*/};
     //const [queryRef,statusRef,limitRef] = [useRef(null),useRef(null),useRef(null)];
     const {themeData,modeData:{backPrimary,textPrimary}} = useTheme();
+    const {fetchDriveSummary,driveSummary,loading} = useTelecom();
     //const {icons} = useTelecom();
     const [hasStack, setHasStack] = useState(false);
-    const {data} = useArrayFetch();
+    //const {data} = useArrayFetch();
     const [initData,setInitData] = useState(init);
     const [currentTelecom, setCurrentTelecom] = useState({name:'',icon:''});
     //const [driveSummary, setDriveSummary] = useState([]);
     //const [packList, setPackList] = useState({drives:[],currentPage:1,totalPage:1,limit:20,query:''});
-    const {icons,fetchDriveSummary,driveSummary,fetchDrives,driveData,loading} = useTelecom();
       
 
     useEffect(()=>{fetchDriveSummary();
@@ -45,7 +45,7 @@ import useArrayFetch from '../../hooks/useArrayFetch';
     }*/
     const getDrivesByOpt = (name,driveCount)=>{
         if(driveCount==0){return}
-        navigate(`/dashboard/manage-package/drive/${name}?status=active&category=bundle&search=&fromDate=&toDate=&fromPrice=&toPrice=&limit=20&page=1`)//fetchDrives({opt:name,limit:20,/*limitRef.current.value*/status:'active'});
+        navigate(`/dashboard/manage-package/drive/${name}?status=active&category=bundle&search=&from=&to=&from-price=&to-price=&limit=20&page=1`)//fetchDrives({opt:name,limit:20,/*limitRef.current.value*/status:'active'});
         //setCurrentTelecom({name,icon:icons[name]});setHasStack(true)  // back block করে দিবে
     }
 
