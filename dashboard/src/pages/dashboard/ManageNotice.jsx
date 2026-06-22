@@ -9,11 +9,11 @@ import {getAheadLocalDateTime,renderLocalTimeFromUTC,getLocalDateTimeFromUTC} fr
 import useLongPress from '../../hooks/longPress';
 import SwitchItem from '../../components/Switch'
 import deleteConfirm from '../../components/Confirmation'
-import useArrayFetch from '../../hooks/useArrayFetch'
+import {fetchArray} from '../../hooks/useFetch'
 import url from '../../config/url'  
 
 export default  ({}) =>{
-    const {data} = useArrayFetch(url.urlNotice)
+    const {data} = fetchArray(url.urlNotice)
     const navigate = useNavigate()
     const ahead = new Date((new Date()).setDate((new Date()).getDate()+2)).toISOString().slice(0,16)  
     const formInit = {id:null,recipient:[],medium:[],noticeDuration:getAheadLocalDateTime(2),repeat:false,notice:{title:'',description:''}};
