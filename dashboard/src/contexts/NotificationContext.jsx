@@ -12,7 +12,7 @@ export const NotificationProvider = ({ children }) => {
     const [failedCounts, setFailedCounts] = useState({deposit:0,topup:0});
 
     useEffect(()=>{
-      if(!socket)return;
+      if(!socket) return;
       //socket.emit('admin:join',admin.id/*({type})*/);
       const onAdd = ({type})=> {
         setPendingCounts(prev=> ({...prev,[type]:prev[type]+1}));
@@ -29,17 +29,18 @@ export const NotificationProvider = ({ children }) => {
     
       socket.on('added',onAdd);
       //socket.on('failed',onFailed);
-      const timer=setTimeout(()=>{setIsPending(false)},1000)
+      //const timer=setTimeout(()=>{setIsPending(false)},1000)
 
       return () => {
         socket.off('added',onAdd);
-        /*socket.off('failed',onFailed);*/clearTimeout(timer);
+        /*socket.off('failed',onFailed);clearTimeout(timer);*/
       };
    },[socket]);
       //setNotification(true);
       const reducePendingCounts = (type) => setPendingCounts(prev=> ({...prev,[type]:0}));
+      const seePendings = ()=> setIsPending(false)
     
-    return <NotificationContext.Provider value={{pendingCounts,reducePendingCounts,failedCounts,isPending}}>{children}</NotificationContext.Provider>
+    return <NotificationContext.Provider value={{pendingCounts,reducePendingCounts,seenPendings,failedCounts,isPending}}>{children}</NotificationContext.Provider>
 }
 
 export const useNotification = ()=> useContext(NotificationContext);
