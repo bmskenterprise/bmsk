@@ -80,7 +80,7 @@ export default  (/*{telecom,enableForm}*/) =>{
                 body:JSON.stringify({ids:selected})
             })
             let data = await res.json();
-            if(!res.ok) throw new Error(data.error||'failed to delete drive pack) //
+            if(!res.ok) throw new Error(data.error||'failed to delete drive pack') //
             setSelected([]);/*fetchDrives({opt});*/toast.success(data.message)  //toast.success('Pack Deleted')//:toast.error('Something went wrong');
         }catch(e) {toast.error(e.message||'selectat least one pack');}
         finally{setLoading(false);}
