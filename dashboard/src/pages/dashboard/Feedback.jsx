@@ -1,24 +1,26 @@
 import {useEffect,useState} from 'react'
 import {useNavigate,useSearchParams} from 'react-router-dom'
 import {toast} from 'react-toastify';
+import {useMediaQuery} from 'react-responsive';
 import {formatDistanceToNow} from 'date-fns'
 import {FaTrash} from 'react-icons/fa';
-import {ScrollViewV,TR,IconButton,Loader,Spinner} from '../../components/styles/Admin.style';
 import {useTheme} from '../../contexts/ThemeContext';
-import Pages from '../../components/Pagination';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
-import useFetch from '../../hooks/useFetch'
+import {Center,ScrollViewV,TR,IconButton,Loader,Spinner} from '../../components/styles/Admin.style';
+import {fetchObject} from '../../hooks/useFetch'
+import Pages from '../../components/Pagination';
 import url from '../../config/url';
 
 export default () =>{
-    const [searchParams] = useSearchParams()
     const navigate = useNavigate()
+    const isMobile = useMediaQuery({maxWidth:768})
     const {admin} = useAdminAuth();
-    const {themeData,modeData:{textPrimary}} =useTheme()
+    const {themeData,modeData:{textPrimary}} = useTheme()
+    const [searchParams] = useSearchParams()
     const [page,limit] = [searchParams.get('page')||'1',searchParams.get('limit')||'20'];
     const [loading,setLoading] = useState(false);
     const [feedbackData,setFeedbackData] = useState({feedbacks:[],pagination:{limit:20,currentPage:1,totalPage:1}});
-    const {data} = useFetch(`${url.urlFeedback}?limit=${limit}&page=${page}`)
+    const {data} = fetchObject(`${url.urlFeedback}?limit=${limit}&page=${page}`)
   
     useEffect(()=>{navigate(`/dashboard/feedback?page=${page}&limit=${limit}`)},[])
   
@@ -44,7 +46,7 @@ export default () =>{
         let data = await res.json();
         if(!res.ok) throw new Error(data.error|| 'failed to delete feedback')
         toast.success(data.message)
-      }catch(err) {toast.error(err.message)}
+      }catch(e) {toast.error(e.message)}
       finally{setLoading(false)}
   }
     const pageNav = p=> navigate(`/dashboard/feedback?page=${p}&limit=${limit}`)
@@ -66,7 +68,7 @@ export default () =>{
                 </form>
             </div>*/}
             <ScrollViewV style={{width:'100%',height:'80vh'}}><table><tbody>
-            {data?.feedbacks?.map(({_id,createdAt,user,description},i)=> <TR key={i}>
+            {data?.feedbacks?.map(({_id,createdAt,user,description})=> <TR key={_id} style={{width:isMobile?'64rem':'87rem'}}>
               <td style={{width:'15%'}}>{formatDistanceToNow(createdAt,{addSuffix:true})}</td>
               <td style={{width:'18%'}}>{user}</td>
               <td style={{width:'62%'}}>{description}</td>
@@ -74,7 +76,7 @@ export default () =>{
             </TR>)}
             </tbody></table></ScrollViewV>
                     {data?.pagination?.totalPage>1 && <Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={p=>pageNav(p/*,userRef.current.value*/)} />}
-          </div>:<Loader><p>No Feedback Yet</p></Loader>}
+          </div>:<Center><p>No Feedback Yet</p></Center>}
           {loading&&<Loader><Spinner /></Loader>}
   </div>
 }
