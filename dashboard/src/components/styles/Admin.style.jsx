@@ -187,7 +187,8 @@ export const InputField= styled.input`
   width: 100%;
 `
 export const Select = styled.select`
-  background: transparent;font-size: 1.1rem;
+  background: transparent;font-size: 1.2rem;
+  padding:0.5rem;
   & >option{
     background: ${({theme})=>theme?.modeData?.backSecondary};
     color: ${({theme})=>theme?.modeData?.textPrimary};
@@ -291,6 +292,10 @@ export const InlineBadge = styled.span`
   color: white;
   font-size: 0.5rem;
   padding: 0.25rem 0.5rem;
+`;
+export const InlineBadge = styled(InlineBadge)`
+  border-radius: 50%;
+  position: absolute;right: -0.4rem;top: -0.4rem;
 `;
 export const Tooltip = styled.span`
   background: black;
