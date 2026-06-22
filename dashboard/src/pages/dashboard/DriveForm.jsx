@@ -3,7 +3,7 @@ import {useLocation,useNavigate} from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext'
-import {validatePack} from '../../utils/validate'
+import {validateDrivePack} from '../../utils/validate'
 import {FlexH,FlexV,GapV,ThemeButton,Icon,DatePicker,ErrorText,Spinner, InputField,Select} from '../../components/styles/Admin.style';
 import {addData,editData} from '../../hooks/useModify';
 
@@ -22,7 +22,7 @@ export default  (/*{initialData:{id,opt,title,price,commission,expireDate},handl
                  if(!hasAccess) {toast.info('you don\'t have modify permission');return}
     const {id,operator,category,title,price,commission,expireDate} = formData/*{operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim(),commission:e.target.commission.value.trim()//,expireDate:e.target.expire.value//};*/
         if(JSON.stringify(formData)==JSON.stringify(drive)) {toast.info('No Changes');return}
-        let validationErrors = validatePack(formData);
+        let validationErrors = validateDrivePack(formData);
         if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
         if(id){
             editData(`${url.urlDrive}/${id}`,{category,title,price,commission,expireDate},'Drive Edited','Failed to Edit Pack')
