@@ -9,12 +9,12 @@ import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useTelecom} from '../../contexts/TelecomContext'
 import {ScrollViewV,ScrollViewH,FlexH,StripedList,IconButton,Field,DatePicker,Select,TH,TR,PaginationBar,Center} from '../../components/styles/Admin.style';
 import {launchDate,getLocalDateFromUTC,getCurrentLocalDate} from '../../utils/date'
+import {fetchObject} from '../../hooks/useFetch'
+import {editData} from '../../hooks/useModify';
 import deleteConfirmation from '../../components/Confirmation';
-import useLongPress from '../../hooks/longPress';
-import useFetch from '../../hooks/useFetch'
 import Pages from '../../components/Pagination'
-import url from '../../config/url'
 import SwitchItem from '../../components/Switch';
+import url from '../../config/url'
 
 export default  (/*{telecom,enableForm}*/) =>{
     const isMobile = useMediaQuery({maxWidth:768})
@@ -22,15 +22,15 @@ export default  (/*{telecom,enableForm}*/) =>{
     const {opt} = useParams()
     const {admin} = useAdminAuth() 
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const {telecomCategories} = useTelecom()
     const {thememode,themeData:{themeBackground,themeText},modeData:{textPrimary}} = useTheme();
-    const [status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page] = [searchParams.get('status')||'active',searchParams.get('category')||categories[0],searchParams.get('search')||'',searchParams.get('fromPrice')||'',searchParams.get('toPrice')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1'];
+    const {telecomCategories} = useTelecom()
+    const [searchParams] = useSearchParams();
+    const [status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page] = [searchParams.get('status')||'active',searchParams.get('category')||categories[0],searchParams.get('search')||'',searchParams.get('from-price')||'',searchParams.get('to-price')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1'];
     const [selected,setSelected] = useState([]);
     const [hovered,setHovered] = useState(false);
-    //const {driveData,fetchDrives,/*,toggleDriveStatus,deleteDrivePack*/} = useTelecom();
-    const [filterData,setFilterData] = useState({status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page});
+    const [filterTerm,setFilterTerm] = useState({status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page});
          const [loading,setLoading] = useState(false);
+    const accesses = admin?.accesses;
     
     /*const selectedPacks = packList.map(pack=>({id:pack.id,selected:false}))
     };*/
@@ -46,32 +46,32 @@ export default  (/*{telecom,enableForm}*/) =>{
     }*/
     useEffect(()=>{
         //fetchDrives({opt}) //Date().toISOString().split('T')[0]);
-        setFilterData({status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page}) //Date().toISOString().split('T')[0]);
+        setFilterTerm({status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page}) //Date().toISOString().split('T')[0]);
     },[status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page])
     
-    const {data} = useFetch(`${url.urlDrive}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`)   //
+    const {data} = fetchObject(`${url.urlDrive}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`)   //
     
-    const toggleStatus = async (id,status)=>{
+    const toggleStatus = (id,status) =>{
         if(!accesses?.includes('modify-drive')) {toast.info('you don\'t have modify permission');return}
         //const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
-        setLoading(true);
-        try{
-            let res=await fetch(`${url.urlDriveStatus}/${id}`,{
-                method:'PATCH',
-                credentials: 'include',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({status})
-            })
-            let data = await res.json();
-            if(!res.ok) throw new Error(data.error || 'failed');
-            setSelected([]);/*fetchDrives({opt});*/toast.success(data.message)
-        }catch(e){toast.error(e.message);}
-        finally{setLoading(false);}/*if(toggleStatus(selected,e.target.checked)){setSelected([])}*/
+          editData(`${url.urlDriveStatus}/${id}`,{status},'Pack Status Toggled','Failed to Toggle Pack Status')
+            /*fetchDrives({opt});*/
     };
+        
+        
+              
+                 
+                
+                
+            
+                
+                 
+        
+        /*if(toggleStatus(selected,e.target.checked)){setSelected([])}*/
 
 
     const deleteDrivePack = async e=>{
-        if(!accesses?.includes('modify-drive')) {toast.info('you don\'t have modify permission');return}
+        if(!accesses?.includes('modify-drive')) {toast.info('You don\'t have modify permission');return}
         //const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
         try{
             let res =await fetch(url.urlDrive,{
@@ -115,10 +115,10 @@ export default  (/*{telecom,enableForm}*/) =>{
                   
             else{return status==state}
         });
-        setPackList(filtered)*/navigate(`/dashboard/manage-package/drive/${opt}?status=${e.target.status.value}&category=${e.target.category.value}&search=${e.target.search.value.trim()}&fromPrice=${e.target.fromPrice.value.trim()}&toPrice=${e.target.toPrice.value.trim()}&fromDate=${e.target.fromDate.value}&toDate=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);//fetchDrives()
+        setPackList(filtered)*/navigate(`/dashboard/manage-package/drive/${opt}?status=${e.target.status.value}&category=${e.target.category.value}&search=${e.target.search.value.trim()}&from-price=${e.target.fromPrice.value.trim()}&to-price=${e.target.toPrice.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);//fetchDrives()
     }
-    const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/manage-package/drive/${opt}?status=${status}&category=${category}&search=${search}&fromPrice=${fromPrice}&toPrice=${toPrice}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
+    const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
+    const pageNav = p=> navigate(`/dashboard/manage-package/drive/${opt}?status=${status}&category=${category}&search=${search}&from-price=${fromPrice}&to-price=${toPrice}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
     
     //const markedRowText = id => selected.includes(String(id))?themeText:''
     const markedRow = id => ({background:selected.includes(String(id))?themeBackground:'',color:selected.includes(String(id))?themeText:'',width:isMobile?'64rem':'87rem'});
@@ -130,7 +130,7 @@ export default  (/*{telecom,enableForm}*/) =>{
                  
                   
                  
-    return !admin?.accesses?.includes('manage-drive')?<Center><p>Dont have Manage Drive Permission</p></Center>:<div style={{width:'100%',height:'70%',marginTop:'3rem'}}>
+    return !accesses?.includes('manage-drive')?<Center><p>Dont have Manage Drive Permission</p></Center>:<div style={{width:'100%',height:'70%',marginTop:'3rem'}}>
                 {/*<h3><MediumIcon src={telecom.icon}  />{telecom.name}</h3>*/}
             {/*<div><label htmlFor=""></label>
                 <select ref={statusRef} onChange={e=>{console.log(e.target.value);}}>
@@ -152,16 +152,16 @@ export default  (/*{telecom,enableForm}*/) =>{
                 <Form.Check type='switch' checked={false} onChange={toggleDriveStatus} />*/}
             </FlexH>:
             <form onSubmit={filter}><FlexH x='space-between' y='center'>
-                <Field value={filterData.limit} min='10' max='100' step='5' x='5' name='limit' />
-                {/*<Field x='5' list="cat" name='category' value={filterData.category} onChange={filterParams}/>*/}
-                <Select value={filterData.category} name='category' onChange={filterParams}>{telecomCategories.map((c,i)=> <option key={i} value={c}>{c}</option>)}</Select>
-                <div><Field value={filterData.fromPrice} name='fromPrice' placeholder='price from' x='6'/>
-                <Field value={filterData.toPrice} name='toPrice' placeholder='price to' x='6'/></div>
+                <Field value={filterTerm.limit} min='10' max='100' step='5' x='5' name='limit' />
+                {/*<Field x='5' list="cat" name='category' value={filterTerm.category} onChange={filterParams}/>*/}
+                <Select value={filterTerm.category} name='category' onChange={filterParams}>{telecomCategories?.map(({id,category})=> <option key={id} style={{textTransform:'capitalize'}} value={category}>{category}</option>)}</Select>
+                <div><Field value={filterTerm.fromPrice} name='fromPrice' placeholder='price from' x='6'/>
+                <Field value={filterTerm.toPrice} name='toPrice' placeholder='price to' x='6'/></div>
                 <div>
-                <DatePicker type='date' name='fromDate' value={filterData.fromDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                <DatePicker type='date' name='toDate' value={filterData.toDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/></div>
-                <Field x='10' value={filterData.search} placeholder='search pack' name='search' onChange={filterParams}/>
-                <Select  name='status' value={filterData.status} onChange={filterParams}>
+                <DatePicker type='date' name='fromDate' value={filterTerm.fromDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                <DatePicker type='date' name='toDate' value={filterTerm.toDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/></div>
+                <Field x='10' value={filterTerm.search} placeholder='search pack' name='search' onChange={filterParams}/>
+                <Select  name='status' value={filterTerm.status} onChange={filterParams}>
                     <option value='active'>Active</option>
                     <option value='deactive'>Deactive</option>
                 </Select>
