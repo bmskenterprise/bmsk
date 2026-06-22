@@ -38,7 +38,7 @@ export default  () =>{
       
     const selectImage = e =>{
         let file = e.target.files[0]
-        if(file && file.type.startsWith('image'){
+        if(file && file.type.startsWith('image')){
             let reader = new FileReader();
             reader.readAsDataURL(file)
             reader.onloadend = e => setImage(prev=>({...prev,link:reader.result}))
