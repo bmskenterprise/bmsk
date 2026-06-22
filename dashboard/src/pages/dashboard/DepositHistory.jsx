@@ -12,8 +12,8 @@ import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {ScrollViewV,ScrollViewH,FlexH,GapH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
+import {fetchObject} from '../../hooks/useFetch'
 import url from '../../config/url';
-import useFetch from '../../hooks/useFetch'
 import Reject from '../../components/Reject'
 import AdminPIN from '../../components/AdminPIN';
 import Pages from '../../components/Pagination'
@@ -30,10 +30,7 @@ export default  () =>{
     const [searchParams] = useSearchParams()
     const [status,user,txn,gateway,type,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',searchParams.get('type')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     //const gateway = searchParams.get('gateway') || '';
-    //const type = searchParams.get('type') || '';
-    //const fromDate = searchParams.get('fromDate') || '';
     const [hovered,setHovered] = useState(false);
-    const fields = ['','',''];
     const [failedId,setFailedId] = useState(null);
     const [loading,setLoading] = useState(false);
     const [depositHistory, setDepositHistory] = useState({deposits:[],pagination:{totalPage:1,currentPage:1,limit:20}});
@@ -41,7 +38,8 @@ export default  () =>{
     const errorlist = {width:'100%',marginBottom:'1rem'}
     const [init,setInit] = useState(false)
     const [selected,setSelected] = useState([])
-    let [filterData,setFilterData]=useState({status,user,txn,gateway,type,fromDate,toDate,limit,page});
+    let [filterTerm,setFilterTerm]=useState({status,user,txn,gateway,type,fromDate,toDate,limit,page});
+    let hasAccess = accesses?.includes('modify-deposit-history');
     //let today = (new Date()).toISOString().split('T')[0]
     /*const check = (id)=>{
         let i=selected.indexOf(id)
@@ -49,18 +47,18 @@ export default  () =>{
         else{setSelected(prev=> [...prev,String(id)]);}
     };*/
     //const {start,clear} = useLongPress(check)//if(data.length)cache[status]=data;
-    const {data} = useFetch(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    const {data} = fetchObject(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
-        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=1`)
+        reducePendingCounts('deposit')
+        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
     }, [])
     useEffect(()=>{
-        reducePendingCounts('deposit')
         if(admin) socket.emit('admin:deposit-history:seen',admin?.id)
     }, [admin])
     
     useEffect(()=>{
-        setFilterData ({status,user,txn,gateway,type,fromDate,toDate,limit,page});
+        setFilterTerm ({status,user,txn,gateway,type,fromDate,toDate,limit,page});
     },[status,user,txn,gateway,type,fromDate,toDate,limit]);
     
     const fetchDepositHistory = async (/*{page}*/) =>{ 
@@ -70,18 +68,18 @@ export default  () =>{
                 let data = await res.json();
                 if(!res.ok) throw new Error(data.error||'failed to fetch history');
                 setDepositHistory(data/*.filter(d=>d.status==statusRef.current.value)*/);
-            }catch(err) {toast.error(err.message)}
+            }catch(e) {toast.error(e.message)}
             finally { setLoading(false); }
         }
     const changeStatus = async ({id,status,feedback},pin)=>{
-        if(!accesses?.includes('modify-deposit-history')) {toast.info('you don\'t have deposit modify permission');return}  //
+        //if(!accesses?.includes('modify-deposit-history')) {toast.info('you don\'t have deposit modify permission');return}  //
         setLoading(true)
         try{
             let res = await fetch(`${url.urlDeposit}/${id}`,{
                 method: 'PATCH',
                 credentials: 'include',
                 headers: {'Content-Type':'application/json','x-admin-pin':pin},
-                body: JSON.stringify({username,status,feedback})
+                body: JSON.stringify({status,feedback})
             })
             let data = await res.json()
             if(!res.ok) throw new Error(data.error||'failed to change status')
@@ -106,14 +104,18 @@ export default  () =>{
                     finally{setLoading(false)}
                 }*/
                       
-    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onSuccess = (id) => {
+        if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    }
     const onFailed = (id,feedback) => {
         setFailedId(null);
+        if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
                           
     const filter = (e) =>{e.preventDefault()
-        navigate(`/dashboard/deposit/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&txn=${e.target.txn.value.trim()}&gateway=${e.target.gateway.value.trim()}&type=${e.target.type.value.trim()}&fromDate=${e.target.fromDate.value}&toDate=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page:1`);/*let filtered=cache[statusRef.current.value].filter(d=>{
+        navigate(`/dashboard/deposit/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&txn=${e.target.txn.value.trim()}&gateway=${e.target.gateway.value.trim()}&type=${e.target.type.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page:1`);/*let filtered=cache[statusRef.current.value].filter(d=>{
             for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
             if(fromDateRef.current.value && d.createdAt<fromDateRef.current.value)return false;
@@ -121,29 +123,29 @@ export default  () =>{
             return true;
         });setDepositHistory(filtered)*///fetchDepositHistory({page:1});
     }
-    const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))    // (err) { toast.error(err.message); }
-    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
+    const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))    // (err) { toast.error(err.message); }
+    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
                       
     return !accesses?.includes('deposit-history')?<Center><p>don't have deposit history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'6rem'}}>Deposit History</h4>
                 {/*!init&&statusRef.current.value=='PENDING' && <div><Button onClick={e=>setInit(true)}>Add Tnx</Button></div>*/}
                 {/*{selected[0]?<button onClick={e=>deleteInit(selected,deleteTxn)}><FaTrash/></button> :*/}<form onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
-                    <Field value={filterData.limit} name='limit' min='10' max='100' x='5' onChange={filterParams}/>
+                    <Field value={filterTerm.limit} name='limit' min='10' max='100' x='5' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                    <Field x='8' value={filterData.user} name='user' placeholder='user' list='levels' onChange={filterParams}/>
+                    <Field x='8' value={filterTerm.user} name='user' placeholder='user' list='levels' onChange={filterParams}/>
                     <datalist id='levels'>{appData?.userLevels?.map(l=><option key={l.name} value={l.name}/>)}</datalist>
                     </div>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                    <Field x='8' value={filterData.txn} name='txn' placeholder='txn' onChange={filterParams}/></div>
-                    <div> <Field x='8' name='gateway' value={filterData.gateway} list='mbanks' placeholder='gateway' onChange={filterParams}/>
+                    <Field x='8' value={filterTerm.txn} name='txn' placeholder='txn' onChange={filterParams}/></div>
+                    <div> <Field x='8' name='gateway' value={filterTerm.gateway} list='mbanks' placeholder='gateway' onChange={filterParams}/>
                     <datalist id='mbanks'>{appData?.mbanks.map((mb,i)=> <option key={i} value={mb.name}/>)}</datalist></div>
-                    {/*<div>  <Field x='8' list='types' name='type' placeholder='type' value={filterData.type} onChange={filterParams}/>
+                    {/*<div>  <Field x='8' list='types' name='type' placeholder='type' value={filterTerm.type} onChange={filterParams}/>
                     <datalist id='types'>{balanceTypes.map((mb,i)=> <option key={i} value={mb}/>)}</datalist></div>*/}
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor="from">from</label><br/>*/}<DatePicker  type='date' value={filterData.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                        {/*<label htmlFor="to">to</label><br/>*/}<DatePicker  type='date' value={filterData.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker  type='date' value={filterTerm.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker  type='date' value={filterTerm.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
-                    <div><Select value={filterData.status} name='status' onChange={filterParams}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
+                    <div><Select value={filterTerm.status} name='status' onChange={filterParams}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
                             <option value='pending'>Pending</option>
                             <option value='success'>Success</option>
                             <option value='failed'>Failed</option>
@@ -152,23 +154,23 @@ export default  () =>{
                     </FlexH> 
                 </form>
             {/*init&& <Form>
-                    <Form.Control type="text" placeholder="Ref" />
+                    <Form.Control type='text' placeholder='Ref' />
                     <Form.Control.Feedback>{errors?.ref }</Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group>
-                    <Form.Control type="text" placeholder="Username" />
+                    <Form.Control type='text' placeholder='Username' />
                         <Form.Control.Feedback>{errors?.username }</Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group>
-                    <Form.Control type="text" placeholder="Transaction ID" />
+                    <Form.Control type='text' placeholder='Transaction ID' />
                     <Form.Control.Feedback>{errors?.txn }</Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group>
-                    <Form.Control type="number" placeholder="Transaction Amount" />
+                    <Form.Control type='number' placeholder='Transaction Amount' />
                     <Form.Control.Feedback>{errors?.amount }</Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group>
-                    <Form.Control type="number" placeholder="Admin PIN" />
+                    <Form.Control type='number' placeholder='Admin PIN' />
                     <Form.Control.Feedback>{errors?.adminPIN }</Form.Control.Feedback>
                 </Form.Group></Form>*/}
             <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
