@@ -4,7 +4,7 @@ import {toast} from 'react-toastify';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext';
 import {FlexH,FlexV,GapV,Icon,InputField,DatePicker,Select,ErrorText,ThemeButton,Spinner} from '../../components/styles/Admin.style';
-import {validatePack} from '../../utils/validate'
+//import {validatePack} from '../../utils/validate'
 import {fetchObject} from '../../hooks/useFetch'
 import {addData,editData} from '../../hooks/useModify'
 import {validateRegularPack} from '../../utils/validate'
@@ -20,6 +20,7 @@ export default () =>{
     const [formData,setFormData] = useState(regular);
     const [errors,setErrors] = useState({});
     const hasAccess = accesses?.includes('modify-regular')
+               const msg = 'You don\'t have modify permission'
     
     useEffect(e=>{
         if(!location?.state){
@@ -29,8 +30,8 @@ export default () =>{
     },[])
     const handleSubmit = e=>{
         e.preventDefault();
-                   if(!hasAccess) {toast.info('you don\'t have modify permission');return}
-        const {id,operator,category,title,price,expireDate}=formData/* = {operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim()//,expireDate:e.target.expire.value//};*/
+                   if(!hasAccess) {toast.info('You don\'t have modify permission');return}
+        const {id,operator,category,title,price,expireDate} = formData/*{operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim()//,expireDate:e.target.expire.value//};*/
         if(JSON.stringify(formData)==JSON.stringify(regular)) {toast.info('No Changes');return}
         let validationErrors = validateRegularPack(formData);
         if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
@@ -42,11 +43,10 @@ export default () =>{
     const handleChange = e=>setFormData({...formData,[e.target.name]:e.target.value})
                        
                            
-                      
                           
                          
                           
-    return <div>{formData.operator&& <div><h3><Icon src={icons[formData.operator]} x='1.5'/></h3><h4 style={{marginBottom:'4rem'}}>{formData.title?'Edit':'Add'} Package</h4></div>}
+    return !hasAccess?<Center>{msg}</Center>:<div>{formData.operator&& <div><h3><Icon src={icons[formData.operator]} x='1.5'/></h3><h4 style={{marginBottom:'4rem'}}>{formData.title?'Edit':'Add'} Package</h4></div>}
             <form onSubmit={/*e=>addRegularPack(formData)*/handleSubmit/*(formData)*/}>
                 {/*operator? <h2>Edit {operator} package</h2>: <Flex>
                     {operators.map(({operatorName,icon},i)=> <div style={{marginRight:'3rem'}} key={i}><input type="radio" name="op" id={operatorName} hidden/><label htmlFor={operatorName}><img src={icon} alt="" />{operatorName}</label></div>)}
