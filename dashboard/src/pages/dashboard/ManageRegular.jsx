@@ -16,17 +16,17 @@ import {getAheadLocalDate} from '../../utils/date';
 export default () => {
     const init = {opt:'',icon:'',/*,expireDate:(new Date()).setDate((new Date()).getDate()+30).toISOString().slice(0, 10)*/};
     const navigate = useNavigate()    //
-    const [statusRef,limitRef,queryRef] = [useRef(null),useRef(null),useRef(null)];
     const {themeData,modeData:{backPrimary,textPrimary}} = useTheme();
+    const {fetchRegularSummary,regularSummary, } = useTelecom();
     //const {telecoms,icons} = useTelecom();
     const [hasStack, setHasStack] = useState(false);
-    const {fetchRegularSummary,regularSummary, regularData,fetchRegulars,addRegularPack} = useTelecom();
     const [initData, setInitData] = useState(init);
     const [loading, setLoading] = useState(false);
+    const [currentTelecom,setCurrentTelecom] = useState({name:'',icon:''});
     //const [regularSummary, setRegularSummary] = useState([]);
     //const [packList, setPackList] = useState({regulars:[],limit:20,currentPage:1,totalPage:1,query:''});
     const formData = {};
-const [currentTelecom,setCurrentTelecom] = useState({name:'',icon:''});
+   
         /*const fetchRegularOpts = async () => {
             try {
                 let res = await fetch(url.urlRegularSummary)
@@ -82,7 +82,7 @@ const [currentTelecom,setCurrentTelecom] = useState({name:'',icon:''});
         }*/
     const getRegularsByOpt = (name,regularCount) =>{
         if(regularCount==0) return 
-        /*initRegularFilter({opt:name,status:'active',limit:20,query:''});*/navigate(`/dashboard/manage-package/regular/${name}?status=active&category=bundle&search=&fromDate=&toDate=&fromPrice=&toPrice=&limit=20&page=1`)//
+        /*initRegularFilter({opt:name,status:'active',limit:20,query:''});*/navigate(`/dashboard/manage-package/regular/${name}?status=active&category=bundle&search=&from=&to=&from-price=&to-price=&limit=20&page=1`)//
         //setCurrentTelecom({name,icon:telecoms[name]});
         //fetchRegulars({page:1})
     }
