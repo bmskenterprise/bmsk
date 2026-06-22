@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'react'
 import {useNavigate,useSearchParams} from 'react-router-dom';
+import {useMediaQuery} from 'react-responsive';
 import {toast} from 'react-toastify';
 import {MdCancel} from 'react-icons/md';
 import {formatDistanceToNow} from 'date-fns';
@@ -9,45 +10,45 @@ import {useNotification} from '../../contexts/NotificationContext'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {FlexH,ScrollViewV,ScrollViewH,StripedList,PaginationBar,ApproveButton,RejectButton,Field,DatePicker,Select,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
+import {fetchObject} from '../../hooks/useFetch'
 import copyToClipboard from '../../utils/copyToClipboard';
 import url from '../../config/url';
 import Pages from '../../components/Pagination'
-import useFetch from '../../hooks/useFetch'
-import Reject from '../../components/Reject'   ;
-const fields = ['','',''];
+import Reject from '../../components/Reject'
 import AdminPIN from '../../components/AdminPIN';
+const fields = ['','',''];
 const billTypes = ['Electricity','Internet','Cable TV','Gas','Water'];
 
 export default () =>{ 
     const navigate = useNavigate()
+    const isMobile = useMediaQuery({maxWidth:768}) //|| '';
+    const {admin} = useAdminAuth()
+    const accesses = admin?.accesses             //
     const {socket} = useSocket()
     const [searchParams] = useSearchParams()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {pendingCounts:{bill},reducePendingCounts} = useNotification();
     const [status,user,type,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'',searchParams.get('page')||'1']  ;
-    //const user = searchParams.get('user') || '';
     //const type = searchParams.get('type') || '';
     //const ac = searchParams.get('ac') || '';
     const errorlist = {width:'100%',marginBottom:'1.5rem'}  ;
-    const {admin} = useAdminAuth()
-    const accesses = admin?.accesses             //
     const [hovered,setHovered] = useState(false);
-    //const [formRef,userRef,typeRef,acRef,fromDateRef,toDateRef,limitRef] = [useRef(null),useRef(null),useRef(null),useRef(null),useRef(null),useRef(null),useRef(null)];
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({bills:[],pagination:{totalPage:1,currentPage:1}});
     const [filterData,setFilterData] = useState({status,user,type,ac,fromDate,toDate,limit,page});
     //const today = (new Date()).toISOString().split('T')[0]
     const [hover,setHover] = useState(false);
-    const {data} = useFetch(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    let hasAccess = accesses?.includes('modify-bill-history');
+    const msg = 'You don\'t have modify permission'
+    const {data} = fetchObject(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
-        //const removePop = (e)=>{if(hover)setHover(null)}
+        reducePendingCounts('bill')
         navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
         //return ()=>document.removeEventListener('click',removePop)
     },[]);
     useEffect(()=>{
-        reducePendingCounts('bill')
         if(admin) socket.emit('admin:bill-history:seen', admin?.id);
     },[admin]);
     useEffect(()=>{
@@ -69,14 +70,12 @@ export default () =>{
           if(!accesses?.includes('modify-bill-history')) {toast.info('you don\'t have bill modify permission');return}
         setLoading(true)
         try {
-            let res = await fetch(`${url.urlBill}/${id}`,
-                {
+            let res = await fetch(`${url.urlBill}/${id}`,{
                     method: 'PATCH',
                     credentials: 'include',
                     headers:{'Content-Type':'application/json','x-admin-pin':pin},
                     body: JSON.stringify({status,feedback}),
-                }
-            )
+            })
             let data = await res.json();
             if(!res.ok) throw new Error(data.error|| 'failed to change bill status');
             //let moved = cache['pending'].splice(cache['pending'].findIndex(i=>i.id===hitId),1)[0]     //'failed')
@@ -90,10 +89,14 @@ export default () =>{
         navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&fromDate=${fd.fromDate}&toDate=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
     }
     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}));
-    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onSuccess = (id) => 
+               if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    }
                       
     const onFailed = (id,feedback) =>{
         setFailedID(null);
+               if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
     const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`)
@@ -134,14 +137,14 @@ export default () =>{
             </form>{/*</FlexH>*/}
         {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
             <ScrollViewH style={{width:'100%'}}>{/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
-                {data?.bills?.map(({_id,billType,updatedAt,acNumber,amount,expireDate,user,status},i)=> <StripedList  style={{width:'87rem',fontSize:'1.3rem'}} key={i}>
+                {data?.bills?.map(({_id,billType,updatedAt,acNumber,amount,expireDate,user,status},i)=> <StripedList  style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={i}>
                     <div style={{width:'20%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div onMouseOver={e=>setHover(true)} onMouseOut={e=>setHover(false)} onClick={e=>copyToClipboard(acNumber)} style={{width:'25%'}}>{hover?billType:acNumber}</div>
                     <div style={{width:'15%'}}>{Object.values(amount||{}).reduce((a,b)=>a+b,0)}</div>
                 {/*<div>{billMonth}</div>*/}
                     <div style={{width:'15%'}}>{expireDate}</div>
                     <div style={{width:'15%'}}>{user?.username}</div>
-                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id)} disabled={!accesses?.includes('modify-bill-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)/*setID(_id)*/}} disabled={!accesses?.includes('modify-bill-history')}>Reject</RejectButton>
+                    {status=='PENDING' && <div style={{width:'10%',position:'relative'}}><ApproveButton onClick={e=>onSuccess(_id)} disabled={!hasAccess}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedID(_id)/*setID(_id)*/}} disabled={!hasAccess}>Reject</RejectButton>
                     {failedID==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                       </div>}
                       
