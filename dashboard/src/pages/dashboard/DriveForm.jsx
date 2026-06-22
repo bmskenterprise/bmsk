@@ -1,9 +1,9 @@
 import {useState} from 'react';
-//import { 
 import {useLocation,useNavigate} from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext'
+import {validatePack} from '../../utils/validate'
 import {FlexH,FlexV,GapV,ThemeButton,Icon,DatePicker,ErrorText,Spinner, InputField,Select} from '../../components/styles/Admin.style';
 import {addData,editData} from '../../hooks/useModify';
 
@@ -13,13 +13,14 @@ export default  (/*{initialData:{id,opt,title,price,commission,expireDate},handl
     let drive= {id:location.state?.id,operator:location.state?.operator,category:location.state?.category,title:location.state?.title,price:location.state?.price,commission:location.state?.commission,expireDate:location.state?.expireDate}
     let {admin:{accesses}} = useAdminAuth();
     let hasAccess = accesses?.includes('modify-drive');
-    const {icons,telecomCategories,errors,loading} = useTelecom();
-    const [formData, setFormData] = useState(drive);
+    const {icons,telecomCategories,loading} = useTelecom();
+    const [errors,setErrors] = useState({})
+    const [formData,setFormData] = useState(drive);
     
     const handleSubmit=e=>{
         e.preventDefault();
                  if(!hasAccess) {toast.info('you don\'t have modify permission');return}
-    const {id,operator,category,title,price,commission,expireDate}=formData/* = {operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim(),commission:e.target.commission.value.trim()//,expireDate:e.target.expire.value//};*/
+    const {id,operator,category,title,price,commission,expireDate} = formData/*{operator:opt,title:e.target.title.value.trim(),price:e.target.price.value.trim(),commission:e.target.commission.value.trim()//,expireDate:e.target.expire.value//};*/
         if(JSON.stringify(formData)==JSON.stringify(drive)) {toast.info('No Changes');return}
         let validationErrors = validatePack(formData);
         if(Object.keys(validationErrors).length>0){setErrors(validationErrors);return}
@@ -64,7 +65,7 @@ export default  (/*{initialData:{id,opt,title,price,commission,expireDate},handl
                     </div>
                     <div style={{width:'12rem'}}>
                         <Select name='category' style={{width:'100%'}} value={formData.category} onChange={handleChange}>
-                            {telecomCategories.map((c,i)=> <option key={i} value={c}>{c}</option>)}
+                            {telecomCategories?.map(({id,category})=> <option key={id} style={{textTransform:'capitalize'}} value={category}>{category}</option>)}
                         </Select>
                     </div>
                 </FlexH><GapV x='5'/>
