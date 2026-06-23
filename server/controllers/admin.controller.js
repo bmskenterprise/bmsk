@@ -346,10 +346,10 @@ export const removeUserDevice = async (req,res,next) =>{
 export const deleteUserByAdmin = async (req,res,next) =>{
     try{
         let {username} = await User.findOne({_id:new ObjectId(req.params.id)})
-        let {socketId} = await SocketResponse.findOne({user:username})
+        let {socketId} = await SocketResponse.findOne({user:req.params.id})
         if(socketId) io.to(socketId).emit('deleted',null)
         await User.deleteOne({_id:new ObjectId(req.params.id)});
-        await SocketResponse.deleteOne({user:username}) //return res.status(404).json({ error: 'Admin not found' });*/
+        await SocketResponse.deleteOne({user:req.params.id}) //return res.status(404).json({ error: 'Admin not found' });*/
         res.status(200).json({message:'user deleted'})
     }catch(e) {next(e)}
 }
@@ -472,7 +472,7 @@ export const getUsersByAdmin = async (req, res, next) => {
     if(['platinum','gold','silver','distributor','sr','retailer'].includes(user)) filter.level = user;
     else if(user) filter.username = user;
     if(status) filter.verified = status=='verified'
-    if(from) 
+    if(from) {
         fromDate = new Date(from)
         filter.updatedAt = {$gte:fromDate}
     }
