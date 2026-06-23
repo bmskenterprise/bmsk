@@ -21,15 +21,14 @@ import Pages from '../../components/Pagination'
 export default  () =>{
     const navigate = useNavigate();
     const isMobile = useMediaQuery({maxWidth:768});
-    const {thememode,themeData:{themeBackground},modeData} = useTheme();
+    const {thememode,themeData:{themeBackground},modeData:{backPrimary,textPrimary}} = useTheme();
     const {appData,admin} = useAdminAuth();
     const accesses = admin?.accesses
     const {socket} = useSocket()  ;
-    const {backPrimary,textPrimary} = modeData
+    //const {backPrimary,textPrimary} = modeData
     const {failedCounts:{deposit},reducePendingCounts} = useNotification();
     const [searchParams] = useSearchParams()
-    const [status,user,txn,gateway,type,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',searchParams.get('type')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
-    //const gateway = searchParams.get('gateway') || '';
+    const [status,user,txn,gateway,/*type,*/from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',/*searchParams.get('type')||'',*/searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const [hovered,setHovered] = useState(false);
     const [failedId,setFailedId] = useState(null);
     const [loading,setLoading] = useState(false);
@@ -38,28 +37,29 @@ export default  () =>{
     const errorlist = {width:'100%',marginBottom:'1rem'}
     const [init,setInit] = useState(false)
     const [selected,setSelected] = useState([])
-    let [filterTerm,setFilterTerm]=useState({status,user,txn,gateway,type,fromDate,toDate,limit,page});
+    let [filterTerm,setFilterTerm]=useState({status,user,txn,gateway,/*type,*/from,to,limit,page});
     let hasAccess = accesses?.includes('modify-deposit-history');
-    //let today = (new Date()).toISOString().split('T')[0]
+    let msg = 'You don\'t have modify permission'
+    //const gateway = searchParams.get('gateway') || '';
     /*const check = (id)=>{
         let i=selected.indexOf(id)
         if(0<=i){setSelected(prev=> prev.filter(i=>i!=id))}
         else{setSelected(prev=> [...prev,String(id)]);}
     };*/
     //const {start,clear} = useLongPress(check)//if(data.length)cache[status]=data;
-    const {data} = fetchObject(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    const {data} = fetchObject(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&from=${from}&to=${to}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
         reducePendingCounts('deposit')
-        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
+        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=1`)
     }, [])
     useEffect(()=>{
         if(admin) socket.emit('admin:deposit-history:seen',admin?.id)
     }, [admin])
     
     useEffect(()=>{
-        setFilterTerm ({status,user,txn,gateway,type,fromDate,toDate,limit,page});
-    },[status,user,txn,gateway,type,fromDate,toDate,limit]);
+        setFilterTerm ({status,user,txn,gateway,/*type,*/from,to,limit,page});
+    },[status,user,txn,gateway,/*type,*/from,to,limit]);
     
     const fetchDepositHistory = async (/*{page}*/) =>{ 
             setLoading(true)
@@ -115,7 +115,7 @@ export default  () =>{
     }
                           
     const filter = (e) =>{e.preventDefault()
-        navigate(`/dashboard/deposit/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&txn=${e.target.txn.value.trim()}&gateway=${e.target.gateway.value.trim()}&type=${e.target.type.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page:1`);/*let filtered=cache[statusRef.current.value].filter(d=>{
+        navigate(`/dashboard/deposit/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&txn=${e.target.txn.value.trim()}&gateway=${e.target.gateway.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);/*let filtered=cache[statusRef.current.value].filter(d=>{
             for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
             if(fromDateRef.current.value && d.createdAt<fromDateRef.current.value)return false;
@@ -124,9 +124,9 @@ export default  () =>{
         });setDepositHistory(filtered)*///fetchDepositHistory({page:1});
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))    // (err) { toast.error(err.message); }
-    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
                       
-    return !accesses?.includes('deposit-history')?<Center><p>don't have deposit history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'6rem'}}>Deposit History</h4>
+    return !accesses?.includes('deposit-history')?<Center><p>Don't have deposit history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'6rem'}}>Deposit History</h4>
                 {/*!init&&statusRef.current.value=='PENDING' && <div><Button onClick={e=>setInit(true)}>Add Tnx</Button></div>*/}
                 {/*{selected[0]?<button onClick={e=>deleteInit(selected,deleteTxn)}><FaTrash/></button> :*/}<form onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
@@ -142,8 +142,8 @@ export default  () =>{
                     {/*<div>  <Field x='8' list='types' name='type' placeholder='type' value={filterTerm.type} onChange={filterParams}/>
                     <datalist id='types'>{balanceTypes.map((mb,i)=> <option key={i} value={mb}/>)}</datalist></div>*/}
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker  type='date' value={filterTerm.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker  type='date' value={filterTerm.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker  type='date' value={filterTerm.from} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker  type='date' value={filterTerm.to} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
                     <div><Select value={filterTerm.status} name='status' onChange={filterParams}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
                             <option value='pending'>Pending</option>
@@ -185,7 +185,7 @@ export default  () =>{
                     {/*<td>{billMonth}</td>
                     <td>{username}</td>*/}
                     {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
-                        <ApproveButton onClick={e=>onSuccess(_id)} disabled={!accesses?.includes('modify-deposit-history')}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedId(_id)}} disabled={!accesses?.includes('modify-deposit-history')}>Reject</RejectButton>
+                        <ApproveButton onClick={e=>onSuccess(_id)} disabled={!hasAccess}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedId(_id)}} disabled={!hasAccess}>Reject</RejectButton>
                         {failedId==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                             
                             
