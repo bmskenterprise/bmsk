@@ -486,7 +486,7 @@ export const getUsersByAdmin = async (req, res, next) => {
     try {
         const totalUsers = await User.countDocuments(filter);
         const users = await User.find(filter,{projection:{password:0,pin:0,failedLoginAttempts:0,lockUntil:0,__v:0}}).skip((currentPage-1)*queryLimit).limit(queryLimit).sort({createdAt:-1}).toArray();
-        if(!users)  {res.status(404).json({error:'users not found'});return}
+        if(!users)  {res.status(404).json({error:'users not found'});}
         res.status(200).json({users,pagination:{currentPage,totalPages:Math.ceil(totalUsers/queryLimit),}});
     }catch(e) {next(e)}  
 }
