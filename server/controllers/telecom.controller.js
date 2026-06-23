@@ -494,7 +494,7 @@ export const deleteDrive = async (req, res, next) => {
 
 
 //call by admin
-export const getDriveHits = async (req, res, next) => {
+/*export const getDriveHits = async (req, res, next) => {
     const {status, user,telecom,fromDate,toDate,limit,page} = req.query;
     const filter = {};
     if(status) filter.status = status.toUpperCase();
@@ -512,7 +512,7 @@ export const getDriveHits = async (req, res, next) => {
         if(!hits) return res.status(404).json({ error: 'No drives found' });
         res.status(200).json({hits,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
     }catch(e) {next(e)}// (e) {
-}
+}*/
     //}
 
 
