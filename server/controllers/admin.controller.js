@@ -476,7 +476,7 @@ export const getUsersByAdmin = async (req, res, next) => {
         fromDate = new Date(from)
         filter.updatedAt = {$gte:fromDate}
     }
-    if(to) 
+    if(to) {
         toDate = new Date(to)
         filter.updatedAt= {$lte:toDate}
     }
