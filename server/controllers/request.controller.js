@@ -164,11 +164,11 @@ export const getBillRequestByAdmin = async (req, res, next) => {
     if(txn) filter.txn=txn
     if(user) filter.user=user
     if(type) filter.billType=type
-    if(from) 
+    if(from) {
         fromDate=new Date(from)
         filter.updatedAt={$gte:fromDate}
     }
-    if(to) 
+    if(to) {
         toDate=new Date(to)
         filter.updatedAt={$lte:toDate}
     }
