@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react'
 import {toast} from 'react-toastify'
-   export const fetchObject = async (/*{page}*/) =>{
+   export const fetchObject = async (url) =>{
     const [data,setData] = useState({})
     try{
         let res = await fetch(url, {credentials:'include'});let data = await res.json()
