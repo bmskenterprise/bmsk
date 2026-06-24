@@ -540,6 +540,11 @@ export const Spinner = styled.div`
   width: ${({size})=> size?size:3}rem;
   height: ${({size})=> size?size:3}rem;
 `;
+export const ThemeSpinner = styled(Spinner)`
+  border: 3px solid ${({theme})=> theme?.themeData?.themeText};
+  width: 2rem;
+  height: 2rem;
+`;
 export const AccordionItem = styled.div`
   & >button{
     position: relative;
