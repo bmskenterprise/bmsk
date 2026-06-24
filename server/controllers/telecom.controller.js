@@ -5,7 +5,7 @@ import {v4 as uuidv4} from 'uuid'
 import dotenv from 'dotenv';dotenv.config()
 import {aggregatePipeSuperAdmin,aggregatePipeSubAdmin} from '../utils/aggregatePipe.js';
 import connectDB from '../config/db.js';
-//import SocketResponse from '../models/socketResponse.model.js'
+import {uploadBase64URLToCloudinary} from '../utils/uploadToCloudinary.js'
 import socket from '../config/socket.js';
 //let io = socket.getIO()
 let CACHE_TTL_MS = 24*1000*60*60;
@@ -44,6 +44,51 @@ const emitToDevice = (deviceId,event,payload) =>{
     io.to(sid).emit(event, payload)
     return {ok:true}
 }
+
+export const getTelecoms = async (req,res,next)=>{
+    try {
+        const admin = await Admin.findOne({role:'admin'});
+        if(!admin ||!admin.telecoms) return res.status(404).json({error:'Not Found'})
+        /*const logos = {};
+        for(const element of admin.telecom) logos[element.name] =element.icon*/
+        //let telecoms = admin.telecoms.map(t=>({name:t.name,icon:t.icon,active:t.active}))
+        res.status(200).json(admin.telecoms);
+    }catch(e) {next(e)}
+};
+
+
+export const addTelecom = async (req, res, next) => {
+    try {
+        const {name,icon} = req.body;
+        const response = await uploadBase64URLToCloudinary(icon)
+        const result = await Admin.findOneAndUpdate({role:'admin'},{$push:{telecoms:{_id:new ObjectId(),name,icon:response.secure_url,active:true},routing:{_id:new ObjectId(),name,ip:'192.168',slot:'0'}}},{returnDocument:'after'})
+        res.status(200).json({telecoms:result.telecoms,message:'telecom added'});
+    }catch(e) {next(e)}
+}
+
+
+export const editTelecom = async (req,res,next) =>{
+    const {name,icon,active} = req.body
+    try{
+        let updateFields ={}
+        if(name!=undefined) updateFields['telecoms.$[elem].name'] = name
+        if(icon!=undefined) {
+            const response = await uploadBase64URLToCloudinary(icon)
+            updateFields['telecoms.$[elem].icon'] = response.secure_url
+        }
+        if(active!=undefined) updateFields['telecoms.$[elem].active'] = active;
+        let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'}) 
+        await SocketResponse.updateMany({user:{$exists:true}},{$set:{optChanged:true}});
+        if(name){
+            await Drive.updateMany({operator:name},{$set:{operator:name}});
+            await Regular.updateMany({operator:name}, {$set:{operator:name}})  
+        }
+        socket.getIO().emit('telecoms',{telecoms:result.telecoms});
+        res.status(200).json({telecoms:result.telecoms,message:'telecom edited'});
+    }catch(e) {next(e)};
+}
+
+
 //call by user
 export const getTopupOpts =async (req, res,next) => {
     try{
@@ -324,7 +369,7 @@ export const hitDrive = async (req, res, next) => {
         //const hit = new DriveHit({drive, recipient, user:req.user.username});
         const currentPack= await DriveHit.insertOne({drive, recipient, user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
         io.emit('added', {type:'drive', currentPack });
-        await SocketResponse.findOneAndUpdate({admin:'socket-admin'},{$inc:{[`pending.drive`]:1}});
+        await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{[`pending.drive`]:1}});
 
         res.status(201).json({message:'drive hit success', success:true});
     }catch(e) {next(e)}
@@ -518,17 +563,17 @@ export const deleteDrive = async (req, res, next) => {
 
 //call by admin
 export const changeHitStatus = async (req, res,next) => {
-    const {userId,status,feedback} = req.body;
+    const {status,feedback} = req.body;
     let io = socket.getIO() 
     try{
-        let {drive,recipient} = await DriveHit.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||''}});
-        const {socketId} =await SocketResponse.findOne({user:userId})//usersSocketConnected[username];
+        let {drive,recipient,user} = await DriveHit.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||''}});
+        const {socketId} =await SocketResponse.findOne({user})//usersSocketConnected[username];
 
         //if(socketId) io.to(socketId).emit('drivehit-status', { title:'Drive', message:`drive ${status=='failed'?feedback:status}`});
         if(status=='SUCCESS') await Drive.findOneAndUpdate({_id:new ObjectId(drive.id)},{$inc:{sold:1}});
         if( status=='FAILED'){
             await User.findOneAndUpdate({username}, {$inc:{['balance.drive']:drive.price}})
-            await SocketResponse.findOneAndUpdate({user:username},{$inc:{['failed.drive']:1}})
+            await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.drive']:1}})
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','drive')
         if(socketId) io.to(socketId).emit('user:status-changed',{title:`Drive Request ${status}`,body:`Recipient:${recipient} Amount:${drive.price}`,url:`${process.env.CLIENT_URL}/drive/history`})
@@ -542,7 +587,7 @@ export const changeHitStatus = async (req, res,next) => {
 //user
 export const getFailedDriveCount = async (req, res, next) => {
     try{
-        let {failed} =await SocketResponse.findOne({user:req.user.username})//usersSocketConnected[req.userId].failed[0];
+        let {failed} =await SocketResponse.findOne({user:req.user.id})//usersSocketConnected[req.userId].failed[0];
         if(failed?.drive>0) res.status(200).json({ failedDriveCount:failed?.drive });
         else res.status(200).json({ failedCount: 0 });
     }catch(e) {next(e)}// (e) {
@@ -697,7 +742,7 @@ export const getAllTelecomAccess = async (req,res,next) =>{
 
 export const getFailedRegularCount = async (req, res, next) => {
     try{
-        let {failed} = await SocketResponse.findOne({user:req.user.username})//usersSocketConnected[req.userId].failed[0];
+        let {failed} = await SocketResponse.findOne({user:req.user.id})//usersSocketConnected[req.userId].failed[0];
         if(failed?.regular>0) res.status(200).json({ failedRegularCount:failed?.regular });
         else res.status(200).json({failedCount:0});
     }catch(e) {next(e)}// (e) {
@@ -719,12 +764,39 @@ export const updateRegularTelecomAccess = async (req,res,next) =>{
 }
     //}
 //user
+
+
 export const getTelecomCategories = async (req,res,next) =>{
     try{
         const admin = await Admin.findOne({role:'admin'});
         res.status(200).json(admin.telecomCategories);
     }catch(e) {next(e)}
 }
+export const addTelecomCategory = async (req, res,next) => {
+    const {category} = req.body;
+    try{
+        let result=await Admin.findOneAndUpdate({role:'admin'},{$push:{telecomCategories:{_id:new ObjectId(),category,active:true}}},{returnDocument:'after'})
+        res.status(200).json({categories:result.telecomCategories,message:'telecom category added'});
+    }catch(e) {next(e)}
+}
+export const editTelecomCategory = async (req,res,next) =>{
+    const {category,active} = req.body
+    try{
+        let updateFields = {}
+        if(category!=undefined) updateFields['telecomCategories.$[elem].category'] = category
+        if(active!=undefined) updateFields['telecomCategories.$[elem].active'] = active
+        let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'})
+        res.status(200).json({categories:result.telecomCategories,message:'telecom category edited'})
+    }catch(e) {next(e)}
+}
+
+export const deleteTelecomCategory = async (req, res, next) => {
+    try {
+        let result = await Admin.findOneAndUpdate({role:'admin'},{$pull:{telecomCategories:{_id:new ObjectId(req.params.id)}}},{returnDocument:'after'})
+        res.status(200).json({categories:result.telecomCategories,message:'telecom category deleted'});
+    }catch(e) {next(e)}
+}
+
 /*const seenFailedDriveCount = async (req, res, next) => {
     try{
         usersSocketConnected[req.userId].failed[2] = 0;
