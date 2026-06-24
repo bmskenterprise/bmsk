@@ -11,7 +11,7 @@ import {useTelecom} from '../../contexts/TelecomContext';
 import {ScrollViewV,ScrollViewH,FlexH,GapH,Center,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,PaginationBar,Loader,Spinner, } from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {fetchObject} from '../../hooks/useFetch'
-import url from '../../config/url'
+import url from '../../config/url.js'
 import copyToClipboard from '../../utils/copyToClipboard'
 import Pages from '../../components/Pagination';
 import AdminPIN from '../../components/AdminPIN';
@@ -27,7 +27,7 @@ export default () => {
     const {thememode,modeData,themeData:{themeBackground}} = useTheme();
     const {pendingCounts:{drive},reducePendingCounts} = useNotification();
     const [searchParams] = useSearchParams()
-    const [status,user,telecom,recipient,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,telecom,recipient,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const errorlist = {width:'100%',marginBottom:'1.5rem'}  ;
          
     const [hovered,setHovered] = useState(false);
@@ -35,26 +35,26 @@ export default () => {
     const [loading, setLoading] = useState(false);
     const [ID, setID] = useState(null);const [failedID,setFailedID] = useState(null);
     //let today = (new Date()).toISOString().split('T')[0];
-    let [filterTerm,setFilterTerm]= useState({status,telecom,user,fromDate,toDate,recipient,limit,page})
+    let [filterTerm,setFilterTerm]= useState({status,telecom,user,from,to,recipient,limit,page})
     let hasAccess = accesses?.includes('modify-drive-history')
+    const msg = 'You don\'t have modify permission'
     const {data} = fetchObject(`${url.urlDriveHit}?status=${status.toUpperCase()}&telecom=${telecom}&user=${user}&recipient=${recipient}&to=${toDate}&from=${fromDate}&page=${page}&limit=${limit}`)  
 
     useEffect(e=>{
         reducePendingCounts('drive')
-        navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`);//document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
+        navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&from=${from}&to=${to}&limit=${limit}&page=1`);//document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
     },[]);
-    useEffect(e=>{
-        setFilterTerm({status,telecom,user,fromDate,toDate,recipient,limit,page})       //<td>{}</td>
-    }, [status,telecom,user,recipient,fromDate,toDate,limit,page])
     useEffect(()=>{
-        //filterTerm = {status:'PENDING',telecom:form.telecom.value,user:form.user.value,fromDate:form['from-date'].value,toDate:form['to-date'].value,recipient:form.recipient.value,limit:20}
         if(admin) socket.emit('admin:drive-history:seen',admin?.id)
     },[admin]);
+    useEffect(e=>{
+        setFilterTerm({status,telecom,user,from,to,recipient,limit,page})       //<td>{}</td>
+    }, [status,telecom,user,recipient,from,to,limit,page])
     
     const fetchDriveHits = async (/*{page}*/)=>{
         setLoading(true)
         try{
-            let res = await fetch(`${url.urlDriveHit}?status=${status.toUpperCase()}&telecom=${telecom}&user=${user}&recipient=${recipient}&to=${toDate}&from=${fromDate}&page=${page}&limit=${limit}`,{credentials: 'include'})
+            let res = await fetch(`${url.urlDriveHit}?status=${status.toUpperCase()}&telecom=${telecom}&user=${user}&recipient=${recipient}&to=${to}&from=${from}&page=${page}&limit=${limit}`,{credentials: 'include'})
             let data = await res.json();
             if(!res.ok) throw new Error(data.error || 'failed')
             //setHitData(data/*hits.map(i=> ({...i,selected:false}))*/)
@@ -63,17 +63,17 @@ export default () => {
         finally{setLoading(false)}
     };
 
+                
+                
+                
     const changeStatus = async ({id,status,feedback},pin) =>{
-        if(!accesses?.includes('modify-drive-history')) {toast.info('you don\'t have modify permission');return}
+        //if(!accesses?.includes('modify-drive-history')) {toast.info('You don\'t have modify permission');return}
         try{
-            let res = await fetch(
-                `${url.urlDriveHit}/${id}`,
-                {
+            let res = await fetch(`${url.urlDriveHit}/${id}`,{
                     method: 'PATCH',
                     credentials: 'include',headers:{'Content-Type':'application/json','x-admin-pin':pin},
                     body: JSON.stringify({status,feedback})
-                }
-            )
+            })
             let data = await res.json();
             if(!res.ok) throw new Error(data.error || 'failed')
             //let moved = cache['pending'].splice(cache['pending'].findIndex(i=>i.id===hitId),1)[0]
@@ -82,9 +82,13 @@ export default () => {
         }catch(e){toast.error(e.message)}
         finally{setLoading(false)}
     }
-    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK')
+    const onSuccess = (id) => {
+        if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK')
+    }
     const onFailed = async (id,feedback)=>{
         setFailedID(null)
+        if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
         
@@ -105,7 +109,7 @@ export default () => {
         });setHits(filtered)*/
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
 
                   
                   
