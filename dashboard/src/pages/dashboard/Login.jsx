@@ -3,7 +3,7 @@ import {Navigate} from 'react-router-dom'
 //import { Form,InputGroup, Button, } from 'react-bootstrap';
 import {FaEye,FaEyeSlash} from 'react-icons/fa'
 // from 'react-router-dom';
-import {CenterCard,FlexH,GapV,InputField,ErrorText,ThemeButton,Loader,Spinner} from '../../components/styles/Admin.style';
+import {CenterCard,FlexH,GapV,InputField,ErrorText,ThemeButton,Loader,ThemeSpinner} from '../../components/styles/Admin.style';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTheme} from '../../contexts/ThemeContext'
 import { validateAdminLogin } from '../../utils/validate';
@@ -45,14 +45,14 @@ export default  () =>{
                 </div><GapV x='2'/>
                 <div  >
                     {/*<InputGroup>*/}
-                    <div style={{position:'relative',width:'100%'}}><InputField type={show?'text':'password'} name='password' placeholder='Password'/><span style={{color:textPrimary,position:'absolute',top:'20%',right:'1%',zIndex:10}} onClick={e=>setShow(prev=>!prev)}>{show?<FaEyeSlash/>:<FaEye/>}</span> 
+                    <div style={{position:'relative',width:'100%'}}><InputField type={show?'text':'password'} name='password' placeholder='Password'/><span style={{color:textPrimary,position:'absolute',top:'50%',right:'0.5rem',transform:'translateY(-50%)',zIndex:10}} onClick={e=>setShow(prev=>!prev)}>{show?<FaEyeSlash/>:<FaEye/>}</span> 
                     </div>
                         {/*<InputGroup.Text onClick={e=>setShow(!show)}>{show?<FaEyeSlash/>:<FaEye/>}</InputGroup.Text>
                     </InputGroup>*/}
                     <ErrorText >{errors?.password}</ErrorText>
                 </div><GapV x='4'/>
                 {loginError&&admin.role=='admin' && <span style={{color:'red'}} onClick={e=>sendRecoveryEmail('password')}>Forgot Password?</span>}
-                <FlexH x='center' y='center'><ThemeButton type='submit'  disabled={loading}>{loading?<Spinner />:'LOGIN'}</ThemeButton></FlexH>
+                <FlexH x='center' y='center'><ThemeButton type='submit'  disabled={loading}>{loading?<ThemeSpinner />:'LOGIN'}</ThemeButton></FlexH>
             </form>
         </CenterCard>
         {/*loading && <Loader><Spinner  ></Spinner></Loader>*/}
