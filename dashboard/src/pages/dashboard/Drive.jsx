@@ -11,7 +11,7 @@ import {useTelecom} from '../../contexts/TelecomContext';
 import {ScrollViewV,ScrollViewH,FlexH,GapH,Center,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,PaginationBar,Loader,Spinner, } from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {fetchObject} from '../../hooks/useFetch'
-import url from '../../config/url.js'
+import url from '../../config/url'
 import copyToClipboard from '../../utils/copyToClipboard'
 import Pages from '../../components/Pagination';
 import AdminPIN from '../../components/AdminPIN';
@@ -38,7 +38,7 @@ export default () => {
     let [filterTerm,setFilterTerm]= useState({status,telecom,user,from,to,recipient,limit,page})
     let hasAccess = accesses?.includes('modify-drive-history')
     const msg = 'You don\'t have modify permission'
-    const {data} = fetchObject(`${url.urlDriveHit}?status=${status.toUpperCase()}&telecom=${telecom}&user=${user}&recipient=${recipient}&to=${toDate}&from=${fromDate}&page=${page}&limit=${limit}`)  
+    const {data} = fetchObject(`${url.urlDriveHit}?status=${status.toUpperCase()}&telecom=${telecom}&user=${user}&recipient=${recipient}&to=${to}&from=${from}&page=${page}&limit=${limit}`)  
 
     useEffect(e=>{
         reducePendingCounts('drive')
@@ -121,7 +121,7 @@ export default () => {
                 <Field x='8' name='user' placeholder='username' value={filterTerm.user} onChange={filterParams}/> <Field   x='8' name='recipient' placeholder='recipient' value={filterTerm.recipient} onChange={filterParams}/>
                    
                 <Field x='8' name='telecom' value={filterTerm.telecom} placeholder='telecom' list='telecoms' onChange={filterParams}/><datalist id='telecoms'>{telecoms?.map(({name},i)=> <option key={i} value={name}/>)}</datalist>
-                <div><DatePicker  type='date' value={filterTerm.fromDate} name='fromDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/><DatePicker  type='date' value={filterTerm.toDate} name='toDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/></div>
+                <div><DatePicker  type='date' value={filterTerm.from} name='fromDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/><DatePicker  type='date' value={filterTerm.to} name='toDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/></div>
                     {/*<Button onClick={filter}>filter</Button>*/}
                     <Select  name='status' value={filterTerm.status} onChange={filterParams} /*onChange={e=>{cache[e.target.value]?setHits(cache[e.target.value]):fetchDriveHits()}}*/>
                         <option value='pending'>Pending</option>
