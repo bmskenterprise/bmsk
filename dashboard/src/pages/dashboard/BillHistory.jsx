@@ -28,7 +28,7 @@ export default () =>{
     const [searchParams] = useSearchParams()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {pendingCounts:{bill},reducePendingCounts} = useNotification();
-    const [status,user,type,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'',searchParams.get('page')||'1'];
+    const [status,user,type,ac,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'',searchParams.get('page')||'1'];
       
     //const type = searchParams.get('type') || '';
     //const ac = searchParams.get('ac') || '';
@@ -37,16 +37,16 @@ export default () =>{
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({bills:[],pagination:{totalPage:1,currentPage:1}});
-    const [filterTerm,setFilterTerm] = useState({status,user,type,ac,fromDate,toDate,limit,page});
+    const [filterTerm,setFilterTerm] = useState({status,user,type,ac,from,to,limit,page});
     //const today = (new Date()).toISOString().split('T')[0]
     const [hover,setHover] = useState(false);
     let hasAccess = accesses?.includes('modify-bill-history');
     const msg = 'You don\'t have modify permission'
-    const {data} = fetchObject(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    const {data} = fetchObject(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&type=${type}&from=${from}&to=${to}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
         reducePendingCounts('bill')
-        navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
+        navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&from=${from}&to=${to}&limit=${limit}&page=${page}`)
         //return ()=>document.removeEventListener('click',removePop)
     },[]);
     useEffect(()=>{
@@ -54,11 +54,11 @@ export default () =>{
     },[admin]);
     useEffect(()=>{
         //fetchBillHistory(/*{page:1}*/);
-        setFilterTerm( {status,user,type,ac,fromDate,toDate,limit,page});
-    }, [status,user,type,ac,fromDate,toDate,limit,page]) 
+        setFilterTerm( {status,user,type,ac,from,to,limit,page});
+    }, [status,user,type,ac,from,to,limit,page]) 
         const fetchBillHistory = async (/*{page}*/) => {setLoading(true);
             try {
-                let res = await fetch(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&type=${type.toLowerCase()}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`,{credentials:'include'});
+                let res = await fetch(`${url.urlBillHistory}?status=${status.toUpperCase()}&user=${user}&type=${type.toLowerCase()}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`,{credentials:'include'});
                 let data = await res.json();
                 if(!res.ok) throw new Error(data.error || 'failed');
                 //if(data.length)caches[status] = data;
@@ -86,8 +86,8 @@ export default () =>{
         finally{setLoading(false);}
     }
     const filter = (e) =>{
-        e.preventDefault();let fd={status:e.target.status.value.trim(),user:e.target.user.value.trim(),type:e.target.type.value.toLowerCase(),ac:e.target.ac.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,limit:e.target.limit.value.trim(),page:1}
-        navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
+        e.preventDefault();let fd={status:e.target.status.value.trim(),user:e.target.user.value.trim(),type:e.target.type.value.toLowerCase(),ac:e.target.ac.value.trim(),from:e.target.fromDate.value,to:e.target.toDate.value,limit:e.target.limit.value.trim(),page:1}
+        navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&from=${fd.from}&to=${fd.to}&limit=${fd.limit||'20'}&page=1`)
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}));
     const onSuccess = (id) => {
@@ -100,7 +100,7 @@ export default () =>{
                if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
-    const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
                           
                       
     return !accesses?.includes('bill-history')?<Center><p>don't have bill history permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
@@ -122,8 +122,8 @@ export default () =>{
                     {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor='ac'>AC Number</label><br /></div>*/}
                     <Field x='8' value={filterTerm.ac} name='ac' placeholder='AC' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
-                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.from}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.to}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
                     </div>
                 <div>
                     <Select name='status' onChange={filterParams} value={filterTerm.status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
