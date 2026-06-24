@@ -12,7 +12,7 @@ import {getBankRequestByAdmin,changeBankRequestStatus,getBillRequestByAdmin,chan
 import {/*changePassword,changePIN,updateUserStatus,*/deleteUser} from '../controllers/user.controller.js'
 
 router.post('/seed', seed);
-router.post('/socket-seed', socketSeed);
+//router.post('/socket-seed', socketSeed);
 router.post('/login', adminLogin);
 router.get('/auth', authAdmin, authenticateAdmin);
 router.get('/admin',authAdmin,isSuperAdmin,getSubAdmins)
