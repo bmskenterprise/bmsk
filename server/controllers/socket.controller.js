@@ -46,19 +46,19 @@ export default (io)=>{
       socket.on('admin:join',async(id)=>{
         let socketAdmin=await findSocketAdmin(id/*.username*/,socket.id);
         if(socketAdmin){
-          const failed = {};
-          const pending = {};
-          for(let f in socketAdmin.failed){
-          if(socketAdmin.failed[f]>0) failed[f]=socketAdmin.failed[f]
-          }//if(socketAdmin.failed.topup>0) failed.topup=socketAdmin.failed.topup
-          for(let p in socketAdmin.pending){
-          if(socketAdmin.pending[p]>0) pending[p]=socketAdmin.pending[p]
-          }/*if(socketAdmin.pending.withdraw>0) pending.withdraw=socketAdmin.pending.withdraw
+          //const failed = {};
+          //const pending = {};
+          let failed = Object.fromEntries(Object.entries(socketAdmin.fail||{}).filter(([_,v])=>v>0))
+          //if(socketAdmin.failed[f]>0) failed[f]=socketAdmin.failed[f]
+          //}//if(socketAdmin.failed.topup>0) failed.topup=socketAdmin.failed.topup
+          let pendings = Object.fromEntries(Object.entries(socketAdmin.pendings||{}).filter(([_,v])=>v>0))
+          //if(socketAdmin.pendings[p]>0) pending[p]=socketAdmin.pendings[p]
+          //}/*if(socketAdmin.pending.withdraw>0) pending.withdraw=socketAdmin.pending.withdraw
           if(socketAdmin.pending.topup>0) pending.topup=socketAdmin.pending.topup
           if(socketAdmin.pending.mbank>0) pending.mbank=socketAdmin.pending.mbank
           if(socketAdmin.pending.bill>0) pending.bill=socketAdmin.pending.bill*/
           if(Object.keys(failed).length>0) io.to(socket.id).emit('admin:failed',failed);
-          if(Object.keys(pending).length>0) io.to(socket.id).emit('admin:pending',pending);
+          if(Object.keys(pendings).length>0) io.to(socket.id).emit('admin:pending',pendings);
         }
         else {initSocketAdmin(id,socket.id)}
       })
@@ -73,14 +73,14 @@ export default (io)=>{
       socket.on('user:join',async ({id,level}) => {     //
         let socketUser=await findSocketUser(id,socket.id);
         if(socketUser) {if(socketUser.countInbox>0) io.to(socket.id).emit('user:inbox',socketUser.countInbox)
-          let failed= {}//socketUser.socketId = socket.id;
+          let failed = Object.fromEntries(Object.entries(SocketUser.failed|| {}).filter(([_,v])=>v>0));
           //let targetUser = socketUser
           /*if(targetUser.failed[0]>0) io.to(targetUser.socketId).emit('deposit-failed',{failedDepositCount:targetUser.failed[0]})
           if(targetUser.failed[1]>0) io.to(targetUser.socketId).emit('topup-failed',{failedTopupCount:targetUser.failed[1]})
           if(targetUser.failed[2]>0) io.to(targetUser.socketId).emit('drive-failed',{failedDriveCount:targetUser.failed[2]})*/
-          for(let f in socketUser.failed){
-          if(socketUser.failed[f]>0) failed[f]=socketUser.failed[f]
-          }//if(targetUser.failed[5]>0) io.to(targetUser.socketId).emit('bank-failed',{failedBankCount:targetUser.failed[5]})
+          //for(let f in socketUser.failed){
+          //if(socketUser.failed[f]>0) failed[f]=socketUser.failed[f]
+          //}//if(targetUser.failed[5]>0) io.to(targetUser.socketId).emit('bank-failed',{failedBankCount:targetUser.failed[5]})
           /*if(socketUser.failed.deposit>0) failed.deposit=socketUser.failed.deposit
           if(socketUser.failed.topup>0) failed.topup=socketUser.failed.topup
           if(socketUser.failed.drive>0) failed.drive=socketUser.failed.drive
