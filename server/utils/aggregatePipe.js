@@ -8,8 +8,9 @@ export const aggregatePipeSubAdmin = (filter,adminId,skip,limit) =>{
       {
         $lookup: {
           from: 'users',
-          let: {uid:'$user'},
-          pipeline: [{$match:{$expr:{$eq:['$_id',{$toObjectId:'$$uid'}]}}},{$project:{_id:1,username:1,adminRef:1}}],
+          localField:'user',
+          foreignField: '_id',
+          pipeline: [{$project:{_id:1,username:1,adminRef:1}}],
           as: 'user'
         }
       },
@@ -38,8 +39,9 @@ export const aggregatePipeSuperAdmin = (filter,skip,limit) =>{
       {
         $lookup: {
           from: 'users',
-          let: {uid:'$user'},
-          pipeline: [{$match:{$expr:{$eq:['$_id',{$toObjectId:'$$uid'}]}}},{$project:{_id:1,username:1}}],
+          localField:'user',
+          foreignField: '_id',
+          pipeline: [{$project:{_id:1,username:1}}],
           as: 'user'
         }
       },
