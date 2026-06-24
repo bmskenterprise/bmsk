@@ -7,7 +7,9 @@ import {v4 as uuidv4} from 'uuid'
 import {validationResult} from 'express-validator'
 import jwt from 'jsonwebtoken';
 import connectDB from '../config/db.js';
-//import Drive from '../models/drive.model.js';
+import createJWT from '../config/jwt.js';
+import socket from '../config/socket.js';
+import {uploadBase64URLToCloudinary} from '../utils/uploadToCloudinary.js';
 //import Regular from '../models/regular.model.js';
 //import DriveHit from '../models/driveHit.model.js';
 //import User from '../models/user.model.js'
@@ -21,8 +23,6 @@ import connectDB from '../config/db.js';
 //import APIUser from '../models/apiUser.model.js'
 //import Feedback from '../models/feedback.model.js'
 import emailWithNodemailer from '../utils/email.js'
-import createJWT from '../config/jwt.js';
-import socket from '../config/socket.js';
 import cacheObject from '../utils/cacheStore.js'
 //import { create } from 'domain';
 let cacheData = cacheObject.getCache()
@@ -403,8 +403,9 @@ export const addMBank = async (req,res,next)=>{
     const {name,icon} = req.body
     try{
         let admin = await Admin.findOne({role:'admin'})
+        let response = await uploadBase64URLToCloudinary(icon)
         if(admin.mbanks.find(b=>b.name==name)) return res.status(409).json({error:'mobile bank already exist'})
-        let result =await Admin.findOneAndUpdate({role:'admin'},{$push:{mbanks:{_id:new ObjectId(),name,icon,account:'',active:true}}},{returnDocument:'after'})
+        let result =await Admin.findOneAndUpdate({role:'admin'},{$push:{mbanks:{_id:new ObjectId(),name,icon:response.secure_url,account:'',active:true}}},{returnDocument:'after'})
         
         res.status(200).json({mbanks:result.mbanks,message:'mbank added'});
     }catch(e) {next(e)}
@@ -504,7 +505,7 @@ export const editUserAccess = async (req,res,next) =>{
     let io = socket.getIO()
     try{
         let {username} = await User.findOneAndUpdate({_id:new ObjectId(req.params.id)},{$set:{accesses:req.body/*,status:req.body.length>0?'ACTIVE':'INACTIVE'*/}})
-        const {socketId} = await SocketResponse.findOne({user:username})
+        const {socketId} = await SocketResponse.findOne({user:req.params.id})
         if(socketId) io.to(socketId).emit('access-modified',null)
         res.status(200).json({message:'user access updated'})
     }catch(e) {next(e)}
@@ -521,14 +522,14 @@ export const getSlideImages =async (req,res,next) =>{
 export const addSlideImageLink = async (req, res,next) => {
     const {link} = req.body;
     try{
-        let result=await Admin.findOneAndUpdate({role:'admin'},{$push:{slideImages:{_id:new ObjectId(),link,active:true}}},{returnDocument:'after'})
+        const response = await uploadBase64URLToCloudinary(link);
+        let result=await Admin.findOneAndUpdate({role:'admin'},{$push:{slideImages:{_id:new ObjectId(),link:response.secure_url,active:true}}},{returnDocument:'after'})
         res.status(200).json({slides:result.slideImages,message:'slide image added'});
     }catch(e) {next(e)}
 }
 /*export const editSlideImageLink = async (req, res,next) => {
     const {active link,newLink,active} = req.body;
     try {
-        if (!admin) return res.status(404).json({ error: 'Admin not found' });
 
         const image = admin.slideImages.find(img => img.link === link);
         if (!image) return res.status(404).json({ error: 'Slide image not found' });
@@ -541,7 +542,10 @@ export const editSlideImageLink = async (req,res,next) =>{
     const {link,active} = req.body
     try{
         let updateFields = {}
-        if(link!=undefined) updateFields['slideImages.$[elem].link'] = link
+        if(link!=undefined) {
+            const response = await uploadBase64URLToCloudinary(link);
+            updateFields['slideImages.$[elem].link'] = response.secure_url
+        }
         if(active!=undefined) updateFields['slideImages.$[elem].active'] = active
         let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'})
         res.status(200).json({slides:result.slideImages,message:'slide image edited'})
@@ -558,7 +562,6 @@ export const deleteSlideImageLink = async (req, res, next) => {
 
 export const getTelecomCategories =async (req,res,next) =>{
     try{
-        const admin = await Admin.findOne({role:'admin'});
         res.status(200).json(admin.telecomCategories)
     }catch(e) {next(e)}
 }
@@ -572,8 +575,6 @@ export const addTelecomCategory = async (req, res,next) => {
 export const editTelecomCategory = async (req,res,next) =>{
     const {category,active} = req.body
     try{
-        let updateFields = {}
-        if(category!=undefined) updateFields['telecomCategories.$[elem].category'] = category
         if(active!=undefined) updateFields['telecomCategories.$[elem].active'] = active
         let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'})
         res.status(200).json({categories:result.telecomCategories,message:'telecom category edited'})
@@ -631,8 +632,7 @@ export const editSocialMedia = async (req,res,next) =>{
         const admin = await Admin.findOneAndUpdate(
             {role:'admin'},
             { $set: Object.assign({}, ...updateOps) },
-            { arrayFilters, new:true}
-        );
+            { arrayFilters, new:true});
         res.status(200).json({ message: "Contact numbers updated", contacts:admin.contacts });
     }catch(e) {next(e)}
 }*/
@@ -720,7 +720,8 @@ export const addPGW = async (req, res, next) => {
     try{
         let admin = await Admin.findOne({role:'admin'})
         if(admin.pgws.some(pgw => pgw.name === name)) return res.status(400).json({error:'Payment gateway already exists'})
-        let updated=await Admin.findOneAndUpdate({role:'admin'},{$push:{pgws:{_id:new ObjectId(),name,icon,merchantID,apiKey,apiPassword,active:true}}},{returnDocument:'after'})
+        let response = await uploadBase64URLToCloudinary(icon)
+        let updated=await Admin.findOneAndUpdate({role:'admin'},{$push:{pgws:{_id:new ObjectId(),name,icon:response.secure_url,merchantID,apiKey,apiPassword,active:true}}},{returnDocument:'after'})
         res.status(200).json({pgws:updated.pgws,message:'Payment gateway added '});
     }catch(e) {next(e)}
 }
@@ -962,10 +963,10 @@ export const seed = async (req, res,next) => {
     }catch(e) {next(e)}
 }
 
-export const socketSeed = async (req,res,next)=>{
+/*export const socketSeed = async (req,res,next)=>{
     try{
         await SocketResponse.insertOne({socketId:null,admin:'socket-admin',pending:{deposit:0,withdraw:0,topup:0,drive:0,mbank:0,bill:0,user:0},failed:{deposit:0,topup:0,mbank:0}})
         res.status(200).json({message:'socket seeding success'})
     }catch(e) {next(e)}
-}
+}*/
 //module.exports = {protectedController,register,login,deposit,updatePackageAccess/*,getImageLinks*/,addImageLink,editImageLink,deleteImageLink,getPGW,editContactList,getContactList,editContactList,getTelecoms,addTelecom,editTelecom,getPGW,addPGW,togglePGW}
