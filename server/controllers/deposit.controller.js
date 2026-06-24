@@ -303,7 +303,7 @@ export const getDepositHistoryByAdmin = async (req, res, next) => {
         if(req.admin.role=='admin'){
             const [result] = await Deposit.aggregate(aggregatePipeSuperAdmin(filter,skip,queryLimit)).toArray();
             deposits = result.data
-            total = Deposit.metadata[0]?.total ?? 0;
+            total = result.metadata[0]?.total ?? 0;
         }else{
             const [result] = await Deposit.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
             deposits = result.data
