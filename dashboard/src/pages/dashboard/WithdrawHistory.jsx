@@ -84,6 +84,7 @@ export default  () =>{
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
     const pageNav = p=> navigate(`/dashboard/withdraw/history?status=${status}&user=${user}&gateway=${gateway}&search=${search}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
 
+
     return !accesses?.includes('withdraw-history')?<Center><p>Don't have withdraw history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Withdraw History</h4>
                 <form onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
@@ -128,4 +129,3 @@ export default  () =>{
             {data?.pagination?.totalPage>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={p=>pageNav(p)}/></PaginationBar>}
             {loading&&<Loader><Spinner/></Loader>}  
         </div>
-}
