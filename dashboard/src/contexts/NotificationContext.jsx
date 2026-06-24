@@ -38,7 +38,7 @@ export const NotificationProvider = ({ children }) => {
    },[socket]);
       //setNotification(true);
       const reducePendingCounts = (type) => setPendingCounts(prev=> ({...prev,[type]:0}));
-      const seePendings = ()=> setIsPending(false)
+      const seenPendings = ()=> setIsPending(false)
     
     return <NotificationContext.Provider value={{pendingCounts,reducePendingCounts,seenPendings,failedCounts,isPending}}>{children}</NotificationContext.Provider>
 }
