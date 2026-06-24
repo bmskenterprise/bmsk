@@ -13,7 +13,7 @@ import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {ScrollViewV,ScrollViewH,FlexH,GapH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {fetchObject} from '../../hooks/useFetch'
-import url from '../../config/url';
+import url from '../../config/url.js';
 import Reject from '../../components/Reject'
 import AdminPIN from '../../components/AdminPIN';
 import Pages from '../../components/Pagination'
