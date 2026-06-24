@@ -52,17 +52,8 @@ export default  () =>{
         setFilterTerm ({status,user,search,gateway,from,to,limit,page});
     },[status,user,search,gateway,from,to,limit]);
     
-    const onSuccess = (id) => 
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK')
-                          if(!hasAccess) {toast.info(msg);return}
-    }
-    const onFailed = (id,feedback) => {
-        setFailedId(null);
-           if(!hasAccess) {toast.info(msg);return}
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
-    }
     const changeStatus = async ({id,status,feedback},pin)=>{
-                       if(!hasAccess) {toast.info('you don\'t have modify permission');return}
+                       //if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         setLoading(true)
         try{
             let res = await fetch(`${url.urlWithdraw}/${id}`,{
@@ -77,13 +68,21 @@ export default  () =>{
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }
+    const onSuccess = (id) => {
+                          if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK')
+    }
+    const onFailed = (id,feedback) => {
+        setFailedId(null);
+           if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
+    }
     
     const filter = (e) =>{e.preventDefault()
-        navigate(`/dashboard/withdraw/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&gateway=${e.target.gateway.value.trim()}&search=${e.target.search.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page:1`);
+        navigate(`/dashboard/withdraw/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&gateway=${e.target.gateway.value.trim()}&search=${e.target.search.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
     const pageNav = p=> navigate(`/dashboard/withdraw/history?status=${status}&user=${user}&gateway=${gateway}&search=${search}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
-
 
     return !accesses?.includes('withdraw-history')?<Center><p>Don't have withdraw history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Withdraw History</h4>
                 <form onSubmit={filter}>
@@ -129,3 +128,5 @@ export default  () =>{
             {data?.pagination?.totalPage>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={p=>pageNav(p)}/></PaginationBar>}
             {loading&&<Loader><Spinner/></Loader>}  
         </div>
+
+}
