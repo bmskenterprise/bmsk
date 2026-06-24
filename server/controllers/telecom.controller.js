@@ -200,16 +200,16 @@ export const updateTopupTelecomAccess = async (req, res,next) => {
 }
 
 //admin
-export const getTelecoms = async (req,res,next)=>{
+/*export const getTelecoms = async (req,res,next)=>{
     try {
         const admin = await Admin.findOne({role:'admin'});
         if(!admin || !admin.telecoms)return res.status(404).json({error:'Not Found'})
-        /*const logos = {};
-        for(const element of admin.telecom) logos[element.name] =element.icon*/
+        //const logos = {};
+        //for(const element of admin.telecom) logos[element.name] =element.icon
         let telecoms = admin.telecoms.map(t=>({name:t.name,icon:t.icon,active:t.active}))
         res.status(200).json(telecoms);
     }catch(e) {next(e)}
-};
+};*/
 //user
 export const getTelecomOpts = async (req,res) => {
     try {
