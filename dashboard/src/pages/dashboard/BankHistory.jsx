@@ -21,38 +21,38 @@ export default () =>{
     const {admin} = useAdminAuth()
     const accesses = admin?.accesses
     const {socket} = useSocket()
+    const navigate = useNavigate()
     const {pendingCounts:{bank},reducePendingCounts} = useNotification()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const [searchParams,] = useSearchParams();
-    const navigate = useNavigate()
-    const [status,user,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
+    const [status,user,ac,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
          
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({banks:[],pagination:{totalPages:1,currentPage:1}});
     const [hovered,setHovered] = useState(false)  //(err) {toast.error(err.message)}
     //let today=(new Date()).toISOString().split('T')[0];
-    let [filterData,setFilterData] = useState({status,ac,fromDate,toDate,user,limit,page});
+    let [filterData,setFilterData] = useState({status,ac,from,to,user,limit,page});
+     const hasAccess = accesses?.includes('modify-bank-history')
+    const msg = 'You don\'t have modify permission';
+    const {data} = fetchObject(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`)
 
     useEffect(()=>{
         reducePendingCounts('bank')
-        navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${page}`)
+        navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`)
     },[]);
     useEffect(()=>{
-        //filterData= {status:'PENDING',ac:'',fromDate:'',toDate:'',user:'',limit:20};
         if(admin) socket.emit('admin:bank-history:seen', admin?.id);
     },[admin]);
          
-     const hasAccess = accesses?.includes('modify-bank-history')
     useEffect(()=>{
         //fetchBankHistory()setFilterData({status,ac,fromDate,toDate,user,limit,page})
-    },[status,user,ac,fromDate,toDate,limit,page]);
+    },[status,user,ac,from,to,limit,page]);
 
-    const {data} = fetchObject(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
 
         const fetchBankHistory = async (/*{page}*/) => {setLoading(true);
             try {
-                let res = await fetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`,{credentials:'include'});
+                let res = await fetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`,{credentials:'include'});
                 let data = await res.json();
                 if(!res.ok) throw new Error(data.error || 'failed to fetch banks');
                 //if(data.length)cache[status] = data;
@@ -63,7 +63,7 @@ export default () =>{
 
 
     const changeStatus= async (id,status,feedback) =>{
-           if(!hasAccess) {toast.info('you don\'t have modify permission');return}
+           //if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
             let res = await fetch(`${url.urlBank}/${id}`,
@@ -84,19 +84,22 @@ export default () =>{
 
 
         const filter = e =>{
-            e.preventDefault();let fd={status:e.target.status.value,ac:e.target.ac.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
-            navigate(`/dashboard/bank/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&fromDate=${fd.fromDate}&toDate=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)  //  
+            e.preventDefault();let fd={status:e.target.status.value,ac:e.target.ac.value.trim(),from:e.target.fromDate.value,to:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
+            navigate(`/dashboard/bank/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&from=${fd.from}&to=${fd.to}&limit=${fd.limit||'20'}&page=1`)  //  
         }
 
 
      const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
-         
-    const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&fromDate=${fromDate}&toDate=${toDate}&limit=${limit}&page=${p}`);
+    const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=${p}`);
 
-    const onSuccess = (id) => AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    const onSuccess = (id) => {
+        if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+    }
     const onFailed = (id,feedback)=>{
         setFailedID(null);//changeStatus(id,'FAILED',feedback,user)
-         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
+        if(!hasAccess) {toast.info(msg);return}
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
                       
                       
