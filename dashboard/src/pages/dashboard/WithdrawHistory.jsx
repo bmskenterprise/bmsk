@@ -10,7 +10,7 @@ import {useNotification} from '../../contexts/NotificationContext';
 import {useSocket} from '../../contexts/SocketContext'
 import {FlexH,ScrollViewV,ScrollViewH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
-import {fetchObject} from '../../hooks/useFetch'
+import useObjectFetch from '../../hooks/useFetch'
 import Pages from '../../components/Pagination'
 import AdminPIN from '../../components/AdminPIN';
 import Reject from '../../components/Reject' 
@@ -30,18 +30,18 @@ export default  () =>{
     const [loading,setLoading] = useState(false)
     const [hovered,setHovered] = useState(false)
     const [failedId,setFailedId] = useState()
-    const [status,user,search,gateway,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('search')||'',searchParams.get('gateway')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1'];
+    const [status,user,search,gateway,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('search')||'',searchParams.get('gateway')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1'];
 
-    let [filterTerm,setFilterTerm]=useState({status,user,search,gateway,from,to,limit,page});
+    let [filterTerm,setFilterTerm]=useState({status,user,search,gateway,fromDate,toDate,limit,page});
     let errorlist = {width:'100%',marginBottom:'1.5rem'} //Date()).toISOString().split('T')[0]
     const mbankIcons = appData?.mbanks ? Object.fromEntries(appData.mbanks.map(item=>[item.name,item.icon])) :{};
     const msg = 'You don\'t have modify permission'
     const hasAccess = accesses?.includes('modify-withdraw-history')
-    const {data} = fetchObject(`${url.urlWithdrawHistory}?status=${status.toUpperCase()}&gateway=${gateway}&user=${user}&search=${search}&from=${from}&to=${to}&limit=${limit}&page=${page}`)  ;
+    const {data} = fetchObject(`${url.urlWithdrawHistory}?status=${status.toUpperCase()}&gateway=${gateway}&user=${user}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
         reducePendingCounts('withdraw')
-        navigate(`/dashboard/withdraw/history?status=${status}&gateway=${gateway}&user=${user}&search=${search}&from=${from}&to=${to}&limit=${limit}&page=1`)
+        navigate(`/dashboard/withdraw/history?status=${status}&gateway=${gateway}&user=${user}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
     }, [])
     
     useEffect(()=>{
@@ -49,8 +49,8 @@ export default  () =>{
     }, [admin])
     
     useEffect(()=>{
-        setFilterTerm ({status,user,search,gateway,from,to,limit,page});
-    },[status,user,search,gateway,from,to,limit]);
+        setFilterTerm ({status,user,search,gateway,fromDate,toDate,limit,page});
+    },[status,user,search,gateway,fromDate,toDate,limit]);
     
     const changeStatus = async ({id,status,feedback},pin)=>{
                        //if(!hasAccess) {toast.info('you don\'t have modify permission');return}
@@ -82,7 +82,7 @@ export default  () =>{
         navigate(`/dashboard/withdraw/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&gateway=${e.target.gateway.value.trim()}&search=${e.target.search.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/withdraw/history?status=${status}&user=${user}&gateway=${gateway}&search=${search}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/withdraw/history?status=${status}&user=${user}&gateway=${gateway}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
 
     return !accesses?.includes('withdraw-history')?<Center><p>Don't have withdraw history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Withdraw History</h4>
                 <form onSubmit={filter}>
@@ -99,8 +99,8 @@ export default  () =>{
                     {/*<div>  <Field x='8' list='types' name='type' placeholder='type' value={filterTerm.type} onChange={filterParams}/>
                     <datalist id='types'>{balanceTypes.map((mb,i)=> <option key={i} value={mb}/>)}</datalist></div>*/}
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        <DatePicker  type='date' value={filterTerm.from} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                        <DatePicker  type='date' value={filterTerm.to} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        <DatePicker  type='date' value={filterTerm.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        <DatePicker  type='date' value={filterTerm.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
                     <div><Select value={filterTerm.status} name='status' onChange={filterParams} >
                             <option value='pending'>Pending</option>
