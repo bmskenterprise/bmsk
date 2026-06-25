@@ -10,7 +10,7 @@ import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {ScrollViewV,ScrollViewH,FlexH,Field,Center,StripedList,PaginationBar,ApproveButton,RejectButton,Select,DatePicker,Spinner, Loader} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
-import {fetchObject} from '../../hooks/useFetch'
+import useObjectFetch from '../../hooks/useFetch'
 import AdminPIN from '../../components/AdminPIN'
 import Reject from '../../components/Reject'
 import Pages from '../../components/Pagination'
@@ -25,34 +25,34 @@ export default () =>{
     const {pendingCounts:{bank},reducePendingCounts} = useNotification()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const [searchParams,] = useSearchParams();
-    const [status,user,ac,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
+    const [status,user,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
          
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({banks:[],pagination:{totalPages:1,currentPage:1}});
     const [hovered,setHovered] = useState(false)  //(err) {toast.error(err.message)}
     //let today=(new Date()).toISOString().split('T')[0];
-    let [filterData,setFilterData] = useState({status,ac,from,to,user,limit,page});
+    let [filterTerm,setFilterTerm] = useState({status,ac,fromDate,toDate,user,limit,page});
      const hasAccess = accesses?.includes('modify-bank-history')
     const msg = 'You don\'t have modify permission';
-    const {data} = fetchObject(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`)
+    const {data} = useObjectFetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
 
     useEffect(()=>{
         reducePendingCounts('bank')
-        navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`)
+        navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
     },[]);
     useEffect(()=>{
         if(admin) socket.emit('admin:bank-history:seen', admin?.id);
     },[admin]);
          
     useEffect(()=>{
-        //fetchBankHistory()setFilterData({status,ac,fromDate,toDate,user,limit,page})
-    },[status,user,ac,from,to,limit,page]);
+        setFilterTerm({status,ac,fromDate,toDate,user,limit,page})
+    },[status,user,ac,fromDate,toDate,limit,page]);
 
 
         const fetchBankHistory = async (/*{page}*/) => {setLoading(true);
             try {
-                let res = await fetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${from}&to=${to}&limit=${limit}&page=${page}`,{credentials:'include'});
+                let res = await fetch(`${url.urlBankHistory}?status=${status.toUpperCase()}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`,{credentials:'include'});
                 let data = await res.json();
                 if(!res.ok) throw new Error(data.error || 'failed to fetch banks');
                 //if(data.length)cache[status] = data;
@@ -62,17 +62,17 @@ export default () =>{
         }
 
 
+                
+                
     const changeStatus= async (id,status,feedback) =>{
            //if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
-            let res = await fetch(`${url.urlBank}/${id}`,
-                {
+            let res = await fetch(`${url.urlBank}/${id}`,{
                     method: 'PATCH',
                     credentials: 'include',headers:{'Content-Type':'application/json'},
                     body: JSON.stringify({status,feedback})
-                }
-            )
+            })
             let data = await res.json();
             if(!res.ok) throw new Error(data.error ||'')//Error(data.error || '');
             //let moved = cache['pending'].splice(cache['pending'].findIndex(i=>i.id===hitId),1)[0]//   'failed')
@@ -84,13 +84,13 @@ export default () =>{
 
 
         const filter = e =>{
-            e.preventDefault();let fd={status:e.target.status.value,ac:e.target.ac.value.trim(),from:e.target.fromDate.value,to:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
-            navigate(`/dashboard/bank/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&from=${fd.from}&to=${fd.to}&limit=${fd.limit||'20'}&page=1`)  //  
+            e.preventDefault();let fd={status:e.target.status.value,ac:e.target.ac.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
+            navigate(`/dashboard/bank/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)  //  
         }
 
 
-     const filterParams = e=> setFilterData(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=${p}`);
+     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
+    const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`);
 
     const onSuccess = (id) => {
         if(!hasAccess) {toast.info(msg);return}
@@ -115,17 +115,17 @@ export default () =>{
                 <FlexH x='space-between' y='center'>
                     {/*<div style={{minWidth:'5rem',height:'auto'}}>
                     </div>*/}
-                    <Field value={filterData.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/>  
-                    <Field x='8' value={filterData.user} name='user' placeholder='user' onChange={filterParams}/>
+                    <Field value={filterTerm.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/>  
+                    <Field x='8' value={filterTerm.user} name='user' placeholder='user' onChange={filterParams}/>
                     {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor="ac">AC Number</label><br />
                     </div>*/}
-                    <Field x='8' value={filterData.ac} name='ac' placeholder='AC' onChange={filterParams}/>
+                    <Field x='8' value={filterTerm.ac} name='ac' placeholder='AC' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor="from">from</label><br/>*/} <DatePicker type='date' value={filterData.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                        {/*<label htmlFor="to">to</label><br/>*/} <DatePicker type='date' value={filterData.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor="from">from</label><br/>*/} <DatePicker type='date' value={filterTerm.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor="to">to</label><br/>*/} <DatePicker type='date' value={filterTerm.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
                 <div>
-                    <Select name='status' value={filterData.status} onChange={filterParams} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBankHistory(e.target.value)}}*/ >
+                    <Select name='status' value={filterTerm.status} onChange={filterParams} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBankHistory(e.target.value)}}*/ >
                         <option value='pending'>Pending</option>
                         <option value='success'>Success</option>
                         <option value='failed'>Failed</option>
