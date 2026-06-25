@@ -9,8 +9,8 @@ import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useTelecom} from '../../contexts/TelecomContext'
 import {ScrollViewV,ScrollViewH,FlexH,StripedList,IconButton,Field,DatePicker,Select,TH,TR,PaginationBar,Center} from '../../components/styles/Admin.style';
 import {launchDate,getLocalDateFromUTC,getCurrentLocalDate} from '../../utils/date'
-import {fetchObject} from '../../hooks/useFetch'
 import {editData} from '../../hooks/useModify';
+import useObjectFetch from '../../hooks/useFetch'
 import deleteConfirmation from '../../components/Confirmation';
 import Pages from '../../components/Pagination'
 import SwitchItem from '../../components/Switch';
@@ -32,6 +32,7 @@ export default  (/*{telecom,enableForm}*/) =>{
          const [loading,setLoading] = useState(false);
     const accesses = admin?.accesses;
     
+    const {data} = useObjectFetch(`${url.urlDrive}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`)   //
     /*const selectedPacks = packList.map(pack=>({id:pack.id,selected:false}))
     };*/
     /*const check = (id)=>{
@@ -49,7 +50,6 @@ export default  (/*{telecom,enableForm}*/) =>{
         setFilterTerm({status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page}) //Date().toISOString().split('T')[0]);
     },[status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page])
     
-    const {data} = fetchObject(`${url.urlDrive}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`)   //
     
     const toggleStatus = (id,status) =>{
         if(!accesses?.includes('modify-drive')) {toast.info('you don\'t have modify permission');return}
