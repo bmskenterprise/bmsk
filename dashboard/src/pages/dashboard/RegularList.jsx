@@ -8,8 +8,8 @@ import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useTelecom} from '../../contexts/TelecomContext'
 import {ScrollViewV,ScrollViewH,StripedList,FlexH,IconButton,Field,TH,Center,Select,DatePicker,PaginationBar,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateFromUTC} from '../../utils/date';
-import {fetchObject} from '../../hooks/useFetch';
  import {editData} from '../../hooks/useModify'
+import useObjectFetch from '../../hooks/useFetch';
 import url from '../../config/url';
 import Pages from '../../components/Pagination'
 import deleteConfirmation from '../../components/Confirmation'
@@ -29,7 +29,7 @@ export default  () =>{const [selected,setSelected] = useState([]);
     const fields = ['Date','ID','Price','Pack','Expire','Sold','Action'];
     
     /*const selectedPacks = packList.map(pack=>{{id:pack.id,selected:false}})*/
-       const {data} = fetchObject(`${url.urlRegular}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`,{credentials:'include'})
+       const {data} = useObjectFetch(`${url.urlRegular}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`,{credentials:'include'})
     //let today = (new Date).toISOString().split('T')[0]
     /*const check = (id)=>{
         let i=selected.indexOf(id)
