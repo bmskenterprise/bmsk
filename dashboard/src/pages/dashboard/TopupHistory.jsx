@@ -11,7 +11,7 @@ import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useTelecom} from '../../contexts/TelecomContext';
 import {ScrollViewV,ScrollViewH,FlexH,GapV,GapH,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
-import {fetchObject} from '../../hooks/useFetch';
+import useObjectFetch from '../../hooks/useFetch';
 import url from '../../config/url';
 import Pages from '../../components/Pagination';
 import Reject from '../../components/Reject'
@@ -27,29 +27,29 @@ export default  () =>{
     const {icons} = useTelecom();
     const {socket} = useSocket()
     const [searchParams] = useSearchParams()
-    const [status,user,telecom,recipient,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,telecom,recipient,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const errorlist = {width:'100%',marginBottom:'1.5rem'};
     const [hovered,setHovered] = useState(false);
     const [loading,setLoading] = useState(false);
     const [topupHistory, setTopupHistory] = useState({topups:[],pagination:{totalPage:1,currentPage:1,limit:20}});
     const [failedID,setFailedID] = useState(null);
     const filterObj = {};
-    let [filterTerm,setFilterTerm]=useState({status,recipient,telecom,from,to,user,limit,page});
+    let [filterTerm,setFilterTerm]=useState({status,recipient,telecom,fromDate,toDate,user,limit,page});
     const hasAccess = accesses?.includes('modify-topup-history');
     const msg = 'You don\'t have modify permission';
-    const {data} = fetchObject(`${url.urlTopupHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&telecom=${telecom}&from=${from}&to=${to}&limit=${limit}&page=${page}`)  ;
+    const {data} = useObjectFetch(`${url.urlTopupHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
     //let today = (new Date()).toISOString().split('T')[0];
     useEffect(()=>{
         reducePendingCounts('topup') ;
-        navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=1`)
+        navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
     }, [])
     useEffect(()=>{
         if(admin) socket.emit('admin:topup-history:seen',admin?.id)
     }, [admin])
 
     useEffect(()=>{
-        setFilterTerm({status,recipient,telecom,from,to,user,limit,page})
-    },[status,user,recipient,telecom,from,to,limit,page])
+        setFilterTerm({status,recipient,telecom,fromDate,toDate,user,limit,page})
+    },[status,user,recipient,telecom,fromDate,toDate,limit,page])
     
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value})) //Date()).toISOString().split('T')[0]);
     const changeStatus = async ({id,status,feedback},pin)=>{
@@ -79,7 +79,7 @@ export default  () =>{
     const fetchTopupHistory = async (/*{page}*/) => {
             try {
                 let res = await fetch(
-                    `${url.urlTopupHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&telecom=${telecom}&from=${from}&to=${to}&limit=${limit}&page=${page}`,
+                    `${url.urlTopupHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`,
                     {credentials: 'include'}
                 );
                 let data = await res.json();
@@ -99,7 +99,7 @@ export default  () =>{
             return true;
         });*///fetchTopupHistory({page:1})
     }
-    const pageNav = p=> navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
                               
                               
     return !accesses?.includes('topup-history')?<Center><p>don't have topup history permission</p></Center>:<div style={{background:backPrimary,color:textPrimary}} onClick={e=>setFailedID(null)}>
@@ -113,8 +113,8 @@ export default  () =>{
                     <datalist id='telecoms'>{['airtel','banglalink','grameenphone','robi','teletalk'].map((t,i)=> <option key={i} value={t}/>)}</datalist><Field   x='8' value={filterTerm.telecom} placeholder='telecom'name='telecom' onChange={filterParams} list='telecoms'/></div>
                     <div style={{minWidth:'5rem',height:'auto'}}>{/*<label htmlFor=''> Number</label><br />*/}<Field   x='8' value={filterTerm.recipient} name='recipient' onChange={filterParams} placeholder='recipient'/></div>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker type='date' name='fromDate' value={filterTerm.from} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker type='date' name='toDate' value={filterTerm.to} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker type='date' name='fromDate' value={filterTerm.fromDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker type='date' name='toDate' value={filterTerm.toDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>     <div><Select  name='status' value={filterTerm.status} onChange={filterParams}>
                             {/*<option value='pending'>pending</option>*/}
                             <option value='pending'>Pending</option>
