@@ -122,8 +122,8 @@ export default () =>{
                     {/*<div style={{minWidth:'5rem',height:'auto'}}><label htmlFor='ac'>AC Number</label><br /></div>*/}
                     <Field x='8' value={filterTerm.ac} name='ac' placeholder='AC' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.from}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
-                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.to}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
+                        {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
                     </div>
                 <div>
                     <Select name='status' onChange={filterParams} value={filterTerm.status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
