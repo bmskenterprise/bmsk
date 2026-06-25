@@ -12,7 +12,7 @@ import {useUser} from '../../contexts/UserContext'
 import {ScrollViewV,ScrollViewH,FlexH,GapV,GapH,Center,StripedList,PaginationBar,ThemeButton,Field,Select,DatePicker,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {serviceTypes,accessTypes} from '../../../Preferences.json';
 import {launchDate,getCurrentLocalDate} from '../../utils/date';
-import {fetchObject} from '../../hooks/useFetch';
+import useObjectFetch from '../../hooks/useFetch';
 import url from '../../config/url'
 import useLongPress from '../../hooks/longPress'
 import UserForm from '../../components/UserForm';
@@ -39,7 +39,7 @@ export default () =>{
     const initUser = {username:'',name:'',nid:'',password:'',pin:'',services:serviceTypes,accesses:accessTypes};
     const msg = 'You don\'t have modify permission'
     let hasAccess = accesses?.includes('modify-user');
-    const {/*fetchUsers,initFilterTerm,addUser,userLevels,*/data,loading} = fetchObject(`${url.urlManageUser}?status=${status.toLowerCase()}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`);
+    const {/*fetchUsers,initFilterTerm,addUser,userLevels,*/data,loading} = useObjectFetch(`${url.urlManageUser}?status=${status.toLowerCase()}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`);
     useEffect(e=>{
             reducePendingCounts('user')
     },[])
