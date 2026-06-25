@@ -1,5 +1,14 @@
 import {toast} from 'react-toastify';
-   
+                  
+export const fetchArray = async (url) =>{
+    const [data,setData] = useState([])
+    try{
+        let res = await fetch(url, {credentials:'include'}); let arr = await res.json()
+        if(!res.ok) throw new Error(arr.error||'Failed to Fetch')
+         setData(arr)
+    }catch(e) {toast.error(e.message)}
+             return {data}
+}   
  export const addData = async (url,formData,successMsg,errMsg) =>{
     try{
       let res = await fetch(url,{
