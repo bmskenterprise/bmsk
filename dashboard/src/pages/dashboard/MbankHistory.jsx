@@ -9,7 +9,7 @@ import {useSocket} from '../../contexts/SocketContext'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {ScrollViewV,ScrollViewH,FlexH,StripedList,PaginationBar,Field,Select,DatePicker,TinyIcon,ApproveButton,RejectButton,Spinner, Center} from '../../components/styles/Admin.style';
-import {fetchObject} from '../../hooks/useFetch'
+import useObjectFetch from '../../hooks/useFetch'
 import url from '../../config/url';
 import AdminPIN from '../../components/AdminPIN' //searchParams.get('page') || '1';
 import Reject from '../../components/Reject';
@@ -25,34 +25,34 @@ export default () =>{
     const {pendingCounts:{mbank},reducePendingCounts} = useNotification()
     const {thememode,themeData:{themeBackground}} = useTheme();
     const [searchParams,] = useSearchParams();
-    const [status,user,recipient,gateway,from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('recipient')||'',searchParams.get('gateway')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,recipient,gateway,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('recipient')||'',searchParams.get('gateway')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({banks:[],pagination:{totalPages:1,currentPage:1}});
     const [hovered,setHovered] = useState(false)
     let errorlist= {width:'100%',marginBottom:'1.5rem'};
-    let [filterTerm,setFilterTerm] = useState({status,recipient,gateway,from,to,user,limit,page});
+    let [filterTerm,setFilterTerm] = useState({status,recipient,gateway,fromDate,toDate,user,limit,page});
     const mbankIcon = appData?.mbanks ? Object.fromEntries(appData.mbanks.map(item=>[item.name,item.icon])):{};
     let hasAccess = accesses?.includes('modify-mbank-history')
      const msg = 'You don\'t have modify permission'
 
-    const {data} = fetchObject(`${url.urlMBankHistory}?status=${status.toUpperCase()}&mbankType=${gateway}&user=${user}&recipient=${recipient}&from=${from}&to=${to}&limit=${limit}&page=${page}`)  ;
+    const {data} = useObjectFetch(`${url.urlMBankHistory}?status=${status.toUpperCase()}&mbankType=${gateway}&user=${user}&recipient=${recipient}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
     
     useEffect(()=>{
         //document.addEventListener('click',e=>{if(failedID){setFailedID(null)}})
         reducePendingCounts('mbank')
-        navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=1`)
+        navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
     },[]);
     useEffect(()=>{
         if(admin) socket.emit('admin:mbank-history:seen', admin?.id);
     },[admin]);
     useEffect(()=>{
-        setFilterTerm({status,recipient,gateway,from,to,user,limit,page})
-    },[status,user,recipient,gateway,from,to,limit,page]);
+        setFilterTerm({status,recipient,gateway,fromDate,toDate,user,limit,page})
+    },[status,user,recipient,gateway,fromDate,toDate,limit,page]);
         
     const fetchMBankHistory = async (/*{page}*/) => {setLoading(true);
         try {
-            let res = await fetch(`${url.urlMBankHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&from=${from}&to=${to}&limit=${limit}&page=${page}`,{credentials:'include'});
+            let res = await fetch(`${url.urlMBankHistory}?status=${status.toUpperCase()}&user=${user}&recipient=${recipient}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`,{credentials:'include'});
             let data = await res.json();
             if(!res.ok) throw new Error(data.error ||'failed to fetch mbank history');
             setHistory(data/*.filter(d=>d.status==statusRef.current.value)*/);
@@ -60,18 +60,18 @@ export default () =>{
         finally{setLoading(false);}
     }
             
+                
+                
+                
     const changeStatus= async ({id,status,feedback},pin) =>{
         //if(!hasAccess) {toast.info('You don\'t have modify permission');return}
         setLoading(true);
         try {
-            let res = await fetch(
-                `${url.urlMBank}/${id}`,
-                {
+            let res = await fetch(`${url.urlMBank}/${id}`,{
                     method: 'PATCH',
                     credentials: 'include',headers:{'Content-Type':'application/json','x-admin-pin':pin},
                     body: JSON.stringify({status,feedback})
-                }
-            )
+            })
             let data = await res.json();
             if(!res.ok) throw new Error(data.error ||'')//Error(data.error || '');
             toast.success(data.message);//fetchMBankHistory(/*{page:history.pagination.currentPage}*/);
@@ -81,12 +81,12 @@ export default () =>{
             
             
     const filter = e =>{
-        e.preventDefault();let fd={status:e.target.status.value,recipient:e.target.recipient.value.trim(),gateway:e.target.gateway.value.trim(),from:e.target.fromDate.value,to:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
-        navigate(`/dashboard/mbank/history?status=${fd.status}&gateway=${gateway}&recipient=${fd.recipient}&user=${fd.user}&from=${fd.from}&to=${fd.to}&limit=${fd.limit||'20'}&page=1`)  //  
+        e.preventDefault();let fd={status:e.target.status.value,recipient:e.target.recipient.value.trim(),gateway:e.target.gateway.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
+        navigate(`/dashboard/mbank/history?status=${fd.status}&gateway=${gateway}&recipient=${fd.recipient}&user=${fd.user}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)  //  
     }
             
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=${p}`);
+    const pageNav = p=> navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`);
                     {/*<FlexH x='space-between' y='center'>*/}
     const onSuccess = (id) => {
         if(!hasAccess) {toast.info(msg);return}
@@ -109,8 +109,8 @@ export default () =>{
                     <Field x='8' value={filterTerm.gateway} name='gateway' placeholder='gateway' onChange={filterParams} list='gateways'/>
                     <datalist id='gateways'>{appData?.mbanks?.map((g,i)=> <option key={i} value={g.name}/>)}</datalist>  
                     <div style={{minWidth:'5rem',height:'auto'}}>
-                        <DatePicker value={filterTerm.from}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                        <DatePicker value={filterTerm.to}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        <DatePicker value={filterTerm.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
+                        <DatePicker value={filterTerm.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
                     <div>
                         <Select name='status' value={filterTerm.status} onChange={filterParams}>
