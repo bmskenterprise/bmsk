@@ -5,7 +5,7 @@ import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext';
 import {FlexH,FlexV,GapV,Icon,InputField,DatePicker,Select,ErrorText,ThemeButton,Spinner} from '../../components/styles/Admin.style';
 //import {validatePack} from '../../utils/validate'
-import {fetchObject} from '../../hooks/useFetch'
+//import {fetchObject} from '../../hooks/useFetch'
 import {addData,editData} from '../../hooks/useModify'
 import {validateRegularPack} from '../../utils/validate'
 import url from '../../config/url'
@@ -22,12 +22,12 @@ export default () =>{
     const hasAccess = accesses?.includes('modify-regular')
                const msg = 'You don\'t have modify permission'
     
-    useEffect(e=>{
+    /*useEffect(e=>{
         if(!location?.state){
             let {data}= fetchObject(`${url.urlRegular}/${id}`)
             setFormData(data)
         }
-    },[])
+    },[])*/
     const handleSubmit = e=>{
         e.preventDefault();
                    if(!hasAccess) {toast.info('You don\'t have modify permission');return}
