@@ -7,7 +7,7 @@ import {FaTrash} from 'react-icons/fa';
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {Center,ScrollViewV,TR,IconButton,Loader,Spinner} from '../../components/styles/Admin.style';
-import {fetchObject} from '../../hooks/useFetch'
+import useObjectFetch from '../../hooks/useFetch'
 import Pages from '../../components/Pagination';
 import url from '../../config/url';
 
@@ -20,7 +20,7 @@ export default () =>{
     const [page,limit] = [searchParams.get('page')||'1',searchParams.get('limit')||'20'];
     const [loading,setLoading] = useState(false);
     const [feedbackData,setFeedbackData] = useState({feedbacks:[],pagination:{limit:20,currentPage:1,totalPage:1}});
-    const {data} = fetchObject(`${url.urlFeedback}?limit=${limit}&page=${page}`)
+    const {data} = useObjectFetch(`${url.urlFeedback}?limit=${limit}&page=${page}`)
   
     useEffect(()=>{navigate(`/dashboard/feedback?page=${page}&limit=${limit}`)},[])
   
