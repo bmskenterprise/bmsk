@@ -12,7 +12,7 @@ import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {ScrollViewV,ScrollViewH,FlexH,GapH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
-import {fetchObject} from '../../hooks/useFetch'
+import useObjectFetch from '../../hooks/useFetch'
 import url from '../../config/url.js';
 import Reject from '../../components/Reject'
 import AdminPIN from '../../components/AdminPIN';
@@ -28,7 +28,7 @@ export default  () =>{
     //const {backPrimary,textPrimary} = modeData
     const {failedCounts:{deposit},reducePendingCounts} = useNotification();
     const [searchParams] = useSearchParams()
-    const [status,user,txn,gateway,/*type,*/from,to,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',/*searchParams.get('type')||'',*/searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,txn,gateway,/*type,*/fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',/*searchParams.get('type')||'',*/searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const [hovered,setHovered] = useState(false);
     const [failedId,setFailedId] = useState(null);
     const [loading,setLoading] = useState(false);
@@ -37,7 +37,7 @@ export default  () =>{
     const errorlist = {width:'100%',marginBottom:'1rem'}
     const [init,setInit] = useState(false)
     const [selected,setSelected] = useState([])
-    let [filterTerm,setFilterTerm]=useState({status,user,txn,gateway,/*type,*/from,to,limit,page});
+    let [filterTerm,setFilterTerm]=useState({status,user,txn,gateway,/*type,*/fromDate,toDate,limit,page});
     let hasAccess = accesses?.includes('modify-deposit-history');
     let msg = 'You don\'t have modify permission'
     //const gateway = searchParams.get('gateway') || '';
@@ -47,19 +47,19 @@ export default  () =>{
         else{setSelected(prev=> [...prev,String(id)]);}
     };*/
     //const {start,clear} = useLongPress(check)//if(data.length)cache[status]=data;
-    const {data} = fetchObject(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&from=${from}&to=${to}&limit=${limit}&page=${page}`)  ;
+    const {data} = useObjectFetch(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
         reducePendingCounts('deposit')
-        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&from=${from}&to=${to}&limit=${limit}&page=1`)
+        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
     }, [])
     useEffect(()=>{
         if(admin) socket.emit('admin:deposit-history:seen',admin?.id)
     }, [admin])
     
     useEffect(()=>{
-        setFilterTerm ({status,user,txn,gateway,/*type,*/from,to,limit,page});
-    },[status,user,txn,gateway,/*type,*/from,to,limit]);
+        setFilterTerm ({status,user,txn,gateway,/*type,*/fromDate,toDate,limit,page});
+    },[status,user,txn,gateway,/*type,*/fromDate,toDate,limit]);
     
     const fetchDepositHistory = async (/*{page}*/) =>{ 
             setLoading(true)
@@ -124,7 +124,7 @@ export default  () =>{
         });setDepositHistory(filtered)*///fetchDepositHistory({page:1});
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))    // (err) { toast.error(err.message); }
-    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&from=${from}&to=${to}&limit=${limit}&page=${p}`)
+    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
                       
     return !accesses?.includes('deposit-history')?<Center><p>Don't have deposit history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'6rem'}}>Deposit History</h4>
                 {/*!init&&statusRef.current.value=='PENDING' && <div><Button onClick={e=>setInit(true)}>Add Tnx</Button></div>*/}
