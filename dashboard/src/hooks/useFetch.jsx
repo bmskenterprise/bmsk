@@ -1,28 +1,24 @@
 import {useEffect,useState} from 'react'
 import {toast} from 'react-toastify'
-   export const fetchObject = async (url) =>{
-    const [data,setData] = useState({})
-    try{
-        let res = await fetch(url, {credentials:'include'});let obj = await res.json()
-                      
-                  if(!res.ok) throw new Error(obj.error || 'failed');
-                  //if(data.length)cache[status]=data;
-                  setData(obj/*.filter(d=>d.status==statusRef.current.value)*/);
-              }catch(e) {toast.error(e.message);}// (err) {  }
-      
-  return {data}
-}
-  
 
-                      
-                       
-                  
-export const fetchArray = async (url) =>{
-    const [data,setData] = useState([])
-    try{
-        let res = await fetch(url, {credentials:'include'}); let arr = await res.json()
-        if(!res.ok) throw new Error(arr.error||'Failed to Fetch')
-         setData(arr)
-    }catch(e) {toast.error(e.message)}
-             return {data}
+export default (url) =>{
+    const [data,setData] = useState({})
+    const [loading,setLoading] = useState(false)    //
+  
+    useEffect(()=>{fetchData()}, [url])
+    const fetchData = async (/*{page}*/) =>{
+        setLoading(true)          
+        try {
+            let res = await fetch(url,{credentials: 'include'});
+                  let data = await res.json();
+                  if(!res.ok) throw new Error(data.error || 'failed');
+                  //if(data.length)cache[status]=data;
+                  setData(data/*.filter(d=>d.status==statusRef.current.value)*/);
+              }catch(err) {toast.error(err.message);}// (err) {  }
+              finally{setLoading(false);}
+      }
+  return {data,loading}
 }
+                      
+                      
+                  
