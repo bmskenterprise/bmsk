@@ -9,7 +9,7 @@ import {getAheadLocalDateTime,renderLocalTimeFromUTC,getLocalDateTimeFromUTC} fr
 import useLongPress from '../../hooks/longPress';
 import SwitchItem from '../../components/Switch'
 import deleteConfirm from '../../components/Confirmation'
-import {fetchArray} from '../../hooks/useFetch'
+import {fetchArray} from '../../hooks/useModify'
 import url from '../../config/url'  
 
 export default  ({}) =>{
