@@ -10,7 +10,7 @@ const UserContext = createContext();
 export const UserProvider = ({children}) =>{
     const [searchParams] = useSearchParams() 
     const {pendingCounts:{users}} = useNotification();
-    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||(users>0?'not-verified':'verified'),searchParams.get('user')||'',searchParams.get('fromDate')||'',searchParams.get('toDate')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
+    const [status,user,fromDate,toDate,limit,page] = [searchParams.get('status')||(users>0?'not-verified':'verified'),searchParams.get('user')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
          
     //const type = searchParams.get('type') || '';
          
@@ -37,7 +37,7 @@ export const UserProvider = ({children}) =>{
                 let data = await res.json()
                 if(!res.ok) {throw new Error(data.error ||'user fetching failed');} 
                 setUserData(data)
-            }catch(err) {toast.error(err.message);}
+            }catch(e) {toast.error(e.message);}
             finally{setLoading(false);}
         }
     const initFilterData = filterData =>{setFilter(filterData)}
@@ -60,7 +60,7 @@ export const UserProvider = ({children}) =>{
             if(res.status==400) setErrors(data.error);
             if(!res.ok) {throw new Error(data.error || 'failed to add user');}
             setUserData(data/*[data.user, ...users]*/);toast.success('User added successfully');
-        } catch(err) {toast.error(err.message);} 
+        } catch(e) {toast.error(e.message);} 
         finally{setLoading(false)}    
     }
     const editUserAccess = async ({id,accesses},pin) =>{
@@ -124,7 +124,7 @@ export const UserProvider = ({children}) =>{
             if(res.status==401) {setAuthError(data.error);}
             if(!res.ok){throw new Error(data.error || 'failed to change password');}
             toast.success(data.message);
-        }catch(err) {toast.error(err.message);}
+        }catch(e) {toast.error(e.message);}
         finally{setLoading(false)}
     }
     
@@ -145,7 +145,7 @@ export const UserProvider = ({children}) =>{
             if(res.status==401) {setAuthError(data.error);}
             if(!res.ok){throw new Error(data.error || 'failed to change pin');}
             toast.success(data.message);
-        }catch(err) {toast.error(err.message);}
+        }catch(e) {toast.error(e.message);}
         finally{setLoading(false)}
     }
     const toggleVerification = async ({id,verified},pin) =>{
