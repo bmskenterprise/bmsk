@@ -301,8 +301,8 @@ export const addUser = async (req, res,next) => {
 }
 export const toggleUserStatus = async (req,res,next) =>{
     try{
-        await User.updateOne({_id:new ObjectId(req.params.id)},{$set:{verified:req.params.verified}})
-        res.status(200).json({message:'updated successfully'})
+        await User.updateOne({_id:new ObjectId(req.params.id)},{$set:{verified:req.body.verified}})
+        res.status(200).json({message:'user status toggled'})
     }catch(e) {next(e)}
 }
 //admin
@@ -721,7 +721,7 @@ export const addPGW = async (req, res, next) => {
         let admin = await Admin.findOne({role:'admin'})
         if(admin.pgws.some(pgw => pgw.name === name)) return res.status(400).json({error:'Payment gateway already exists'})
         let response = await uploadBase64URLToCloudinary(icon)
-        let updated=await Admin.findOneAndUpdate({role:'admin'},{$push:{pgws:{_id:new ObjectId(),name,icon:response.secure_url,merchantID,apiKey,apiPassword,active:true}}},{returnDocument:'after'})
+        let updated=await Admin.findOneAndUpdate({role:'admin'},{$push:{pgws:{_id:new ObjectId(),name,icon:response.secure_url,merchantID:merchantID??'',apiKey:apiKey??'',apiPassword:apiPassword??'',active:true}}},{returnDocument:'after'})
         res.status(200).json({pgws:updated.pgws,message:'Payment gateway added '});
     }catch(e) {next(e)}
 }
