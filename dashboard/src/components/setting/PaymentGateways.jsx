@@ -42,7 +42,7 @@ export default  () =>{
         const file = e.target.files[0];
         if(file && file.type.startsWith('image/')) {
          let reader = new FileReader()
-        reader.onloadend = e => setEditInit(prev=>({...prev,link:reader.result}))
+        reader.onloadend = e => setEditInit(prev=>({...prev,icon:reader.result}))
         }
     }
                   
