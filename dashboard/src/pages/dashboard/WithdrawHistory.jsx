@@ -37,7 +37,7 @@ export default  () =>{
     const mbankIcons = appData?.mbanks ? Object.fromEntries(appData.mbanks.map(item=>[item.name,item.icon])) :{};
     const msg = 'You don\'t have modify permission'
     const hasAccess = accesses?.includes('modify-withdraw-history')
-    const {data} = fetchObject(`${url.urlWithdrawHistory}?status=${status.toUpperCase()}&gateway=${gateway}&user=${user}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    const {data} = useObjectFetch(`${url.urlWithdrawHistory}?status=${status.toUpperCase()}&gateway=${gateway}&user=${user}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
         reducePendingCounts('withdraw')
