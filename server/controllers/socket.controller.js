@@ -23,7 +23,7 @@ export const findSocketUser =async (id,socketId)=>{
   try{let user = await SocketResponse.findOneAndUpdate({user:id},{$set:{socketId}},{returnDocument:'after'});return user;}catch(e){throw new Error(e)}
 }
 export const seenPendingByAdmin =async (type)=>{
-  try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'}, {$set:{[`pending.${type}`]:0}});}catch(e){throw new Error(e)}
+  try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'}, {$set:{[`pendings.${type}`]:0}});}catch(e){throw new Error(e)}
 }
 let seenFailedByUser=async (user,seenType)=>{
   await SocketResponse.findOneAndUpdate({user}, {$set:{[`failed.${seenType}`]:0}})
