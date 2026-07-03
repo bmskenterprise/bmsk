@@ -7,15 +7,16 @@
 *{box-sizing: border-box;scrollbar-width: none;}
 a{color:inherit!important;text-decoration: none!important;}
 button {
-  /*padding: 1.5rem;*/
   border: none;
   cursor: pointer;
   /*transition: filter 300ms;*/
 }
-/*.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+button:disabled {
+  cursor: no-drop;
+  opacity: 0.5;
 }
-.logo.react:hover {
+/*.logo.react:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
   filter: drop-shadow(0 0 2em #61dafbaa);
   -webkit-filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -35,7 +36,6 @@ select,option{
 }  
 
 /*header {
-  position: fixed;
   top: 0;left: 0;
 }*/
 .sidebar #active{background:#000;color: #fff;}
