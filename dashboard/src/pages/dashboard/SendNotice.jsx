@@ -15,32 +15,32 @@ export default  () =>{
         let navigate= useNavigate()
         let isMobile = useMediaQuery({maxWidth:768})
         let init = location?.state
+        const {appData,admin:{accesses}} = useAdminAuth();
         const {thememode,themeData:{themeBackground,themeText}} = useTheme()
         const {addNotice,editNotice,loading,errors} = useMessage();
         //const =themeData
-        /*const [notificationInit,setNotificationInit] = useState(false);
-        const [outgoings, setOutgoings] = useState([]{receipant:'notification',subject:'',message:''});*/const [noticeInit,setNoticeInit] = useState(init);
+        /*const [outgoings, setOutgoings] = useState([]{receipant:'notification',subject:'',message:''});*/const [noticeInit,setNoticeInit] = useState(init);
         const recipient = [];
-        const medium = []
-        let ahead=new Date((new Date()).setDate((new Date()).getDate()+2)).toISOString().slice(0,17)+'00'/*useEffect(()=> {
-            durationRef.current.value = (new Date((new Date()).setDate((new Date()).getDate()+2)).toISOString()).slice(0,17)+'00'
+        const hasAccess = accesses?.includes('modify-notice')
+        const msg = 'You don\'t have modify permission';
+            /*durationRef.current.value = (new Date((new Date()).setDate((new Date()).getDate()+2)).toISOString()).slice(0,17)+'00'
         },[])*/
-        const {appData} = useAdminAuth();
         const getTextValue = e=> setNoticeInit(prev=>({...prev,notice:{...prev.notice,[e.target.name]:e.target.value}}));
         const getBooleanValue = e=> setNoticeInit(prev=>({...prev,repeat:e.target.checked}));
         const mark = (selected,value,check) =>{
-            if(check) setNoticeInit(prev=>({...prev,[selected]:[...prev[selected],value].sort()}));
-            else setNoticeInit(prev=>({...prev,[selected]:prev[selected].filter(v=>v!=value).sort()}));
+            if(check) setNoticeInit(prev=>({...prev,[selected]:new Set([...prev[selected],value].sort())}));
+            else setNoticeInit(prev=>({...prev,[selected]:new Set([...prev[selected]].filter(v=>v!=value).sort())}));
         }
         const handleForm = e=>{
             e.preventDefault()
+            if(!hasAccess) {toast.info(msg);return}
             init.recipient.sort();init.medium.sort()//sendNotice({recipient,medium,notice:{title:e.target.title.value.trim(),description:e.target.description.value.trim()},duration:e.target.duration.value,repeat:e.target.repeat.checked})
             if(JSON.stringify(init)===JSON.stringify(noticeInit)) {toast.info('No Changes Made');return}
             if(init.id) AdminPIN([thememode,themeBackground],{cb:editNotice,data:{id:init.id,noticeData:noticeInit}},'SEND')
             else AdminPIN([thememode,themeBackground],{cb:addNotice,data:noticeInit},'SEND') //= notices.find(n=> n._id==msgId)
         };
 
-        return <div>
+        return !hasAccess?<Center><p>{msg}</p></Center>:<div>
             <h4>Send Notice</h4><GapV x='5'/>
             <form onSubmit={handleForm}><FlexH x='space-between' y='flex-start' style={{minHeight:'12rem'}}>
                     <div /*x='flex-start' y='space-between'*/ style={{width:isMobile?'100%':'45%'}}>
@@ -69,7 +69,7 @@ export default  () =>{
                     </div>
                 </div>
             {/*<ScrollViewV><div>{notices?.map(({_id,title,description,active},i)=> active&&<FlexH x='flex-start' key={i} style={getStyle(_id)} onClick={e=>setMsgId(_id)}><b>{title}</b>&nbsp;<p>{description}</p></FlexH>)}</div></ScrollViewV> */}
-                 <GapV x='3'/><FlexH x='flex-end'><button type='button' onClick={e=>navigate(-1)}>CANCEL</button><GapH x='2'/><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner />:'SEND'}</ThemeButton></FlexH>
+                 <GapV x='3'/><FlexH x='flex-end'><button type='button' onClick={e=>navigate(-1)}>CANCEL</button><GapH x='2'/><ThemeButton  type='submit' disabled={!hasAccess}>{loading?<Spinner />:'SEND'}</ThemeButton></FlexH>
                 </form>{/*notificationInit && <Form validated={validated} onSubmit={handleSubmit}>
                     {<Form.Group>
                         <Form.Label>Reseller</Form.Label>
