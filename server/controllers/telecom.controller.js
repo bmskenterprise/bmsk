@@ -61,7 +61,7 @@ export const addTelecom = async (req, res, next) => {
     try {
         const {name,icon} = req.body;
         const response = await uploadBase64URLToCloudinary(icon)
-        const result = await Admin.findOneAndUpdate({role:'admin'},{$push:{telecoms:{_id:new ObjectId(),name,icon:response.secure_url,active:true},routing:{_id:new ObjectId(),name,ip:'192.168',slot:'0'}}},{returnDocument:'after'})
+        const result = await Admin.findOneAndUpdate({role:'admin'},{$push:{telecoms:{_id:new ObjectId(),name,icon:response.secure_url,active:true},routing:{_id:new ObjectId(),operator:name.toLowerCase(),ip:'192.168',slot:'0'},topupAccess:name.toLowerCase(),regularAccess:name.toLowerCase(),driveAccess:name.toLowerCase()}},{returnDocument:'after'})
         res.status(200).json({telecoms:result.telecoms,message:'telecom added'});
     }catch(e) {next(e)}
 }
@@ -179,6 +179,7 @@ export const changeTopupStatus = async (req,res,next)=>{
     const {status,feedback} = req.body;
     let io = socket.getIO()
     try{
+        if(!req.admin.accesses?.includes('modify-topup-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         let {recipient,amount,user}= await Topup.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}});
         const {socketId} = await SocketResponse.findOne({user})
         if(status=='FAILED') {
@@ -277,16 +278,14 @@ export const getTopupHistoryByAdmin = async (req,res,next)=>{
     let currentPage=parseInt(page)||1
     let skip=queryLimit*(currentPage-1)
     try{
-        let topups,total
-        if(req.admin.role=='admin') {
-            const [result] = await Topup.aggregate(aggregatePipeSuperAdmin(filter,skip,queryLimit)).toArray();
-            topups=result.data
-            total = result.metadata[0]?.total ?? 0;
-        }else{
+        let pipe = req.admin.role=='admin'? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)
+            const [result] = await Topup.aggregate(pipe).toArray();
+        topups = result.data
+           let total = result.metadata[0]?.total ?? 0;
+        /*}else{
             const [result] = await Topup.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
-            topups = result.data
             total = result.metadata[0]?.total ?? 0;
-        }
+        }*/
         if(!topups) return res.status(404).json({error:'No topup history found'});
         res.status(200).json({topups,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
     }catch(e) {next(e)}
@@ -566,13 +565,14 @@ export const changeHitStatus = async (req, res,next) => {
     const {status,feedback} = req.body;
     let io = socket.getIO() 
     try{
+        if(!req.admin.accesses?.includes('modify-drive-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         let {drive,recipient,user} = await DriveHit.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||''}});
         const {socketId} =await SocketResponse.findOne({user})//usersSocketConnected[username];
 
         //if(socketId) io.to(socketId).emit('drivehit-status', { title:'Drive', message:`drive ${status=='failed'?feedback:status}`});
         if(status=='SUCCESS') await Drive.findOneAndUpdate({_id:new ObjectId(drive.id)},{$inc:{sold:1}});
         if( status=='FAILED'){
-            await User.findOneAndUpdate({username}, {$inc:{['balance.drive']:drive.price}})
+            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.drive']:drive.price}})
             await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.drive']:1}})
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed','drive')
