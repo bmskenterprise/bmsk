@@ -71,7 +71,7 @@ export const getBankRequestByAdmin = async (req, res, next) => {
         let pipe = req.admin.role=='admin' ? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit);
         const [result] = await Bank.aggregate(pipe).toArray();
         const banks = result.data
-        const total = result.metadata[0]?.total ??0
+        const total = result.metadata[0]?.total ?? 0
         if(!banks){return res.status(404).json({error:'bank history not found'})}
         res.status(200).json({banks,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage,limit:queryLimit}});
     }catch(e) {next(e)}
@@ -87,14 +87,15 @@ export const addBankRequest = async (req, res, next) => {
     try{
         let user =await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
         if(!user.accesses.includes('bank')) return res.status(403).json({error:'No Permission at this moment'})
+        let {bkash,dbbl,nagad,upay} = user.balance.main
         let balanceMain = Object.values(user.balance?.main|| {}).reduce((sum,val)=>sum+val,0)
-        if(balanceMain<parseInt(amount)) return res.status(422).json({error:'insufficient balance'})
-        const currentBank = await Bank.insertOne({bank,acNumber,acHolder,amount:parseInt(amount),user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
-        await User.updateOne({_id:new ObjectId(req.user.id)},{$set:{[`balance.main`]:deductMainBalance(user.balance.main,amount)}});
-        //let socketAdmin = await SocketResponse.findOne({admin:'socket-admin',socketId:{$exists:true,$ne:null}})
+        if(balanceMain<parseInt(amount)) return res.status(422).json({error:'Insufficient Balance'})
+        const deductedBalance = deductMainBalance(user.balance.main,amount)
+        await Bank.insertOne({bank,acNumber,acHolder,amount:{bkash:bkash-deductedBalance.bkash,dbbl:dbbl-deductedBalance.dbbl,nagad:nagad-deductedBalance.nagad,upay:upay-deductedBalance.upay},user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
+        await User.updateOne({_id:new ObjectId(req.user.id)},{$set:{['balance.main']:deductMainBalance(user.balance.main,amount)}});
         const {socketId} = await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.bank']:1}},{returnDocument:'after'});// Date();
-        if(socketId) io.to(socketId).emit('added',{type:'bank', currentBank});
-        res.status(201).json({ message: 'bank request sent', success:true})
+        if(socketId) io.to(socketId).emit('added',{type:'bank', });
+        res.status(201).json({message:'bank request sent',success:true})
     }catch(e) {next(e)}
 }
 
@@ -107,11 +108,12 @@ export const changeBankRequestStatus = async (req, res, next) => {
     const {status,feedback} = req.body;
     let io=socket.getIO();
     try{
+        if(!req.admin.accesses?.includes('modify-bank-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         let {acNumber,amount,user} = await Bank.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}},{returnDocument:'after'})
         let {socketId} = await SocketResponse.findOne({user})
         if(status==='FAILED') {
             await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.bank']:1}})
-            await User.findOneAndUpdate({username},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}})
+            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}})
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', 'bank')
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Bank Request ${status}`,body:` AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/bank/history`})
@@ -198,12 +200,13 @@ export const addBillRequest = async (req, res, next) => {
         if(!user.accesses.includes('bill')) return req.status(403).json({error:'No Permission at this moment'})
         let balanceMain = Object.values(user.balance?.main|| {}).reduce((sum,val)=>sum+val,0)
         if(balanceMain<parseInt(amount)) return res.status(422).json({error:'Insufficient Balance'})
-        const currentBill = await Bill.insertOne({billType,acNumber,amount:parseInt(amount),expireDate:expire,user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
-        //const total = await Bill.countDocuments({user:req.user.username,...req.query})
+        const deductedBalance = deductMainBalance(user.balance.main,amount)
+        let {bkash,dbbl,nagad,upay} = user.balance.main
+        await Bill.insertOne({billType,acNumber,amount:{bkash:bkash-deductedBalance.bkash,dbbl:dbbl-deductedBalance.dbbl,nagad:nagad-deductedBalance.nagad,upay:upay-deductedBalance.upay},expireDate:expire,user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()})
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{[`balance.main`]:deductMainBalance(user.balance.main,amount)},})
         //await User.updateOne({_id:new ObjectId(req.user.id)},{$inc:{[`balance.bank`]:(-1)*parseInt(amount)}});
         let {socketId} =await SocketResponse.findOneAndUpdate({admin:req.user.adminRef},{$inc:{['pendings.bill']:1}},{returnDocument:'after'});
-        if(socketId) io.to(socketId).emit('added',{type:'bill', currentBill });
+        if(socketId) io.to(socketId).emit('added',{type:'bill',});
         res.status(201).json({message:'utility bill request sent' , success:true})
     }catch(e) {next(e)}
 }
@@ -216,6 +219,7 @@ export const addBillRequest = async (req, res, next) => {
     //const {id} = req.params;
     const {status,feedback} = req.body;
     try{
+        if(!req.admin.accesses?.includes('modify-bill-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         //await Bill.findOneAndUpdate({_id:new ObjectId(id)},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
         let {acNumber,amount,user} = await Bill.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}},{returnDocument:'after'})
         let {socketId} =await SocketResponse.findOne({user});
@@ -379,7 +383,7 @@ export const changeMbankRequestStatus = async (req,res,next) =>{
     const {id} = req.params;
     const {status,feedback} = req.body;
     try{
-        //await Transaction.updateOne({_id:new ObjectId(id)},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
+        if(!req.admin.accesses?.includes('modify-mbank-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         let {acNumber,mbankType,recipient,amount,user} = await Transaction.findOneAndUpdate({_id:new ObjectId(id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
         let {socketId} =await SocketResponse.findOne({user});
         if(  status==='FAILED'){
