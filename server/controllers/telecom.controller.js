@@ -182,7 +182,7 @@ export const changeTopupStatus = async (req,res,next)=>{
         let {recipient,amount,user}= await Topup.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}});
         const {socketId} = await SocketResponse.findOne({user})
         if(status=='FAILED') {
-            await User.findOneAndUpdate({username},{$inc:{['balance.topup']:parseInt(amount)}})
+            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.topup']:parseInt(amount)}})
             await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.topup']:1}});
         }
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Topup Request ${status}`,body:`Recipient:${recipient} Amount:৳${amount} `,url:`${process.env.CLIENT_URL}/topup/history`})
