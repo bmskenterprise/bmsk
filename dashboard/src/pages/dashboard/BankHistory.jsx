@@ -137,7 +137,7 @@ export default () =>{
         {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
                 <ScrollViewH style={{width:'100%'}}>
             {/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
-                    {history?.banks?.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status})=> <StripedList /*x='flex-start' y='center'*/ key={_id} style={{width:'87rem',fontSize:'1.2rem'}}>
+                    {data?.banks?.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status})=> <StripedList /*x='flex-start' y='center'*/ key={_id} style={{width:'87rem',fontSize:'1.2rem'}}>
                         <div style={{width:'15%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
                         <div style={{width:'25%'}}>{bank}</div>
                         <div style={{width:'25%'}}>{acNumber} {acName}</div>
@@ -151,7 +151,7 @@ export default () =>{
                 </ScrollViewH>
             </ScrollViewV>
         
-            {history.pagination.totalPages>1 && <PaginationBar><Pages totalPage={history.pagination.totalPage} currentPage={history.pagination.currentPage} changePage={e=>pageNav(e)}/></PaginationBar>}
+            {data?.pagination?.totalPages>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)}/></PaginationBar>}
         {/*</List>*/}{loading && <Spinner></Spinner>}  
     </div>
     {/*:<div style={{background:backPrimary, color:textPrimary}}><Row>
