@@ -7,7 +7,7 @@ import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {ScrollViewV,Col,FlexH,GapV,GapH,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
-import {fetchArray} from '../../hooks/useModify';
+import fetchArray from '../../hooks/useArrayFetch';
 import url from '../../config/url';
 import Accordion from './Accordion';
 import SwitchItem from '../Switch'
