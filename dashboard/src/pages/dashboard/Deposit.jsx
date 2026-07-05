@@ -81,7 +81,7 @@ export default  () =>{
                 <Table>
                     <thead><TR>{['level',...Object.keys(formData[0]?.fee??{})]?.map((f,i)=> <TH key={i} style={{marginRight:'1rem'}}>{f}</TH>)}</TR></thead>
                     <tbody>{formData.map(({level,fee},ind)=> <TR key={ind}>
-                        <TD>{level}</TD>
+                        <TD style={{textTransform:'uppercase'}}>{level}</TD>
                         {Object.keys(fee).map((mb,i)=> <TD key={i}><NumberField x='4' onChange={e=>setFormData(prev=>prev.map((l,index)=> ind==index?({...l,fee:{...prev[index].fee,[mb]:e.target.value}}):l))} style={{padding:'0.5rem',border:'0',outline:'0'}} value={fee[mb]}/>{}</TD>)}
                     </TR>)} 
                     </tbody>
@@ -98,7 +98,7 @@ export default  () =>{
                     <td><NumberField type="number" name="" value={accountPrice} /></td>
                 </tr>)} */}<tbody>
                 {formData?.map(({level,topup,drive,mbank,regFee,permission},i)=> <TR key={i} style={{color:textPrimary,lineHeight:'3rem'}}>
-                    <TD>{level}</TD>
+                    <TD style={{textTransform:'uppercase'}}>{level}</TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].topup.commission.bkash} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,bkash:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField   /*x='4'*/ type='number' value={formData[i].topup.commission.dbbl} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,dbbl:Number(e.target.value)}}}:l))} /></TD>
                     <TD><NumberField type='number' value={formData[i].topup.commission.nagad} onChange={e=>setFormData(formData.map((l,ind)=> i==ind?{...l,topup:{...formData[i].topup,commission:{...formData[i].topup.commission,nagad:Number(e.target.value)}}}:l))} /></TD>
