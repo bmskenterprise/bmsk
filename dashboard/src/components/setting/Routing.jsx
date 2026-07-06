@@ -4,7 +4,7 @@ import {toast} from 'react-toastify'
 import {useTheme} from '../../contexts/ThemeContext' 
 import {useTelecom} from '../../contexts/TelecomContext'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'    //
-import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Select,Spinner} from '../styles/Admin.style';
+import {Col,FlexH,GapV,Field,ThemeButton,TinyIcon,Select,ThemeSpinner} from '../styles/Admin.style';
 import Accordion from './Accordion'
 import url from '../../config/url'
 
@@ -72,15 +72,15 @@ export default  () =>{
         <form onSubmit={saveRouting}>
         {modemRouting?.map(({_id,operator,ip,slot})=> <FlexH x='space-between' y='center' style={{width:'100%',marginBottom:'1rem'}} key={_id}>
             <div style={{width:'25%'}}><TinyIcon src={icons[operator]}/></div>
-            <FlexH x='flex-end' style={{width:'71%'}}>
+            <FlexH x='flex-end' style={{width:'72%'}}>
                 <Field x='10' name={`${operator}-ip`} value={ip} onChange={e=>changeIP(_id,e.target.value)}/>
-                <Select style={{width:'15%'}} name={`${operator}-slot`} onChange={e=>changeSlot(_id,e.target.value)} value={slot}>
+                <Select style={{width:'18%'}} name={`${operator}-slot`} onChange={e=>changeSlot(_id,e.target.value)} value={slot}>
                     <option value='0'>1</option>
                     <option value='1'>2</option>
                 </Select>
             </FlexH>
         </FlexH>)}
-        <GapV x='1'/><FlexH x='flex-end'><ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>:'save'}</ThemeButton></FlexH><GapV x='4'/>
+        <GapV x='1'/><FlexH x='flex-end'><ThemeButton  type='submit' disabled={loading}>{loading?<ThemeSpinner  size='1'/>:'save'}</ThemeButton></FlexH><GapV x='4'/>
     </form>
     </div>
             
