@@ -4,7 +4,7 @@ import {toast} from 'react-toastify'
 import {BsPlusLg} from 'react-icons/bs'
 import {useTheme} from '../../contexts/ThemeContext'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {Col,FlexH,GapV,GapH,Field,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
+import {Col,FlexH,FlexV,GapV,GapH,Field,InputField,ErrorText,ThemeButton,PrimaryButton,TinyIcon,Spinner} from '../styles/Admin.style'
 import {validateMBank} from '../../utils/validate';
 import url from '../../config/url'
 import Accordion from './Accordion'
@@ -121,8 +121,8 @@ export default ()=>{
         {mobileBanks?.map(({_id,name,icon,account,active},i)=><FlexH x='space-between' y='center' key={i} style={{marginBottom:'2rem'}}>
           <div style={{width:'15%'}}><TinyIcon src={icon} alt={name}/></div>
         <FlexH x='flex-end' y='center' style={{width:'75%'}}>
-          <div> <Field x='18' name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
-          <ErrorText>{errors?.name}</ErrorText></div><GapH x='1.5'/>
+          <FlexV style={{width:'65%'}}><Field style={{width:'100%'}} name={name} value={account} onChange={e=>changeAccount(_id,e.target.value)}/>
+          <ErrorText>{errors?.name}</ErrorText></FlexV><GapH x='1.5'/>
         <SwitchItem check={active} handleChange={e=>changeStatus(_id,e.target.checked)}/>
         </FlexH>
         </FlexH>)}
