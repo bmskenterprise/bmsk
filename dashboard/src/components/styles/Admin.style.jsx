@@ -543,14 +543,14 @@ export const Spinner = styled.div`
 export const ThemeSpinner = styled(Spinner)`
   border: 3px solid ${({theme})=> theme?.themeData?.themeText};
   border-top: 3px solid transparent;
-  width:1rem;
-  height:1rem;
+  width:2rem;
+  height:2rem;
 `;
-export const ThemeSpinner = styled(Spinner)`
+/*export const ThemeSpinner = styled(Spinner)`
   border: 3px solid ${({theme})=> theme?.themeData?.themeText};
   width: 2rem;
   height: 2rem;
-`;
+`;*/
 export const AccordionItem = styled.div`
   & >button{
     position: relative;
