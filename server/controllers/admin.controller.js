@@ -617,7 +617,7 @@ export const getSocialMediaLinks = async (req, res, next) => {
 }
 export const editSocialMedia = async (req,res,next) =>{
     try{
-        const bulkOps=req.body.map(({media,updatedURL})=> ({updateOne:{filter:{role:'admin','contacts.media':media},update:{$set:{['socialLinks.$.url']:updatedURL}}}}))
+        const bulkOps=req.body.map(({media,updatedURL})=> ({updateOne:{filter:{role:'admin','socialLinks.media':media},update:{$set:{['socialLinks.$.url']:updatedURL}}}}))
         await Admin.bulkWrite(bulkOps)
         const admin = await Admin.findOne({role:'admin'});
         res.status(200).json({socialLinks:admin.socialLinks,message:'social links updated'})
