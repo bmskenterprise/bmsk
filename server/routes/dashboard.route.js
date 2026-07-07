@@ -29,18 +29,18 @@ router.get('/telecom/balance',authAdmin,getTelecomBalances);
 router.post('/drive', authAdmin, validatePack, addDrive);///api/drive-package
 router.get('/drive/summary', authAdmin, getAllOptDriveSummary);
 router.get('/drive/hit', authAdmin, getDriveHits);
-router.patch('/drive/telecom-access', authAdmin,isSuperAdmin, updateDriveTelecomAccess)
+router.patch('/drive/telecom-access', authAdmin, updateDriveTelecomAccess)
 router.patch('/drive/status/:id', authAdmin, toggleDriveStatus);///api/drive-package/
 router.delete('/drive', authAdmin, deleteDrive);///api/drive-package
 router.get('/drive/:opt', authAdmin, getDrivesByAdmin);///api/drive-package/opt
 router.patch('/drive/:id', authAdmin, validatePackEdit, editDrive);///api/drive-package/id
-router.patch('/drive/hit/:id', authAdmin,validateAdminPIN,matchAuthPIN, changeHitStatus);
+router.patch('/drive/hit/:id', authAdmin,validateAuthPIN,matchAuthPIN, changeHitStatus);
 router.get('/drive/:id',authAdmin,getDrive)
 
 router.get('/regular/summary', authAdmin, getAllOptRegularSummary);
 router.post('/regular', authAdmin, validatePack, addRegular);///api/regular-package
 router.delete('/regular', authAdmin, deleteRegular);///api/regular-package
-router.patch('/regular/telecom-access', authAdmin,isSuperAdmin, updateRegularTelecomAccess)
+router.patch('/regular/telecom-access', authAdmin, updateRegularTelecomAccess)
 router.patch('/regular/status/:id', authAdmin, toggleRegularStatus);///api/regular-package/
 router.get('/regular/:opt', authAdmin, getRegularsByAdmin);///api/regular-package/opt
 router.patch('/regular/:id', authAdmin, validatePackEdit, editRegular);///api/regular-package/id
@@ -48,15 +48,15 @@ router.get('/regular/:id',authAdmin,getRegular)
 
 router.get('/deposit/history', authAdmin, getDepositHistoryByAdmin);
 router.get('/withdraw/history',authAdmin,getWithdrawHistoryByAdmin)
-router.patch('/deposit/:id',authAdmin,validateAdminPIN,matchAuthPIN,changeDepositStatus)
-router.patch('/withdraw/:id',authAdmin,changeWithdrawStatus)
+router.patch('/deposit/:id',authAdmin,validateAuthPIN,matchAuthPIN,changeDepositStatus)
+router.patch('/withdraw/:id',authAdmin,validateAuthPIN,matchAuthPIN,changeWithdrawStatus)
 router.get('/topup/history', authAdmin, getTopupHistoryByAdmin);
-router.patch('/topup/:id',authAdmin,validateAdminPIN,matchAuthPIN,changeTopupStatus)
+router.patch('/topup/:id',authAdmin,validateAuthPIN,matchAuthPIN,changeTopupStatus)
 router.get('/utility-bill/history', authAdmin, getBillRequestByAdmin);
-router.patch('/utility-bill/:id',authAdmin,validateAdminPIN,matchAuthPIN, changeBillRequestStatus);
+router.patch('/utility-bill/:id',authAdmin,validateAuthPIN,matchAuthPIN, changeBillRequestStatus);
 router.get('/bank/history', authAdmin, getBankRequestByAdmin);
-router.patch('/bank/:id',authAdmin, changeBankRequestStatus);
-router.patch('/mbank/:id',authAdmin,validateAdminPIN,matchAuthPIN,changeMbankRequestStatus)
+router.patch('/bank/:id',authAdmin,validateAuthPIN,matchAuthPIN, changeBankRequestStatus);
+router.patch('/mbank/:id',authAdmin,validateAuthPIN,matchAuthPIN,changeMbankRequestStatus)
 router.patch('/change-password', authAdmin, /*userValidation,*/ limiter, changeSuperAdminPassword);
 router.patch('/change-pin', authAdmin, /*userValidation,*/ limiter, changeSuperAdminPIN);
 router.get('/recover-credential/:token',initRecovery)
@@ -65,71 +65,71 @@ router.patch('/reset-password',resetSuperAdminPassword)
 router.patch('/reset-pin',resetSuperAdminPIN)
 router.patch('/manage-admin/reset-password/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateAdminPassword,resetSubAdminPassword)//  )
 router.patch('/manage-admin/reset-pin/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateAdminPIN,resetSubAdminPIN)  
-router.post('/manage-user',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateUserRegister,addUser)
-router.get('/manage-user',authAdmin,isSuperAdmin,getUsersByAdmin);
-router.get('/manage-user/:id',authAdmin,isSuperAdmin,getUserByAdmin);
-router.delete('/manage-user/:id',authAdmin,isSuperAdmin,deleteUserByAdmin);
-router.patch('/manage-user/access/:id',authAdmin,isSuperAdmin,editUserAccess);
-router.patch('/manage-user/status/:id', authAdmin,  isSuperAdmin, toggleUserStatus);
-router.patch('/manage-user/reset-password/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateUserPassword,resetUserPassword);// ,,, );
-router.patch('/manage-user/reset-pin/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateUserPIN,resetUserPIN)// ,,, resetUserPIN);
-router.patch('/manage-user/device/:id',authAdmin,isSuperAdmin,validateAdminPIN,matchAuthPIN,toggleUserNewDevice)
-router.delete('/manage-user/device/:id',authAdmin,isSuperAdmin,validateAdminPIN,matchAuthPIN,removeUserDevice);
-router.patch('/deposit/add/:id', authAdmin,isSuperAdmin,validateAuthPIN, matchAuthPIN, addBalanceByAdmin);
-router.patch('/deposit/deduct/:id', authAdmin,isSuperAdmin,validateAuthPIN, matchAuthPIN, deductBalanceByAdmin);
+router.post('/manage-user',authAdmin,validateAuthPIN,matchAuthPIN,validateUserRegister,addUser)
+router.get('/manage-user',authAdmin,getUsersByAdmin);
+router.get('/manage-user/:id',authAdmin,getUserByAdmin);
+router.delete('/manage-user/:id',authAdmin,deleteUserByAdmin);
+router.patch('/manage-user/access/:id',authAdmin,editUserAccess);
+router.patch('/manage-user/status/:id', authAdmin,   toggleUserStatus);
+router.patch('/manage-user/reset-password/:id',authAdmin,validateAuthPIN,matchAuthPIN,validateUserPassword,resetUserPassword);// ,,, );
+router.patch('/manage-user/reset-pin/:id',authAdmin,validateAuthPIN,matchAuthPIN,validateUserPIN,resetUserPIN)// ,,, resetUserPIN);
+router.patch('/manage-user/device/:id',authAdmin,validateAdminPIN,matchAuthPIN,toggleUserNewDevice)
+router.delete('/manage-user/device/:id',authAdmin,validateAdminPIN,matchAuthPIN,removeUserDevice);
+router.patch('/deposit/add/:id', authAdmin,validateAuthPIN, matchAuthPIN, addBalanceByAdmin);
+router.patch('/deposit/deduct/:id', authAdmin,validateAuthPIN, matchAuthPIN, deductBalanceByAdmin);
 //router.put('/status', authAdmin, updateUserStatus);
-router.delete('/user/:id', authAdmin,isSuperAdmin, deleteUser);
+router.delete('/user/:id', authAdmin, deleteUser);
 
 router.get('/deposit-init', authAdmin, getDepositInit);
-router.post('/deposit-init',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,validateTxn,depositInit);
-router.delete('/deposit-init',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,deleteDepositHistory);
+router.post('/deposit-init',authAdmin,validateAuthPIN,matchAuthPIN,validateTxn,depositInit);
+router.delete('/deposit-init',authAdmin,validateAuthPIN,matchAuthPIN,deleteDepositHistory);
 
-router.get('/telecom', authAdmin, isSuperAdmin, getTelecoms);
-router.patch('/telecom', authAdmin,isSuperAdmin, /*validateTelecom,*/ addTelecom);
-router.patch('/telecom/:id', authAdmin,isSuperAdmin, /*validateTelecom,*/ editTelecom);
+router.get('/telecom', authAdmin,  getTelecoms);
+router.patch('/telecom', authAdmin, /*validateTelecom,*/ addTelecom);
+router.patch('/telecom/:id', authAdmin, /*validateTelecom,*/ editTelecom);
 router.get('/telecom-access',authAdmin,getAllTelecomAccess)
-router.get('/modem-routing',authAdmin,isSuperAdmin,getModemRouting)
-router.patch('/modem-routing', authAdmin,isSuperAdmin, updateModemRouting);
+router.get('/modem-routing',authAdmin,getModemRouting)
+router.patch('/modem-routing', authAdmin, updateModemRouting);
 router.get('/deposit-rates',authAdmin,getDepositRates)
-router.patch('/deposit-rates',authAdmin,isSuperAdmin,validateAdminPIN,matchAuthPIN,updateDepositRates);
-router.get('/deposit/method',authAdmin,isSuperAdmin,getDepositMethod)
-router.patch('/deposit/method/:method',authAdmin,isSuperAdmin,changeDepositMethod)
-router.get('/topup/method',authAdmin,isSuperAdmin,getTopupMethod)
-router.patch('/topup/method/:method',authAdmin,isSuperAdmin,changeTopupMethod)
-router.patch('/topup/telecom-access', authAdmin,isSuperAdmin, updateTopupTelecomAccess)
-router.get('/mbank',authAdmin,isSuperAdmin,getMBanks)
-router.post('/mbank',authAdmin,isSuperAdmin,addMBank)
-router.patch('/mbank', authAdmin,isSuperAdmin, updateMBankList);
+router.patch('/deposit-rates',authAdmin,validateAdminPIN,matchAuthPIN,updateDepositRates);
+router.get('/deposit/method',authAdmin,getDepositMethod)
+router.patch('/deposit/method/:method',authAdmin,changeDepositMethod)
+router.get('/topup/method',authAdmin,getTopupMethod)
+router.patch('/topup/method/:method',authAdmin,changeTopupMethod)
+router.patch('/topup/telecom-access', authAdmin, updateTopupTelecomAccess)
+router.get('/mbank',authAdmin,getMBanks)
+router.post('/mbank',authAdmin,addMBank)
+router.patch('/mbank', authAdmin, updateMBankList);
 router.get('/mbank/history',authAdmin,getMbankHistoryByAdmin)
-router.get('/bank-names',authAdmin,isSuperAdmin,getBankNames)
-router.patch('/bank-names',authAdmin,isSuperAdmin,validateBankNames,saveBankNames)
-router.get('/slide-images',authAdmin,isSuperAdmin,getSlideImages)
-router.patch('/slide-images',authAdmin,isSuperAdmin,addSlideImageLink)
-router.patch('/slide-images/:id',authAdmin,isSuperAdmin,editSlideImageLink)
-router.delete('/slide-images/:id',authAdmin,isSuperAdmin,deleteSlideImageLink)
-router.get('/telecom-category',authAdmin,isSuperAdmin,getTelecomCategories)
-router.patch('/telecom-category',authAdmin,isSuperAdmin,addTelecomCategory)
-router.patch('/telecom-category/:id',authAdmin,isSuperAdmin,editTelecomCategory)
-router.delete('/telecom-category/:id',authAdmin,isSuperAdmin,deleteTelecomCategory)
-router.get('/pgw',authAdmin,isSuperAdmin,getPGW)
-router.patch('/pgw',authAdmin,isSuperAdmin,addPGW)
-router.patch('/pgw/:id',authAdmin,isSuperAdmin,editPGW)
+router.get('/bank-names',authAdmin,getBankNames)
+router.patch('/bank-names',authAdmin,validateBankNames,saveBankNames)
+router.get('/slide-images',authAdmin,getSlideImages)
+router.patch('/slide-images',authAdmin,addSlideImageLink)
+router.patch('/slide-images/:id',authAdmin,editSlideImageLink)
+router.delete('/slide-images/:id',authAdmin,deleteSlideImageLink)
+router.get('/telecom-category',authAdmin,getTelecomCategories)
+router.patch('/telecom-category',authAdmin,addTelecomCategory)
+router.patch('/telecom-category/:id',authAdmin,editTelecomCategory)
+router.delete('/telecom-category/:id',authAdmin,deleteTelecomCategory)
+router.get('/pgw',authAdmin,getPGW)
+router.patch('/pgw',authAdmin,addPGW)
+router.patch('/pgw/:id',authAdmin,editPGW)
 router.get('/sms-gateway',authAdmin,getSMSGateway)
-router.patch('/sms-gateway',authAdmin,isSuperAdmin,addSMSGateway)
-router.patch('/sms-gateway/:id',authAdmin,isSuperAdmin,editSMSGateway)
-router.get('/services',authAdmin,isSuperAdmin,getServices)
-router.patch('/services',authAdmin,isSuperAdmin,editServices)
+router.patch('/sms-gateway',authAdmin,addSMSGateway)
+router.patch('/sms-gateway/:id',authAdmin,editSMSGateway)
+router.get('/services',authAdmin,getServices)
+router.patch('/services',authAdmin,editServices)
 //router.get('/api-request',authAdmin,getRequestAPI)
 router.get('/notice',authAdmin,getNotices)
-router.post('/notice',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,addNotice)
+router.post('/notice',authAdmin,validateAuthPIN,matchAuthPIN,addNotice)
 //router.post('/notice/send',authAdmin,sendNotice)
-router.patch('/notice/:id',authAdmin,isSuperAdmin,validateAuthPIN,matchAuthPIN,editNotice)
+router.patch('/notice/:id',authAdmin,validateAuthPIN,matchAuthPIN,editNotice)
 router.patch('/notice/toggle/:id',authAdmin,toggleNotice)
 router.delete('/notice/:id',authAdmin,deleteNotice)
 router.get('/feedback', authAdmin, getUserFeedback);
-router.delete('/feedback/:id', authAdmin,isSuperAdmin, deleteUserFeedback);
-router.get('/contacts',authAdmin,isSuperAdmin,getContactMedia)
-router.patch('/contacts', authAdmin,isSuperAdmin, editContactMedia);
+router.delete('/feedback/:id', authAdmin, deleteUserFeedback);
+router.get('/contacts',authAdmin,getContactMedia)
+router.patch('/contacts', authAdmin, editContactMedia);
 router.get('/social-links',authAdmin,getSocialMediaLinks)
 router.patch('/social-links',authAdmin,editSocialMedia)
 router.post('/logout',authAdmin,logout)
