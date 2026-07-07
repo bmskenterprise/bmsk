@@ -258,29 +258,29 @@ export const updateModemRouting = async (req,res,next) =>{
 
 
 export const getTopupHistoryByAdmin = async (req,res,next)=>{
-    const {status,txn,user,opt,from,to,limit,page} = req.query;
+    const {status,recipient,user,opt,from,to,limit,page} = req.query;
     const filter = {};
     if(status) filter.status = status??'PENDING'
-    if(txn) filter.txn = txn
+    if(txn) filter.recipient = recipient
     if(user) filter.user = user
     if(opt) filter.operator = opt
     let fromDate,toDate
     if(from) {
         fromDate = new Date(from)
-        filter.createdAt={$gte:fromDate}
+        filter.updatedAt={$gte:fromDate}
     }
     if(to) {
         toDate = new Date(to)
-        filter.createdAt={$lte:toDate}
+        filter.updatedAt={$lte:toDate}
     }
-    if(from&&to) filter.createdAt={$gte:fromDate,$lte:toDate}
+    if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page)||1
     let skip=queryLimit*(currentPage-1)
     try{
         let pipe = req.admin.role=='admin'? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)
             const [result] = await Topup.aggregate(pipe).toArray();
-        topups = result.data
+        let topups = result.data
            let total = result.metadata[0]?.total ?? 0;
         /*}else{
             const [result] = await Topup.aggregate(aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)).toArray()
