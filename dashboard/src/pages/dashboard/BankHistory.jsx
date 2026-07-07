@@ -96,7 +96,7 @@ export default () =>{
         if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
     }
-    const onFailed = (id,feedback)=>{
+    const onFailed = (id,feedback)=>{console.log(id)
         setFailedID(null);//changeStatus(id,'FAILED',feedback,user)
         if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
