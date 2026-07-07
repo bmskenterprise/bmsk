@@ -22,8 +22,8 @@ export const findSocketAdmin =async (id,socketId)=>{
 export const findSocketUser =async (id,socketId)=>{
   try{let user = await SocketResponse.findOneAndUpdate({user:id},{$set:{socketId}},{returnDocument:'after'});return user;}catch(e){throw new Error(e)}
 }
-export const seenPendingByAdmin =async (type)=>{
-  try{let admin = await SocketResponse.findOneAndUpdate({admin:'socket-admin'}, {$set:{[`pendings.${type}`]:0}});}catch(e){throw new Error(e)}
+export const seenPendingByAdmin =async (id,type)=>{
+  try{let admin = await SocketResponse.findOneAndUpdate({admin:id}, {$set:{[`pendings.${type}`]:0}});}catch(e){throw new Error(e)}
 }
 let seenFailedByUser=async (user,seenType)=>{
   await SocketResponse.findOneAndUpdate({user}, {$set:{[`failed.${seenType}`]:0}})
@@ -62,14 +62,14 @@ export default (io)=>{
         }
         else {initSocketAdmin(id,socket.id)}
       })
-      socket.on('admin:deposit-history:seen',(obj)=> seenPendingByAdmin('deposit'))
-      socket.on('admin:topup-history:seen',(obj)=> seenPendingByAdmin('topup'))
-      socket.on('admin:withdraw-history:seen',(obj)=> seenPendingByAdmin('withdraw'))
-      socket.on('admin:drive-history:seen',(obj)=> seenPendingByAdmin('drive'))
-      socket.on('admin:mbank-history:seen',(obj)=> seenPendingByAdmin('mbank'))
-      socket.on('admin:bill-history:seen',(obj)=> seenPendingByAdmin('bill'))
-      socket.on('admin:bank-history:seen',(obj)=> seenPendingByAdmin('bank'))
-      socket.on('admin:user-history:seen',(obj)=> seenPendingByAdmin('user'))
+      socket.on('admin:deposit-history:seen',(id)=> seenPendingByAdmin(id,'deposit'))
+      socket.on('admin:topup-history:seen',(id)=> seenPendingByAdmin(id,'topup'))
+      socket.on('admin:withdraw-history:seen',(id)=> seenPendingByAdmin(id,'withdraw'))
+      socket.on('admin:drive-history:seen',(id)=> seenPendingByAdmin(id,'drive'))
+      socket.on('admin:mbank-history:seen',(id)=> seenPendingByAdmin(id,'mbank'))
+      socket.on('admin:bill-history:seen',(id)=> seenPendingByAdmin(id,'bill'))
+      socket.on('admin:bank-history:seen',(id)=> seenPendingByAdmin(id,'bank'))
+      socket.on('admin:user-history:seen',(id)=> seenPendingByAdmin(id,'user'))
       socket.on('user:join',async ({id,level}) => {     //
         let socketUser=await findSocketUser(id,socket.id);
         if(socketUser) {if(socketUser.countInbox>0) io.to(socket.id).emit('user:inbox',socketUser.countInbox)
