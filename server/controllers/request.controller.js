@@ -105,15 +105,15 @@ export const changeBankRequestStatus = async (req, res, next) => {
     /*const errors = validationResult(req)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})*/
     //const {id} = req.params;
-    const {status,feedback} = req.body;
+    const {status,feedback} = req.body;console.log(req.params.id,status,feedback)
     let io=socket.getIO();
     try{
         if(!req.admin.accesses?.includes('modify-bank-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         let {acNumber,amount,user} = await Bank.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}},{returnDocument:'after'})
         let {socketId} = await SocketResponse.findOne({user})
         if(status==='FAILED') {
-            await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.bank']:1}})
-            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}})
+            await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.bank']:1}});console.log('s')
+            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}});console.log('u')
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', 'bank')
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Bank Request ${status}`,body:` AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/bank/history`})
