@@ -87,8 +87,8 @@ export const validateDriveHit=[
 
 export const validateBillRequest = [
     body('billType').escape()
-    .notEmpty().withMessage('Enter a Bill Type')
-    .isIn(['electricity','water','gas','mobile','landline','internet','education','insurance',]).withMessage('Enter a valid Bill Type'),
+    .notEmpty().withMessage('Enter a Bill Type'),
+    //.isIn(['electricity','water','gas','mobile','landline','internet','education','insurance',]).withMessage('Enter a valid Bill Type'),
     
     body('amount').escape()
     .trim().notEmpty().withMessage('Enter Bill Amount')
