@@ -64,13 +64,14 @@ export default () =>{
 
                 
                 
-    const changeStatus= async (id,status,feedback) =>{
+    const changeStatus= async ({id,status,feedback},pin) =>{
            //if(!hasAccess) {toast.info('you don\'t have modify permission');return}
         setLoading(true);
         try {
             let res = await fetch(`${url.urlBank}/${id}`,{
                     method: 'PATCH',
-                    credentials: 'include',headers:{'Content-Type':'application/json'},
+                    credentials: 'include',
+                    headers:{'Content-Type':'application/json','x-admin-pin':pin},
                     body: JSON.stringify({status,feedback})
             })
             let data = await res.json();
@@ -96,7 +97,7 @@ export default () =>{
         if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
     }
-    const onFailed = (id,feedback)=>{console.log(id)
+    const onFailed = (id,feedback)=>{
         setFailedID(null);//changeStatus(id,'FAILED',feedback,user)
         if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
