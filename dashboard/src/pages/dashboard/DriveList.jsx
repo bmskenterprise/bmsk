@@ -52,7 +52,7 @@ export default  (/*{telecom,enableForm}*/) =>{
     
     
     const toggleStatus = (id,status) =>{
-        if(!accesses?.includes('modify-drive')) {toast.info('you don\'t have modify permission');return}
+        if(!accesses?.includes('modify-drive')) {toast.info('You don\'t have modify permission');return}
         //const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
           editData(`${url.urlDriveStatus}/${id}`,{status},'Pack Status Toggled','Failed to Toggle Pack Status')
             /*fetchDrives({opt});*/
@@ -70,18 +70,18 @@ export default  (/*{telecom,enableForm}*/) =>{
         /*if(toggleStatus(selected,e.target.checked)){setSelected([])}*/
 
 
-    const deleteDrivePack = async e=>{
+    const deleteDrivePack = async selected =>{
         if(!accesses?.includes('modify-drive')) {toast.info('You don\'t have modify permission');return}
         //const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
         try{
             let res =await fetch(url.urlDrive,{
-                method:'DELETE',
+                method:'DELETE',credentials:'include',
                 headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({ids:selected})
             })
             let data = await res.json();
-            if(!res.ok) throw new Error(data.error||'failed to delete drive pack') //
-            setSelected([]);/*fetchDrives({opt});*/toast.success(data.message)  //toast.success('Pack Deleted')//:toast.error('Something went wrong');
+            if(!res.ok) throw new Error(data.error||'Failed to delete drive pack') //
+            /*setSelected([]);fetchDrives({opt});*/toast.success(data.message)  //toast.success('Pack Deleted')//:toast.error('Something went wrong');
         }catch(e) {toast.error(e.message||'selectat least one pack');}
         finally{setLoading(false);}
         //if(deletePack(selected)) setSelected([])   //toast.info('select at least one pack');
