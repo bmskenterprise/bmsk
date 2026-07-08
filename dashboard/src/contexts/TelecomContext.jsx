@@ -70,13 +70,13 @@ export const TelecomProvider = ({children})=>{
         finally{setLoading(false)}
     }*/
     
-    const fetchTelecomCategories = async (id) =>{
+    const fetchTelecomCategories = async () =>{
         setLoading(true)
         try{
             let res = await fetch(url.urlTelecomCategory,{credentials:'include'});
             let data = await res.json()
             if(!res.ok) throw new Error(data.error)
-             setTelecomCategories({id:data._id,title:data.title})
+             setTelecomCategories(data.map(c=>({id:c._id,category:c.category})))
         }catch(e) {toast.error(e.message)}
         finally{setLoading(false)}
     }
