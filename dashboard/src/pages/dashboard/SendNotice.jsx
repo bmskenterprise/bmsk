@@ -19,7 +19,7 @@ export default  () =>{
         const {thememode,themeData:{themeBackground,themeText}} = useTheme()
         const {addNotice,editNotice,loading,errors} = useMessage();
         //const =themeData
-        /*const [outgoings, setOutgoings] = useState([]{receipant:'notification',subject:'',message:''});*/const [noticeInit,setNoticeInit] = useState(init);
+        /*const [outgoings, setOutgoings] = useState([]{receipant:'notification',subject:'',message:''});const [noticeInit,setNoticeInit] = useState(init);*/
         const [noticeInit,setNoticeInit] = useState(init);
         const hasAccess = accesses?.includes('modify-notice')
         const msg = 'You don\'t have modify permission';
@@ -28,8 +28,11 @@ export default  () =>{
         const getTextValue = e=> setNoticeInit(prev=>({...prev,notice:{...prev.notice,[e.target.name]:e.target.value}}));
         const getBooleanValue = e=> setNoticeInit(prev=>({...prev,repeat:e.target.checked}));
         const mark = (selected,value,check) =>{
-            if(check) setNoticeInit(prev=>({...prev,[selected]:new Set([...prev[selected],value].sort())}));
-            else setNoticeInit(prev=>({...prev,[selected]:new Set([...prev[selected]].filter(v=>v!=value).sort())}));
+            setNoticeInit(prev=>{
+              const current = prev[selected] || [];
+              const updated = check ? [...current,value] : current.filter(v=> v!=value);
+              return {...prev,[selected]:[...new Set(updated)].sort()}
+            })
         }
         const handleForm = e=>{
             e.preventDefault()
