@@ -288,13 +288,13 @@ export const getDepositHistoryByAdmin = async (req, res, next) => {
     let fromDate,toDate
     if(from) {
         fromDate=new Date(from)
-        filter.createdAt={$gte:fromDate}
+        filter.updatedAt={$gte:fromDate}
     }
     if(to) {
         toDate=new Date(to)
-        filter.createdAt={$lte:toDate}
+        filter.updatedAt={$lte:toDate}
     }
-    if(from&&to) filter.createdAt={$gte:fromDate,$lte:toDate}
+    if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
     let queryLimit=parseInt(limit) || 20
     let currentPage = parseInt(page) || 1;
     let skip=queryLimit*(currentPage-1)
