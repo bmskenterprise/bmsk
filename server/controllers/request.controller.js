@@ -38,12 +38,12 @@ export const getBankHistoryByUser = async (req, res, next) => {
     const {search,page} = req.query;
     const s = new RegExp(search,'i')
     const currentPage = parseInt(page)||1;
-    let filter = {user:req.user.id,$or:[{status:{$regex:s}},{bank:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]};
+    let filter = {user:req.user.id,$or:[{status:{$regex:s}},{bank:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{updatedAt:{$regex:s}}]};
     try {
         const total = await Bank.countDocuments(filter)
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{latsActiveAt:new Date()}})
         const banks = await Bank.find(filter,{projection:{user:0,__v:0}}).skip((currentPage-1)*20).limit(20).sort({updatedAt:-1}).toArray();
-        if(!banks){return res.status(404).json({error:'ব্যাংক লেনদেন পাওয়া যায়নি',success:false})}
+        if(!banks){return res.status(404).json({error:'bank transaction not found',success:false})}
         res.status(200).json({banks,pagination:{totalPage:Math.ceil(total/20),currentPage}})
     }catch(e) {next(e)}
 }
@@ -144,7 +144,7 @@ export const getFailedBankCount = async (req, res, next) => {
 export const getBillHistoryByUser = async (req, res, next) => {
     const {search,page} = req.query;
     const s = new RegExp(search,'i')
-    let filter = {user:req.user.id,$or:[{status:{$regex:s}},{billType:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{expireDate:{$regex:s}},{createdAt:{$regex:s}}]};
+    let filter = {user:req.user.id,$or:[{status:{$regex:s}},{billType:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{expireDate:{$regex:s}},{updatedAt:{$regex:s}}]};
     const currentPage = parseInt(page)||1;
     try{
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)}, {$set:{lastActiveAt:new Date()}})
@@ -287,11 +287,11 @@ export const getBkashHistory = async (req,res,next)=>{
     const {search,page} = req.query
     let filter = {user:req.user.username,mbankType:'bkash'}
     let s = {regex:new RegExp(search,'i')}
-    if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{createdAt:s}]
+    if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{updatedAt:s}]
     let currentPage = parseInt(page) || 1
     try{
         let total = await Transaction.countDocuments(filter)
-        let history = await Transaction.find(filter).sort({createdAt:-1}).skip((currentPage-1)*20).limit(20)
+        let history = await Transaction.find(filter).sort({updatedAt:-1}).skip((currentPage-1)*20).limit(20)
         res.status(200).json({history,pagination:{totalPage:Math.ceil(total/20),currentPage}})
     }catch(e){next(e)}
 }
@@ -299,11 +299,11 @@ export const getDBBLHistory = async (req,res,next)=>{
     const {search,page} = req.query
     let filter = {user:req.user.username,mbankType:'dbbl'}
     let s = {regex:new RegExp(search,'i')}
-    if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{createdAt:s}]
+    if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{updatedAt:s}]
     let currentPage = parseInt(page) || 1
     try{
         let total = await Transaction.countDocuments(filter)
-        let history = await Transaction.find(filter).sort({createdAt:-1}).skip((currentPage-1)*20).limit(20)
+        let history = await Transaction.find(filter).sort({updatedAt:-1}).skip((currentPage-1)*20).limit(20)
         res.status(200).json({history,pagination:{totalPage:Math.ceil(total/20),currentPage}})
     }catch(e){next(e)}
 }
@@ -311,11 +311,11 @@ export const getNagadHistory = async (req,res,next)=>{
     const {search,page} = req.query
     let filter = {user:req.user.username,mbankType:'nagad'} /*{ user: phone }*/
     let s= {regex:new RegExp(search,'i')}
-    if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{createdAt:s}]
+    if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{updatedAt:s}]
     let currentPage = parseInt(page) || 1
     try{
         let total = await Transaction.countDocuments(filter)
-        let history = await Transaction.find(filter).sort({createdAt:-1}).skip((currentPage-1)*20).limit(20)
+        let history = await Transaction.find(filter).sort({updatedAt:-1}).skip((currentPage-1)*20).limit(20)
         res.status(200).json({history,pagination:{totalPage:Math.ceil(total/20),currentPage}})
     }catch(e){next(e)}
 }
@@ -369,7 +369,7 @@ export const getMbankHistoryByUser = async (req,res,next)=>{
     const {search,page} = req.query
     let currentPage = parseInt(page) || 1
     const s = new RegExp(search,'i')
-    let filter = {user:req.user.id,mbankType:req.params.type,$or:[{status:{$regex:s}},{recipient:{$regex:s}},{transactionType:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]};
+    let filter = {user:req.user.id,mbankType:req.params.type,$or:[{status:{$regex:s}},{recipient:{$regex:s}},{transactionType:{$regex:s}},{amount:{$regex:s}},{updatedAt:{$regex:s}}]};
     try{
         let total = await Transaction.countDocuments(filter)
         let history = await Transaction.find(filter,{projection:{user:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
