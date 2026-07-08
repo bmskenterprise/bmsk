@@ -67,10 +67,10 @@ export default () =>{
                 <button type='submit'>filter</button>
                 </form>
             </div>*/}
-            <ScrollViewV style={{width:'100%',height:'80vh'}}><table><tbody>
-            {data?.feedbacks?.map(({_id,createdAt,user,description})=> <TR key={_id} style={{width:isMobile?'64rem':'87rem'}}>
+            <ScrollViewV style={{width:'100%',height:'80vh'}}><table style={{width:isMobile?'64rem':'87rem'}}><tbody>
+            {data?.feedbacks?.map(({_id,createdAt,user,description})=> <TR key={_id} >
               <td style={{width:'15%'}}>{formatDistanceToNow(createdAt,{addSuffix:true})}</td>
-              <td style={{width:'18%'}}>{user}</td>
+              <td style={{width:'18%'}}>{user?.username}</td>
               <td style={{width:'62%'}}>{description}</td>
               <td style={{width:'5%'}}><IconButton style={{color:textPrimary}} onClick={e=>{deleteFeedback(_id)}}><FaTrash/></IconButton></td>
             </TR>)}
