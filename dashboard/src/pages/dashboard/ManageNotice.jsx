@@ -49,9 +49,9 @@ export default  ({}) =>{
         if(!hasAccess) {toast.info(msg);return}
         navigate('/dashboard/notice/add',{state:formInit})
     }
-    const editInit = (notice,recipients,receiveMedium,duration,repeat) =>{
+    const editInit = (id,notice,recipients,receiveMedium,duration,repeat) =>{console.log(hasAccess)
         if(!hasAccess) {toast.info(msg);return}
-        navigate('/dashboard/notice/edit',{state:{id:_id,notice,recipient:recipients,medium:receiveMedium,noticeDuration:renderLocalTimeFromUTC(duration),repeat}})
+        navigate('/dashboard/notice/edit',{state:{id,notice,recipient:recipients,medium:receiveMedium,noticeDuration:renderLocalTimeFromUTC(duration),repeat}})
     }
     const toggleNotice =async (id,status)=>{
         if(!hasAccess) {toast.info(msg);return}
@@ -93,7 +93,7 @@ export default  ({}) =>{
                             <div style={{width:'75%'}}><b>{notice.title}</b> {notice.description}</div>
                             <div style={{width:'5%'}}><SwitchItem  check={active} handleChange={e=>toggleNotice(_id,e.target.checked)}/></div>
                             <div style={{width:'5%'}}>
-                                <IconButton disabled={!hasAccess} onClick={e=>editInit(notice,recipients,receiveMedium,duration,repeat)}><FaPen/></IconButton>
+                                <IconButton disabled={!hasAccess} onClick={e=>editInit(_id,notice,recipients,receiveMedium,duration,repeat)}><FaPen/></IconButton>
                                 <IconButton disabled={!hasAccess} onClick={e=>deleteInit(_id)}><FaTrash/></IconButton>
                             </div>
                         </StripedList>)}
