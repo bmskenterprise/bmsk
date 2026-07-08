@@ -14,7 +14,7 @@ import useArrayFetch from '../../hooks/useArrayFetch'
 import url from '../../config/url'
 
 export default  ({}) =>{
-    const {admin:accesses} = useAdminAuth()
+    const {admin:{accesses}} = useAdminAuth()
     const navigate = useNavigate()
     const formInit = {id:null,recipient:[],medium:[],noticeDuration:getAheadLocalDateTime(2),repeat:false,notice:{title:'',description:''}};
     const {thememode,modeData:{backSecondary,textPrimary}} = useTheme();
