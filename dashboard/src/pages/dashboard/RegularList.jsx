@@ -68,11 +68,11 @@ export default  () =>{const [selected,setSelected] = useState([]);
         
 
 
-    const deleteRegularPack = async e=>{
+    const deleteRegularPack = async selected =>{
             if(!accesses?.includes('modify-regular')) {toast.info('You don\'t have modify permission');return}
         //const selectedIDs = selectedPacks.filter(pack=>pack.selected).map(pack=>pack.id);
         try{
-            let res =await fetch(url.urlRegular,{
+            let res = await fetch(url.urlRegular,{
                 method:'DELETE',credentials:'include',
                 headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({ids:selected})
@@ -81,8 +81,8 @@ export default  () =>{const [selected,setSelected] = useState([]);
             })
             let data = await res.json();
             if(!res.ok) throw new Error(data.error||'Failed to Delete');
-            toast.success(data.message||'Regular Pack Deleted');setSelected([])  //
-            fetchRegulars({opt})
+            toast.success(data.message||'Regular Pack Deleted');//setSelected([])  //
+            //fetchRegulars({opt})
         }catch(e) {toast.error(e.message);}
         finally{setLoading(false);}
     };
