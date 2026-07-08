@@ -3,12 +3,13 @@ import {useNavigate,useParams,useSearchParams} from 'react-router-dom'
 import {toast} from 'react-toastify';
 import {FaPen,FaTrash} from 'react-icons/fa'
 import {formatDistanceToNow} from 'date-fns'
+import {useMediaQuery} from 'react-responsive'
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useTelecom} from '../../contexts/TelecomContext'
 import {ScrollViewV,ScrollViewH,StripedList,FlexH,IconButton,Field,TH,Center,Select,DatePicker,PaginationBar,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateFromUTC} from '../../utils/date';
- import {editData} from '../../hooks/useModify'
+import {editData} from '../../hooks/useModify'
 import useObjectFetch from '../../hooks/useFetch';
 import url from '../../config/url';
 import Pages from '../../components/Pagination'
@@ -17,11 +18,12 @@ import SwitchItem from '../../components/Switch';
 
 export default  () =>{const [selected,setSelected] = useState([]);
     const {admin:{accesses}} = useAdminAuth()
+    const isMobile = useMediaQuery({maxWidth:768})
     let navigate = useNavigate()
     let {opt} = useParams()
     const {thememode,themeData:{themeBackground,themeText}} =useTheme();
     const {/*regularData,fetchRegulars,*/telecomCategories} = useTelecom();
-    let [searchParams,setSearchParams] = useSearchParams();
+    const [searchParams,setSearchParams] = useSearchParams();
     const [status,category,search,fromPrice,toPrice,fromDate,toDate,limit,page] = [searchParams.get('status')||'active',searchParams.get('category')||'bundle',searchParams.get('search')||'',searchParams.get('from-price')||'',searchParams.get('to-price')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1'];
     const [hovered,setHovered] = useState(false);
     const [filterTerm,setFilterTerm] = useState({status,category,search,fromDate,toDate,fromPrice,toPrice,limit,page});
@@ -29,7 +31,7 @@ export default  () =>{const [selected,setSelected] = useState([]);
     const fields = ['Date','ID','Price','Pack','Expire','Sold','Action'];
     
     /*const selectedPacks = packList.map(pack=>{{id:pack.id,selected:false}})*/
-       const {data} = useObjectFetch(`${url.urlRegular}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`,{credentials:'include'})
+    const {data} = useObjectFetch(`${url.urlRegular}/${opt}?status=${status}&category=${category}&search=${search}&from=${fromDate}&to=${toDate}&fromPrice=${fromPrice}&toPrice=${toPrice}&limit=${limit}&page=${page}`,{credentials:'include'})
     //let today = (new Date).toISOString().split('T')[0]
     /*const check = (id)=>{
         let i=selected.indexOf(id)
