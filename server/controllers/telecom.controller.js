@@ -418,15 +418,22 @@ export const getDrive = async (req,res,next) =>{
 //call by admin
 export const getDrivesByAdmin = async (req, res, next) => {
     const {opt} = req.params;
-    const {status,category,fromPrice,toPrice,fromDate,toDate,search,limit,page} = req.query;
+    const {status,category,fromPrice,toPrice,from,to,search,limit,page} = req.query;
     const filter = {};
-    const queryRegex = new RegExp(search, 'i');
+    const queryRegex = new RegExp(search,'i');
+    let fromDate,toDate;
     if(opt) filter.operator = opt.toLowerCase()
     if(status) filter.active = status==='active'
     if(category) filter.category = category
-    if(fromDate) filter.updatedAt = {$gte:fromDate};
-    if(toDate) filter.updatedAt = {$lte:toDate};
-    if(fromDate&&toDate) filter.updatedAt = {$gte:fromDate, $lte:toDate};
+    if(from) {
+        fromDate = new Date(from);
+        filter.updatedAt = {$gte:fromDate};
+    }
+    if(to) {
+        toDate = new Date(to);
+        filter.updatedAt = {$lte:toDate};
+    }
+    if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
     if(fromPrice) filter.price = {$gte:fromPrice}
     if(toPrice) filter.price = {$lte:toPrice}
     if(fromPrice&&toPrice) filter.price = {$gte:fromPrice, $lte:toPrice}//next(e);
@@ -650,19 +657,26 @@ export const getRegular = async (req,res,next) =>{
 //call by admin
 export const getRegularsByAdmin = async (req, res, next) => {
     const {opt} = req.params;
-    const {status,category,fromPrice,toPrice,fromDate,toDate,search,limit,page} = req.query;
-    const queryRegex = new RegExp(search, 'i');
+    const {status,category,fromPrice,toPrice,from,to,search,limit,page} = req.query;
+    const queryRegex = new RegExp(search,'i');
+    let fromDate,toDate
     const filter = {};
     if(opt) filter.operator = opt.toLowerCase()
     if(status) filter.active = status=='active'
     if(category) filter.category = category
-    if(fromDate) filter.updatedAt = {$gte:fromDate};
-    if(toDate) filter.updatedAt = {$lte:toDate};
-    if(fromDate&&toDate) filter.updatedAt = {$gte:fromDate, $lte:toDate};
+    if(from) {
+        fromDate = new Date(from);
+        filter.updatedAt = {$gte:fromDate};
+    }
+    if(to) {
+        toDate = new Date(to);
+        filter.updatedAt = {$lte:toDate};
+    }
+    if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
     if(fromPrice) filter.price = {$gte:fromPrice}
     if(toPrice) filter.price={$gte:toPrice}
     if(fromPrice&&toPrice) filter.price = {$gte:fromPrice, $lte:toPrice}
-    if(search) filter.title = {$regex:queryRegex} //next(e);
+    if(search) filter.title = {$regex:queryRegex}
     let queryLimit=parseInt(limit) || 20
     let currentPage=parseInt(page) || 1
     try {
