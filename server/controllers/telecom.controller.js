@@ -261,7 +261,7 @@ export const getTopupHistoryByAdmin = async (req,res,next)=>{
     const {status,recipient,user,opt,from,to,limit,page} = req.query;
     const filter = {};
     if(status) filter.status = status??'PENDING'
-    if(txn) filter.recipient = recipient
+    if(recipient) filter.recipient = recipient
     if(user) filter.user = user
     if(opt) filter.operator = opt
     let fromDate,toDate
