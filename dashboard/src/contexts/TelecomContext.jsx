@@ -246,7 +246,7 @@ export const TelecomProvider = ({children})=>{
     
     useEffect(()=>{
         if(telecomCategories.length==0) fetchTelecomCategories()
-    })
+    },[])
         
     useEffect(()=>{
         ///*telecoms = */opts?setTelecoms(JSON.parse(opts)):fetchTelecoms();
