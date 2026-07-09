@@ -56,11 +56,11 @@ export const getBankRequestByAdmin = async (req, res, next) => {
     if(ac) filter.acNumber = ac;
     let fromDate,toDate
     if(from) {
-        fromDate=new Date(from)
+        fromDate=new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt={$gte:fromDate}
     }
     if(to) {
-        toDate=new Date(to)
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt={$lte:toDate}
     }
     if (from&&to) filter.updatedAt = {$gte:fromDate,$lte:toDate}
@@ -167,11 +167,11 @@ export const getBillRequestByAdmin = async (req, res, next) => {
     if(user) filter.user=user
     if(type) filter.billType=type
     if(from) {
-        fromDate=new Date(from)
+        fromDate=new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt={$gte:fromDate}
     }
     if(to) {
-        toDate=new Date(to)
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt={$lte:toDate}
     }
     if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
@@ -348,11 +348,11 @@ export const getMbankHistoryByAdmin = async (req,res,next)=>{
     let queryLimit=parseInt(limit)||20
     let currentPage = parseInt(page)||1
     if(from) {
-        fromDate= new Date(from)
+        fromDate= new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt = {$gte:fromDate};
     }
     if(to) {
-        toDate=new Date(to)
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt = {$lte:toDate};
     }
     if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
