@@ -886,7 +886,7 @@ export const getUserFeedback = async (req, res,next) => {
     let queryLimit = parseInt(limit)|| 20;
      let skip = queryLimit*(currentPage-1);
     try{
-        const pipe = req.admin.role=='admin' ? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)
+        const pipe = req.admin.role=='admin' ? aggregatePipeSuperAdmin({},skip,queryLimit) : aggregatePipeSubAdmin({},req.admin.id,skip,queryLimit)
         const [result] = await Feedback.aggregate(pipe).toArray();
         const feedbacks = result.data;
         const total = result.metadata[0]?.total ?? 0;
