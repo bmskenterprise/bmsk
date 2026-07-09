@@ -283,15 +283,15 @@ export const getDepositHistoryByAdmin = async (req, res, next) => {
     if(status) filter.status=status
     if(txn) filter.txn=txn
     if(user) filter.user=user
-    if(type) filter.balanceType=type
+    //if(type) filter.balanceType=type
     if(gateway) filter.gateway =gateway
     let fromDate,toDate
     if(from) {
-        fromDate=new Date(from)
+        fromDate=new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt={$gte:fromDate}
     }
     if(to) {
-        toDate=new Date(to)
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt={$lte:toDate}
     }
     if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
@@ -323,11 +323,11 @@ export const getWithdrawHistoryByAdmin = async (req, res, next) => {
     let fromDate,toDate
     if(gateway) filter.gateway =gateway
     if(from) {
-        fromDate=new Date(from)
+        fromDate=new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt={$gte:fromDate}
     }
     if(to) {
-        toDate=new Date(to)
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt={$lte:toDate}
     }
     if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
