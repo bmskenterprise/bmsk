@@ -373,7 +373,7 @@ export const getDepositLimit = async (req, res,next) => {
             drive:{min:userLevel.drive.min,max:userLevel.drive.max},
             mbank:{min:userLevel.mbank.min,max:userLevel.mbank.max}
         });
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 /*export const getDepositFee = async (req, res,next) => {
     try{
@@ -431,16 +431,16 @@ export const getSliderImages = async (req, res) => {
         if(!admin) return res.status(200).json([]);
         let urls=admin.slideImages.filter(image=>image.active).map(image=>image.link);
         res.status(200).json(urls);
-    }catch(err) {res.status(200).json([])}
+    }catch(e) {res.status(200).json([])}
 }
 export const addFeedback = async (req,res,next) =>{
     let errors=validationResult(req).formatWith((error)=>error.msg)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=>err.msg).mapped(),success:false});
     try{
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
-        await Feedback.insertOne({description:req.body.description,user:req.user.username,createdAt:new Date(),updatedAt:new Date()})
-        res.status(201).json({message:'feedback added',success:true});
-    }catch(err) {next(err)} 
+        await Feedback.insertOne({description:req.body.description,user:req.user.id,createdAt:new Date(),updatedAt:new Date()})
+        res.status(201).json({message:'Feedback Added',success:true});
+    }catch(e) {next(e)} 
 }
 //user
 export const getFeedbacksByUser = async (req, res, next) => {
@@ -449,7 +449,7 @@ export const getFeedbacksByUser = async (req, res, next) => {
         const feedbacks = await Feedback.find({user: req.user.username}).sort({ createdAt: -1 }).toArray();
         if (!feedbacks) return next(new Error('No feedback found'));
         res.status(200).json(feedbacks)
-    }catch(err) {next(err)}
+    }catch(e) {next(e)}
 }
     /*let errors=validationResult(req).formatWith((error)=>error.msg)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.array()[0].msg,success:false});
@@ -480,7 +480,7 @@ export const loginAPIUser = async (req, res,next) => {
             await user.save();
             res.status(200).json({message:'login success',success:true});
         }
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 //call by user
 export const sendRecoveryOTPEmail = async (req,res,next) =>{
@@ -495,7 +495,7 @@ export const sendRecoveryOTPEmail = async (req,res,next) =>{
         user.recoveryOTP =await bcrypt.hash(otp.toString(),11)
         await user.save();
         res.status(200).json({message:'OTP sent to your email'});// });
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const resetAPIUserPassword = async (req,res,next) =>{
     const {username,password,otp} = req.body
@@ -507,7 +507,7 @@ export const resetAPIUserPassword = async (req,res,next) =>{
         user.password = await bcrypt.hash(password,11)
         await user.save()
         res.status(200).json({message:'password reseted'});
-    }catch(err){next(err)}
+    }catch(e){next(e)}
 }
 export const getNotices = async (req,res,next) =>{
     try{
