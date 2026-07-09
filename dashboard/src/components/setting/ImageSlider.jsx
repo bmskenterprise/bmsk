@@ -58,7 +58,7 @@ export default  () =>{
                 body: JSON.stringify({link:image.link})
             })
             let data = await res.json()
-            if(!res.ok) throw new Error(data.error||'failed to add image link')
+            if(!res.ok) throw new Error(data.error||'Failed to add image link')
             //setImages(data.slides);
             toast.success(data.message)
         }catch(e) {toast.error(e.message)}//   .catch(err => toast.error('failed to add image link'))
@@ -75,8 +75,8 @@ export default  () =>{
                 body: JSON.stringify({link,active})
            })
            let data = await res.json()
-           if(!res.ok) throw new Error(data.error||'failed to update image link')
-           //setImages(data.slides)
+           if(!res.ok) throw new Error(data.error||'Failed to update image link')
+           toast.success(data.message||'Image edited')
         }catch(e) {toast.error(e.message)}//  .catch(err => toast.error('failed to update image link'))
         finally{setLoading(false);setImage(init);setEditMode(false)}//   .finally(()=>{setLoading(false);setEditMode(false)})
     };
@@ -110,7 +110,7 @@ export default  () =>{
             })
             let data = await res.json()
             if(!res.ok) throw new Error(data.error)
-            //setImages(data.slides);toast.success(data.message)
+            /*setImages(data.slides);*/toast.success(data.message||'Image deleted')
         }catch(e) {toast.error(e.message)}   
         finally{setLoading(false)}
     };
