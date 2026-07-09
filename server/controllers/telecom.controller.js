@@ -258,19 +258,19 @@ export const updateModemRouting = async (req,res,next) =>{
 
 
 export const getTopupHistoryByAdmin = async (req,res,next)=>{
-    const {status,recipient,user,opt,from,to,limit,page} = req.query;
+    const {status,recipient,user,telecom,from,to,limit,page} = req.query;
     const filter = {};
     if(status) filter.status = status??'PENDING'
     if(recipient) filter.recipient = recipient
     if(user) filter.user = user
-    if(opt) filter.operator = opt
+    if(telecom) filter.operator = telecom.toLowerCase()
     let fromDate,toDate
     if(from) {
-        fromDate = new Date(from)
+        fromDate = new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt={$gte:fromDate}
     }
     if(to) {
-        toDate = new Date(to)
+        toDate = new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt={$lte:toDate}
     }
     if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
@@ -426,11 +426,11 @@ export const getDrivesByAdmin = async (req, res, next) => {
     if(status) filter.active = status==='active'
     if(category) filter.category = category
     if(from) {
-        fromDate = new Date(from);
+        fromDate = new Date(`${from}T00:00:00.000+06:00`);
         filter.updatedAt = {$gte:fromDate};
     }
     if(to) {
-        toDate = new Date(to);
+        toDate = new Date(`${to}T23:59:59.999+06:00`);
         filter.updatedAt = {$lte:toDate};
     }
     if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
@@ -491,11 +491,11 @@ export const getDriveHits = async (req, res, next) => {
     if(user) filter['user.username'] = user;
     if(telecom) filter['drive.operator'] = telecom;
     if(from) {
-        fromDate = new Date(from)
+        fromDate = new Date(`${from}T00:00:00.000+06:00`)
         filter.updatedAt = {$gte:fromDate};
     }
     if(to) {
-        toDate = new Date(to)
+        toDate = new Date(`${to}T23:59:59.999+06:00`)
         filter.updatedAt = {$lte:toDate};
     }
     if(fromDate&&toDate) filter.updatedAt = {$gte:fromDate,$lte:toDate};
@@ -665,11 +665,11 @@ export const getRegularsByAdmin = async (req, res, next) => {
     if(status) filter.active = status=='active'
     if(category) filter.category = category
     if(from) {
-        fromDate = new Date(from);
+        fromDate = new Date(`${from}T00:00:00.000+06:00`);
         filter.updatedAt = {$gte:fromDate};
     }
     if(to) {
-        toDate = new Date(to);
+        toDate = new Date(`${to}T23:59:59.999+06:00`);
         filter.updatedAt = {$lte:toDate};
     }
     if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
