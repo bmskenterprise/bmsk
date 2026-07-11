@@ -514,7 +514,7 @@ export const getNotices = async (req,res,next) =>{
             //return res.status(404).json({ error: 'মোবাইল নাম্বার সঠিক নয়', success: false });
         let notices = await Notice.find({recipients:req.user.level,receiveMedium:'inbox',duration:{$gte:new Date()},active:true},{projection:{notice:1,updatedAt:1}}).toArray()
         res.status(200).json(notices)
-    }catch(e) {next(e)}
+    }catch(e) {res.status(200).json([])}
 }
 export const getModalNotices = async (req,res,next) =>{
     try{
