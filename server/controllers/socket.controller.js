@@ -28,8 +28,8 @@ export const seenPendingByAdmin =async (id,type)=>{
 let seenFailedByUser=async (user,seenType)=>{
   await SocketResponse.findOneAndUpdate({user}, {$set:{[`failed.${seenType}`]:0}})
 }
-const seenInbox = async (id)=>{
-  try{await SocketResponse.updateOne({user:id},{$set:{countInbox:0}})}catch(e) {throw new Error(e)}
+const seenInbox = async (id)=>{console.log(id)
+  try{let {modifiedCount}=await SocketResponse.updateOne({user:id},{$set:{countInbox:0}});console.log(modifiedCount)}catch(e) {throw new Error(e)}
 }
 const getNotice = async (noticeId) =>{
   try{
@@ -104,12 +104,12 @@ export default (io)=>{
       /*socket.on('seen-failed-deposit',({userId})=> usersSocketConnected[userId].failed[0]=null)
       socket.on('seen-failed-bill',({userId})=> usersSocketConnected[userId].failed[4]=null)
       socket.on('seen-failed-bank',({userId})=> usersSocketConnected[userId].failed[5]=null)*/
-      socket.on('user:failed-deposit:seen',(username)=> seenFailedByUser(id,'deposit'))
-      socket.on('user:failed-withdraw:seen',(username)=> seenFailedByUser(id,'withdraw'))
-      socket.on('user:failed-topup:seen',(username)=> seenFailedByUser(id,'topup'))
-      socket.on('user:failed-drive:seen',(username)=> seenFailedByUser(id,'drive'))
-      socket.on('user:failed-mbank:seen',(username)=> seenFailedByUser(id,'mbank'))
-      socket.on('user:failed-bill:seen',(username)=> seenFailedByUser(id,'bill'))
+      socket.on('user:failed-deposit:seen',(id)=> seenFailedByUser(id,'deposit'))
+      socket.on('user:failed-withdraw:seen',(id)=> seenFailedByUser(id,'withdraw'))
+      socket.on('user:failed-topup:seen',(id)=> seenFailedByUser(id,'topup'))
+      socket.on('user:failed-drive:seen',(id)=> seenFailedByUser(id,'drive'))
+      socket.on('user:failed-mbank:seen',(id)=> seenFailedByUser(id,'mbank'))
+      socket.on('user:failed-bill:seen',(id)=> seenFailedByUser(id,'bill'))
       socket.on('user:failed-bank:seen',(id)=> seenFailedByUser(id,'bank'))
       socket.on('user:inbox:seen',(id)=>seenInbox(id))
 
