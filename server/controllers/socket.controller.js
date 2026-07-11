@@ -73,7 +73,7 @@ export default (io)=>{
       socket.on('user:join',async ({id,level}) => {     //
         let socketUser=await findSocketUser(id,socket.id);
         if(socketUser) {if(socketUser.countInbox>0) io.to(socket.id).emit('user:inbox',socketUser.countInbox)
-          let failed = Object.fromEntries(Object.entries(SocketUser.failed|| {}).filter(([_,v])=>v>0));
+          let failed = Object.fromEntries(Object.entries(socketUser.failed|| {}).filter(([_,v])=>v>0));
           //let targetUser = socketUser
           /*if(targetUser.failed[0]>0) io.to(targetUser.socketId).emit('deposit-failed',{failedDepositCount:targetUser.failed[0]})
           if(targetUser.failed[1]>0) io.to(targetUser.socketId).emit('topup-failed',{failedTopupCount:targetUser.failed[1]})
