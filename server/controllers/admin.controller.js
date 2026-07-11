@@ -798,7 +798,7 @@ export const /*noticeStack*//*sendNotice*/addNotice = async (req, res,next) => {
         receiveMedium.splice(i,1)
     }
     try{
-        let {insertedId} = await Notice.insertOne({recipients,receiveMedium,notice,duration:new Date(noticeDuration),repeat,active:true,createdAt:new Date(),updatedAt:new Date()});
+        let {insertedId} = await Notice.insertOne({recipients,receiveMedium,notice,duration:new Date(`${noticeDuration}+06:00`),repeat,active:true,createdAt:new Date(),updatedAt:new Date()});
         //await SocketResponse.updateMany({level:{$in:recipients}},{$push:{notices:insertedId}});
         if(receiveMedium.includes('inbox')) {console.log(receiveMedium,recipients);
             io.emit('user:inbox-immediate',recipients)
@@ -814,7 +814,7 @@ export const editNotice = async (req,res,next) =>{
         let recipients,receiveMedium,duration //= {};
         recipients= (recipient!==undefined&&recipient.length==0)? cacheData.levels:recipient
         receiveMedium= (medium!==undefined&&medium.length==0) ?['push','in-app','inbox']:medium
-        if(noticeDuration !==undefined) duration=new Date(noticeDuration);
+        if(noticeDuration !==undefined) duration=new Date(`${noticeDuration}+06:00`);
         const updateData = Object.fromEntries(
             Object.entries({ recipients, receiveMedium, notice,duration,repeat }).filter(([_, v]) => v !== undefined)
         );
