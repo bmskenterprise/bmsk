@@ -365,9 +365,9 @@ export const depositInit =async (req, res,next) => {
 
 
 export const getDepositHistoryByUser = async (req, res, next) => {
-    const {/*id,*/search,page} = req.query;
+    const {status,search,page} = req.query;
     const s = new RegExp(search,'i')
-    const filter ={user:req.user.id,$or:[{status:{$regex:s}},{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
+    const filter ={user:req.user.id,status,$or:[{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
     const currentPage = parseInt(page)||1;
   //if(txn) filter.txn =txn;
   //filter.user=id
@@ -380,9 +380,9 @@ export const getDepositHistoryByUser = async (req, res, next) => {
     }catch(e) {next(e)}
 }
 export const getWithdrawHistoryByUser = async (req,res,next) =>{
-    const {search,page} = req.query;
+    const {status,search,page} = req.query;
     const s = new RegExp(search,'i')
-    const filter ={user:req.user.id,$or:[{status:{$regex:s}},{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
+    const filter ={user:req.user.id,status,$or:[{txn:{$regex:s}},{gateway:{$regex:s}},{amount:{$regex:s}},{createdAt:{$regex:s}}]}
     const currentPage = parseInt(page)||1;
     try{
         const withdraws = await Withdraw.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
