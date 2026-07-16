@@ -25,7 +25,7 @@ export const findSocketUser =async (id,socketId)=>{
 export const seenPendingByAdmin =async (id,type)=>{
   try{let admin = await SocketResponse.findOneAndUpdate({admin:id}, {$set:{[`pendings.${type}`]:0}});}catch(e){throw new Error(e)}
 }
-let seenFailedByUser=async (user,seenType)=>{
+let seenFailedByUser=async (user,seenType)=>{console.log(user,seenType)
   await SocketResponse.findOneAndUpdate({user}, {$set:{[`failed.${seenType}`]:0}})
 }
 const seenInbox = async (id)=>{console.log(id)
