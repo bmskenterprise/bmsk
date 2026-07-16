@@ -25,8 +25,11 @@ export const findSocketUser =async (id,socketId)=>{
 export const seenPendingByAdmin =async (id,type)=>{
   try{let admin = await SocketResponse.findOneAndUpdate({admin:id}, {$set:{[`pendings.${type}`]:0}});}catch(e){throw new Error(e)}
 }
-let seenFailedByUser=async (user,seenType)=>{console.log(user,seenType)
-  await SocketResponse.findOneAndUpdate({user}, {$set:{[`failed.${seenType}`]:0}})
+let seenFailedByUser=async (id,seenType)=>{
+  await SocketResponse.findOneAndUpdate({user:id}, {$set:{[`failed.${seenType}`]:0}})
+}
+let seenFailedMbankByUser = async (id,mbankType)=>{
+  await SocketResponse.findOneAndUpdate({user:id}, {$set:{[`failed.${mbankType}`]:0}})
 }
 const seenInbox = async (id)=>{console.log(id)
   try{let {modifiedCount}=await SocketResponse.updateOne({user:id},{$set:{countInbox:0}});console.log(modifiedCount)}catch(e) {throw new Error(e)}
@@ -108,7 +111,7 @@ export default (io)=>{
       socket.on('user:failed-withdraw:seen',(id)=> seenFailedByUser(id,'withdraw'))
       socket.on('user:failed-topup:seen',(id)=> seenFailedByUser(id,'topup'))
       socket.on('user:failed-drive:seen',(id)=> seenFailedByUser(id,'drive'))
-      socket.on('user:failed-mbank:seen',(id)=> seenFailedByUser(id,'mbank'))
+      socket.on('user:failed-mbank:seen',({id,mbankType})=> seenFailedMbankByUser(id,mbankType))
       socket.on('user:failed-bill:seen',(id)=> seenFailedByUser(id,'bill'))
       socket.on('user:failed-bank:seen',(id)=> seenFailedByUser(id,'bank'))
       socket.on('user:inbox:seen',(id)=>seenInbox(id))
