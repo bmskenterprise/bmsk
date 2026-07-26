@@ -304,7 +304,7 @@ export const getTopupHistoryByUser = async (req,res,next)=>{
     const total = await Topup.countDocuments(filter);
     const topups = await Topup.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
     if(!topups) return res.status(404).json({error:'topup history not found', success:false});
-    return res.status(200).json({topups,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
+    return res.status(200).json({topups,pagination:{totalPage:Math.ceil(total/20),currentPage}});
   }catch(e) {next(e)}
 }
 
