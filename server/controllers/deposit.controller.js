@@ -376,7 +376,7 @@ export const getDepositHistoryByUser = async (req, res, next) => {
         const total = await Deposit.countDocuments(filter);
         const deposits = await /*Transaction*/Deposit.find(filter,{projection:{__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
         if(!deposits) {return res.status(404).json({error:'deposit history not found',success:false});}
-        res.status(200).json({deposits,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
+        res.status(200).json({deposits,pagination:{totalPage:Math.ceil(total/20),currentPage}});
     }catch(e) {next(e)}
 }
 export const getWithdrawHistoryByUser = async (req,res,next) =>{
@@ -388,7 +388,7 @@ export const getWithdrawHistoryByUser = async (req,res,next) =>{
         const withdraws = await Withdraw.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
         let total = await Withdraw.countDocuments(filter);
         if(!withdraws) {return res.status(404).json({error:'withdraw history not found',success:false});}
-    res.status(200).json({withdraws,pagination:{totalPage:Math.ceil(total.length/20),currentPage}});
+    res.status(200).json({withdraws,pagination:{totalPage:Math.ceil(total/20),currentPage}});
     }catch(e) {next(e)}
 }
 
