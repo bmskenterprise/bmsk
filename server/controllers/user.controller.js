@@ -446,7 +446,7 @@ export const addFeedback = async (req,res,next) =>{
 export const getFeedbacksByUser = async (req, res, next) => {
     try{
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}});
-        const feedbacks = await Feedback.find({user: req.user.username}).sort({ createdAt: -1 }).toArray();
+        const feedbacks = await Feedback.find({user: req.user.id}).sort({ createdAt: -1 }).toArray();
         if (!feedbacks) return next(new Error('No feedback found'));
         res.status(200).json(feedbacks)
     }catch(e) {next(e)}
