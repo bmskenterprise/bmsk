@@ -8,7 +8,7 @@ import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext';
-import {ScrollViewV,ScrollViewH,FlexH,GapH,Center,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,PaginationBar,Loader,Spinner, } from '../../components/styles/Admin.style';
+import {ScrollViewV,ScrollViewH,FlexH,GapH,GapV,Center,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,PaginationBar,Loader,Spinner, } from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import useObjectFetch from '../../hooks/useFetch'
 import url from '../../config/url'
@@ -26,9 +26,8 @@ export default () => {
     const {socket} = useSocket()
     const {thememode,modeData,themeData:{themeBackground}} = useTheme();
     const {pendingCounts:{drive},reducePendingCounts} = useNotification();
-    const [searchParams] = useSearchParams()
+    const [searchParams,setSearchParams] = useSearchParams()
     const [status,user,telecom,recipient,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
-    const errorlist = {width:'100%',marginBottom:'1.5rem'}  ;
          
     const [hovered,setHovered] = useState(false);
     //const [hitData, setHitData] = useState({hits:[],pagination:{limit:20,currentPage:1,totalPage:1}});
@@ -42,7 +41,7 @@ export default () => {
 
     useEffect(e=>{
         reducePendingCounts('drive')
-        navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`);//document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
+        setSearchParams(prev=>{prev.set('status',status);prev.set('limit',limit);prev.set('page','1');return prev}.{replace:true});//document.addEventListener('click',e=>{if(failedID)setFailedID(null)})
     },[]);
     useEffect(()=>{
         if(admin) socket.emit('admin:drive-history:seen',admin?.id)
@@ -100,7 +99,7 @@ export default () => {
     const filter = (e)=> {
         e.preventDefault();
         let form=e.target
-        navigate(`/dashboard/drive/history?status=${form.status.value.trim()}&telecom=${form.telecom.value.trim()}&user=${form.user.value.trim()}&recipient=${form.recipient.value.trim()}&from=${form.fromDate.value}&to=${form.toDate.value}&limit=${form.limit.value.trim()||'20'}&page=1`);//fetchDriveHits({page:1})
+        setSearchParams(prev=>{prev.set('telecom',form.telecom.value.trim());prev.set('user',form.user.value.trim());prev.set('recipient',form.recipient.value.trim());prev.set('from',form.fromDate.value);prev.set('to',form.toDate.value);prev.set('limit',form.limit.value.trim()||'20');return prev},{replace:true});//fetchDriveHits({page:1})
             /*for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
             if(fromDateRef.current.value && d.createdAt<fromDateRef.current.value)return false;
@@ -109,12 +108,18 @@ export default () => {
         });setHits(filtered)*/
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/drive/history?status=${status}&recipient=${recipient}&user=${user}&telecom=${telecom}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev})
+    const handleStatusChange = e => setSearchParams(prev=>{prev.set('status',e.target.value);return prev});
 
                   
                   
-    return !accesses?.includes('drive-history')?<Center><p>don't have drive history permission</p></Center>:<div style={{position:'relative'/*, color:textPrimary*/}}>
+    return !accesses?.includes('drive-history')?<Center><p>Don't have drive history permission</p></Center>:<div style={{height:'calc(100vh - 4rem)'/*, color:textPrimary*/}}>
        <div><h4 style={{marginBottom:'4rem'}}>Drive</h4>{/*<IconButton style={{float: 'right'}}><BsPrinter/></IconButton>*/}</div>
+                    <FlexH x='space-between'><Select style={{width:'10rem'}} value={status} onChange={handleStatusChange} /*onChange={e=>{cache[e.target.value]?setHits(cache[e.target.value]):fetchDriveHits()}}*/>
+                        <option value='pending'>Pending</option>
+                        <option value='success'>Success</option>
+                        <option value='failed'>Failed</option>
+                    </Select>
         <form  onSubmit={filter}>
             <FlexH x='space-between' style={{gap:'0.5rem'}}>
                      <Field value={filterTerm.limit} name='limit' x='5' min='10' max='100' onChange={filterParams}/>
@@ -123,17 +128,12 @@ export default () => {
                 <Field x='8' name='telecom' value={filterTerm.telecom} placeholder='telecom' list='telecoms' onChange={filterParams}/><datalist id='telecoms'>{telecoms?.map(({name},i)=> <option key={i} value={name}/>)}</datalist>
                 <div><DatePicker  type='date' value={filterTerm.fromDate} name='fromDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/><DatePicker  type='date' value={filterTerm.toDate} name='toDate' max={getCurrentLocalDate()} min={launchDate} onChange={filterParams}/></div>
                     {/*<Button onClick={filter}>filter</Button>*/}
-                    <Select  name='status' value={filterTerm.status} onChange={filterParams} /*onChange={e=>{cache[e.target.value]?setHits(cache[e.target.value]):fetchDriveHits()}}*/>
-                        <option value='pending'>Pending</option>
-                        <option value='success'>Success</option>
-                        <option value='failed'>Failed</option>
-                    </Select>
                 
                 <button type='submit'>filter</button>
             </FlexH>
-        </form>
-        <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
-            <ScrollViewH style={{width:'100%'}}>
+        </form></FlexH>
+        <ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem'}}>
+            <ScrollViewH style={{width:'100%',height:'100%'}}>
                 {/*<tr>*/}
                     {/* <th><input type='checkbox' name='' id='' /></th> */}
                     {/*fields.map(f=> <th>{f}</th>)</tr>*/}
@@ -158,7 +158,7 @@ export default () => {
                     {/*<td>{}</td>*/}
                 </StripedList>)}
             </ScrollViewH></ScrollViewV>
-        {data?.pagination?.totalPage>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)} /></PaginationBar>}
+        <GapV x='2'/>{data?.pagination?.totalPage>1&& <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)} /></PaginationBar>}
         {loading&&<Loader><Spinner/></Loader>}  
     </div>
 }
