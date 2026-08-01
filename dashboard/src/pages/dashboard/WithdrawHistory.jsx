@@ -26,7 +26,7 @@ export default  () =>{
     const {socket} = useSocket();
     const {thememode,themeData:{themeBackground},modeData:{backPrimary,backSecondary}} = useTheme();
     const {reducePendingCounts} = useNotification();
-    const [searchParams] = useSearchParams()
+    const [searchParams,setSearchParams] = useSearchParams()
     const [loading,setLoading] = useState(false)
     const [hovered,setHovered] = useState(false)
     const [failedId,setFailedId] = useState()
@@ -41,7 +41,7 @@ export default  () =>{
 
     useEffect(()=>{
         reducePendingCounts('withdraw')
-        navigate(`/dashboard/withdraw/history?status=${status}&gateway=${gateway}&user=${user}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
+        setSearchParams(prev=>{prev.set('status',status);prev.set('limit',limit);prev.set('page',page);return prev},{replace:true})
     }, [])
     
     useEffect(()=>{
@@ -74,17 +74,23 @@ export default  () =>{
     }
     const onFailed = (id,feedback) => {
         setFailedId(null);
-           if(!hasAccess) {toast.info(msg);return}
+        if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
     
     const filter = (e) =>{e.preventDefault()
-        navigate(`/dashboard/withdraw/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&gateway=${e.target.gateway.value.trim()}&search=${e.target.search.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);
+        setSearchParams(prev=>{prev.set('user',e.target.user.value.trim());prev.set('gateway',e.target.gateway.value.trim());prev.set('search',e.target.search.value.trim());prev.set('from',e.target.fromDate.value);prev.set('to',e.target.toDate.value);prev.set('limit',e.target.limit.value.trim());return prev},{replace:true});
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/withdraw/history?status=${status}&user=${user}&gateway=${gateway}&search=${search}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev})
+     const handleStatusChange = e => setSearchParams(prev=>{prev.set('status',e.target.value);return prev})
 
-    return !accesses?.includes('withdraw-history')?<Center><p>Don't have withdraw history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Withdraw History</h4>
+    return !accesses?.includes('withdraw-history')?<Center><p>Don't have withdraw history permission</p></Center>:<div style={{background:backPrimary,height:'calc(100vh - 4rem)'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Withdraw History</h4>
+                   <FlexH x='space-between'><Select value={status} style={{width:'10rem'}} onChange={handleStatusChange} >
+                            <option value='pending'>Pending</option>
+                            <option value='success'>Success</option>
+                            <option value='failed'>Failed</option>
+                        </Select>
                 <form onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
                     <Field value={filterTerm.limit} name='limit' min='10' max='100' x='5' onChange={filterParams}/>
@@ -102,16 +108,11 @@ export default  () =>{
                         <DatePicker  type='date' value={filterTerm.fromDate} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                         <DatePicker  type='date' value={filterTerm.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
-                    <div><Select value={filterTerm.status} name='status' onChange={filterParams} >
-                            <option value='pending'>Pending</option>
-                            <option value='success'>Success</option>
-                            <option value='failed'>Failed</option>
-                        </Select>
-                    </div><button type='submit'>filter</button>
+                    <button type='submit'>filter</button>
                     </FlexH> 
-                </form>
-                <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem',fontSize:'1.2rem'}}>
-                    <ScrollViewH style={{width:'100%'}}>
+                </form></FlexH>
+                <ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem',fontSize:'1.2rem'}}>
+                    <ScrollViewH style={{width:'100%',height:'100%'}}>
                         {data?.withdraws?.map(({_id,updatedAt,ref,user,amount,status,gateway},i)=> <StripedList  key={_id} style={{width:isMobile?'64rem':'87rem'}} >
                             <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                             <div style={{width:'25%'}}>{ref||user?.username}</div>
@@ -125,7 +126,7 @@ export default  () =>{
                         </StripedList>)}
                     </ScrollViewH>
                 </ScrollViewV>
-            {data?.pagination?.totalPage>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={p=>pageNav(p)}/></PaginationBar>}
+            <GapV x='2'/>{data?.pagination?.totalPage>1&& <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={p=>pageNav(p)}/></PaginationBar>}
             {loading&&<Loader><Spinner/></Loader>}  
         </div>
 
