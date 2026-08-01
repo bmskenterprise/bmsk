@@ -9,7 +9,7 @@ import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useTelecom} from '../../contexts/TelecomContext';
-import {ScrollViewV,ScrollViewH,FlexH,GapV,GapH,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,Center,Loader,Spinner} from '../../components/styles/Admin.style';
+import {ScrollViewV,ScrollViewH,FlexH,GapV,GapH,StripedList,Field,Select,DatePicker,ApproveButton,RejectButton,TinyIcon,Center,Loader,Spinner,PaginationBar} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import useObjectFetch from '../../hooks/useFetch';
 import url from '../../config/url';
@@ -26,9 +26,8 @@ export default  () =>{
     const {thememode,themeData:{themeBackground},modeData:{backPrimary,textPrimary}} = useTheme()
     const {icons} = useTelecom();
     const {socket} = useSocket()
-    const [searchParams] = useSearchParams()
+    const [searchParams,setSearchParams] = useSearchParams()
     const [status,user,telecom,recipient,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('telecom')||'',searchParams.get('recipient')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
-    const errorlist = {width:'100%',marginBottom:'1.5rem'};
     const [hovered,setHovered] = useState(false);
     const [loading,setLoading] = useState(false);
     const [topupHistory, setTopupHistory] = useState({topups:[],pagination:{totalPage:1,currentPage:1,limit:20}});
@@ -41,7 +40,7 @@ export default  () =>{
     //let today = (new Date()).toISOString().split('T')[0];
     useEffect(()=>{
         reducePendingCounts('topup') ;
-        navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
+        setSearchParams(prev=>{prev.set('status',status);prev.set('limit',limit);prev.set('page',page);return prev},{replace:true})
     }, [])
     useEffect(()=>{
         if(admin) socket.emit('admin:topup-history:seen',admin?.id)
@@ -90,7 +89,7 @@ export default  () =>{
             finally{setLoading(false);}
     }
     const filter = (e)=> {e.preventDefault()
-        navigate(`/dashboard/topup/history?status=${e.target.status.value}&recipient=${e.target.recipient.value.trim()}&telecom=${e.target.telecom.value.trim()}&user=${e.target.user.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);
+        setSearchParams(prev=>{prev.set('recipient',e.target.recipient.value.trim());prev.set('telecom',e.target.telecom.value.trim());prev.set('user',e.target.user.value.trim());prev.set('from',e.target.fromDate.value);prev.set('to',e.target.toDate.value);prev.set('limit',e.target.limit.value.trim());return prev},{replace:true});
         /*let filtered=cache[statusRef.current.value].filter(d=>{
             for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
@@ -99,11 +98,17 @@ export default  () =>{
             return true;
         });*///fetchTopupHistory({page:1})
     }
-    const pageNav = p=> navigate(`/dashboard/topup/history?status=${status}&recipient=${recipient}&telecom=${telecom}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev})
+    const handleStatusChange = e => setSearchParams(prev=>{prev.set('status',e.target.value);return prev});
                               
                               
-    return !accesses?.includes('topup-history')?<Center><p>don't have topup history permission</p></Center>:<div style={{background:backPrimary,color:textPrimary}} onClick={e=>setFailedID(null)}>
+    return !accesses?.includes('topup-history')?<Center><p>Don't have topup history permission</p></Center>:<div style={{background:backPrimary,height:'calc(100vh - 4rem)'}} onClick={e=>setFailedID(null)}>
                 <h4>Topup History</h4><GapV x='4'/>
+                         <FlexH x='space-between'><Select style={{width:'10rem'}} value={status} onChange={handleStatusChange}>
+                            <option value='pending'>Pending</option>
+                            <option value='success'>Success</option>
+                            <option value='failed'>Failed</option>
+                        </Select>
                 <form onSubmit={filter}><FlexH x='space-between' y='center'>
                     <Field value={filterTerm.limit} x='4' name='limit' onChange={filterParams}/>
                     {/*<Field   value={filterTerm.limit} name='limit'*/}
@@ -115,17 +120,12 @@ export default  () =>{
                     <div style={{minWidth:'5rem',height:'auto'}}>
                         {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker type='date' name='fromDate' value={filterTerm.fromDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                         {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker type='date' name='toDate' value={filterTerm.toDate} min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
-                    </div>     <div><Select  name='status' value={filterTerm.status} onChange={filterParams}>
                             {/*<option value='pending'>pending</option>*/}
-                            <option value='pending'>Pending</option>
-                            <option value='success'>Success</option>
-                            <option value='failed'>Failed</option>
-                        </Select>
-                    </div><button type='submit'>filter</button>
+                    <button type='submit'>filter</button>
                     </FlexH> 
-                </form>
-            {/*<List collection={history}>*/}{/*loading?<Spinner animation='border' role='status'></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem',fontSize:'1.2rem'}}>
-                <ScrollViewH style={{width:'100%'}}>
+                </form></FlexH>
+            {/*<List collection={history}>*/}{/*loading?<Spinner animation='border' role='status'></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem',fontSize:'1.2rem'}}>
+                <ScrollViewH style={{width:'100%',height:'100%'}}>
                 {/*<tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead>*/}
                     {data?.topups?.map(({_id,updatedAt,recipient,amount,operator,user,status})=> <StripedList key={_id} style={{width:'80rem',fontSize:'1.2rem'}}>
                         <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
@@ -141,7 +141,7 @@ export default  () =>{
                         </div>}
                     </StripedList>)}
                 </ScrollViewH></ScrollViewV>
-                {data?.pagination?.totalPage>1 && <Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)}/>}
+                <GapV x='2'/>{data?.pagination?.totalPage>1&& <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)}/></PaginationBar>}
             {loading && <Loader><Spinner  /></Loader>}
         </div>
         {/*:<div style={{background:backPrimary, color:textPrimary}}><Row>
