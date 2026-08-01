@@ -11,7 +11,7 @@ import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
-import {ScrollViewV,ScrollViewH,FlexH,GapH,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
+import {ScrollViewV,ScrollViewH,FlexH,GapH,GapV,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import useObjectFetch from '../../hooks/useFetch'
 import url from '../../config/url.js';
 import Reject from '../../components/Reject'
@@ -27,7 +27,7 @@ export default  () =>{
     const {socket} = useSocket()  ;
     //const {backPrimary,textPrimary} = modeData
     const {failedCounts:{deposit},reducePendingCounts} = useNotification();
-    const [searchParams] = useSearchParams()
+    const [searchParams,setSearchParams] = useSearchParams()
     const [status,user,txn,gateway,/*type,*/fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('txn')||'',searchParams.get('gateway')||'',/*searchParams.get('type')||'',*/searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const [hovered,setHovered] = useState(false);
     const [failedId,setFailedId] = useState(null);
@@ -51,7 +51,7 @@ export default  () =>{
 
     useEffect(()=>{
         reducePendingCounts('deposit')
-        navigate(`/dashboard/deposit/history?status=${status}&txn=${txn}&gateway=${gateway}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
+        setSearchParams(prev=>{prev.set('status',status);prev.set('limit'limit);prev.set('page',page);return prev},{replace:true})
     }, [])
     useEffect(()=>{
         if(admin) socket.emit('admin:deposit-history:seen',admin?.id)
@@ -115,7 +115,7 @@ export default  () =>{
     }
                           
     const filter = (e) =>{e.preventDefault()
-        navigate(`/dashboard/deposit/history?status=${e.target.status.value}&user=${e.target.user.value.trim()}&txn=${e.target.txn.value.trim()}&gateway=${e.target.gateway.value.trim()}&from=${e.target.fromDate.value}&to=${e.target.toDate.value}&limit=${e.target.limit.value.trim()}&page=1`);/*let filtered=cache[statusRef.current.value].filter(d=>{
+        setSearchParams(prev=>{prev.set('user'e.target.user.value.trim());prev.set('txn',e.target.txn.value.trim());prev.set('gateway',e.target.gateway.value.trim());prev.set('from',e.target.fromDate.value);prev.set('to',e.target.toDate.value);prev.set('limit',e.target.limit.value.trim());return prev},{replace:true});/*let filtered=cache[statusRef.current.value].filter(d=>{
             for(let j in filterObj){
                 if(!d[j].includes(filterObj[j]))return false;}
             if(fromDateRef.current.value && d.createdAt<fromDateRef.current.value)return false;
@@ -124,10 +124,15 @@ export default  () =>{
         });setDepositHistory(filtered)*///fetchDepositHistory({page:1});
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))    // (err) { toast.error(err.message); }
-    const pageNav = p=> navigate(`/dashboard/deposit/history?status=${status}&user=${user}&txn=${txn}&gateway=${gateway}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev})
                       
-    return !accesses?.includes('deposit-history')?<Center><p>Don't have deposit history permission</p></Center>:<div style={{background:backPrimary,position:'relative'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'6rem'}}>Deposit History</h4>
+    return !accesses?.includes('deposit-history')?<Center><p>Don't have deposit history permission</p></Center>:<div style={{background:backPrimary,height:'calc(100vh - 4rem)'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Deposit History</h4>
                 {/*!init&&statusRef.current.value=='PENDING' && <div><Button onClick={e=>setInit(true)}>Add Tnx</Button></div>*/}
+                   <FlexH x='space-between'><Select value={status} style={{width:'10rem'}} onChange={handleStatusChange}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
+                            <option value='pending'>Pending</option>
+                            <option value='success'>Success</option>
+                            <option value='failed'>Failed</option>
+                        </Select>
                 {/*{selected[0]?<button onClick={e=>deleteInit(selected,deleteTxn)}><FaTrash/></button> :*/}<form onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
                     <Field value={filterTerm.limit} name='limit' min='10' max='100' x='5' onChange={filterParams}/>
@@ -145,14 +150,9 @@ export default  () =>{
                         {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker  type='date' value={filterTerm.from} name='fromDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                         {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker  type='date' value={filterTerm.to} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
-                    <div><Select value={filterTerm.status} name='status' onChange={filterParams}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
-                            <option value='pending'>Pending</option>
-                            <option value='success'>Success</option>
-                            <option value='failed'>Failed</option>
-                        </Select>
-                    </div><button type='submit'>filter</button>
+                    <button type='submit'>filter</button>
                     </FlexH> 
-                </form>
+                </form></FlexH>
             {/*init&& <Form>
                     <Form.Control type='text' placeholder='Ref' />
                     <Form.Control.Feedback>{errors?.ref }</Form.Control.Feedback>
@@ -173,8 +173,8 @@ export default  () =>{
                     <Form.Control type='number' placeholder='Admin PIN' />
                     <Form.Control.Feedback>{errors?.adminPIN }</Form.Control.Feedback>
                 </Form.Group></Form>*/}
-            <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
-            <ScrollViewH style={{width:'100%'}}>
+            <ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem'}}>
+            <ScrollViewH style={{width:'100%',height:'100%'}}>
                 {/*<thead><tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead><tbody>*/}
                 {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
                     <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
@@ -194,7 +194,7 @@ export default  () =>{
                     </div>}
                 </StripedList>)}{/*</tbody>*/}</ScrollViewH>
                 </ScrollViewV>
-            {data?.pagination?.totalPage>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)}/></PaginationBar>}
+            <GapV x='2'/>{data?.pagination?.totalPage>1&& <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)}/></PaginationBar>}
             {loading&&<Loader><Spinner/></Loader>}  
         </div>
 }
