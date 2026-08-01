@@ -8,7 +8,7 @@ import {useTheme} from '../../contexts/ThemeContext';
 import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext'
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
-import {FlexH,ScrollViewV,ScrollViewH,StripedList,PaginationBar,ApproveButton,RejectButton,Field,DatePicker,Select,Center,Loader,Spinner} from '../../components/styles/Admin.style';
+import {ScrollViewV,ScrollViewH,FlexH,GapV,StripedList,PaginationBar,ApproveButton,RejectButton,Field,DatePicker,Select,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import useObjectFetch from '../../hooks/useFetch'
 import copyToClipboard from '../../utils/copyToClipboard';
@@ -25,13 +25,12 @@ export default () =>{
     const {admin} = useAdminAuth()
     const accesses = admin?.accesses             //
     const {socket} = useSocket()
-    const [searchParams] = useSearchParams()
+    const [searchParams,setSearchParams] = useSearchParams()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
     const {pendingCounts:{bill},reducePendingCounts} = useNotification();
     const [status,user,type,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('type')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'',searchParams.get('page')||'1'];
       
     //const type = searchParams.get('type') || '';
-    //const ac = searchParams.get('ac') || '';
     const errorlist = {width:'100%',marginBottom:'1.5rem'}  ;
     const [hovered,setHovered] = useState(false);
     const [loading,setLoading] = useState(false);
@@ -46,7 +45,7 @@ export default () =>{
 
     useEffect(()=>{
         reducePendingCounts('bill')
-        navigate(`/dashboard/utility-bill/history?status=${status}&user=${user}&ac=${ac}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
+        setSearchParams(prev=>{prev.set('status',status);prev.set('limit',limit);prev.set('page',page);return prev},{replace:true})
         //return ()=>document.removeEventListener('click',removePop)
     },[]);
     useEffect(()=>{
@@ -87,7 +86,7 @@ export default () =>{
     }
     const filter = (e) =>{
         e.preventDefault();let fd={status:e.target.status.value.trim(),user:e.target.user.value.trim(),type:e.target.type.value.toLowerCase(),ac:e.target.ac.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,limit:e.target.limit.value.trim(),page:1}
-        navigate(`/dashboard/utility-bill/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&type=${fd.type}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)
+        setSearchParams(prev=>{prev.set('ac',fd.ac);prev.set('user',fd.user);prev.set('type',fd.type);prev.set('from',fd.fromDate);prev.set('to',fd.toDate);prev.set('limit',fd.limit||'20');return prev},{replace:true})
     }
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}));
     const onSuccess = (id) => {
@@ -100,12 +99,19 @@ export default () =>{
                if(!hasAccess) {toast.info(msg);return}
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
-    const pageNav = p=> navigate(`/dashboard/utility-bill/history?status=${status}&ac=${ac}&user=${user}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`)
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev})
+    const handleStatusChange = e => setSearchParams(prev=>{prev.set('status',e.target.value);return prev});
                           
                       
-    return !accesses?.includes('bill-history')?<Center><p>don't have bill history permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
-        <h4 style={{marginBottom:'6rem'}}>Utility-Bill History</h4>
+    return !accesses?.includes('bill-history')?<Center><p>Don't have bill history permission</p></Center>:<div style={{width:'100%', height:'calc(100vh - 4rem'}} onClick={e=>setFailedID(null)}>
+        <h4 style={{marginBottom:'4rem'}}>Utility-Bill History</h4>
         {/*<FlexH x='space-between' y='center'>*/}
+               <FlexH x='space-between'>
+                    <Select style={{width:'10rem'}} onChange={handleStatusChange} value={status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
+                        <option value='pending'>Pending</option>
+                        <option value='success'>Success</option>
+                        <option value='failed'>Failed</option>
+                    </Select>
             <form  onSubmit={filter}>
                 <FlexH x='space-between' y='center' style={{width:'100%'}}>
                 <div>  <Field value={filterTerm.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/></div>
@@ -125,19 +131,13 @@ export default () =>{
                         {/*<label htmlFor='from'>from</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.fromDate}  type='date' name='fromDate' min={launchDate} max={getCurrentLocalDate()}/>
                         {/*<label htmlFor='to'>to</label><br/>*/}<DatePicker onChange={filterParams} value={filterTerm.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()}/>
                     </div>
-                <div>
-                    <Select name='status' onChange={filterParams} value={filterTerm.status} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBillHistory(e.target.value)}}*/ >
-                        <option value='pending'>Pending</option>
-                        <option value='success'>Success</option>
-                        <option value='failed'>Failed</option>
-                    </Select>
-                </div>
             <button type='submit'>filter</button>
                 </FlexH>
         
             </form>{/*</FlexH>*/}
-        {/*<List collection={history}>*/}{/*loading?<Spinner animation='border' role='status'></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
-            <ScrollViewH style={{width:'100%'}}>{/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
+                </FlexH>
+        {/*<List collection={history}>*/}{/*loading?<Spinner animation='border' role='status'></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem'}}>
+            <ScrollViewH style={{width:'100%',height:'100%'}}>{/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
                 {data?.bills?.map(({_id,billType,updatedAt,acNumber,amount,expireDate,user,status},i)=> <StripedList  style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={i}>
                     <div style={{width:'20%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div onMouseOver={e=>setHover(true)} onMouseOut={e=>setHover(false)} onClick={e=>copyToClipboard(acNumber)} style={{width:'25%'}}>{hover?billType:acNumber}</div>
@@ -154,7 +154,7 @@ export default () =>{
                 </StripedList>)}
             
             </ScrollViewH></ScrollViewV>
-            {data?.pagination?.totalPage>1 && <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)} /></PaginationBar>}
+            <GapV x='2'/>{data?.pagination?.totalPage>1&& <PaginationBar><Pages totalPage={data?.pagination?.totalPage} currentPage={data?.pagination?.currentPage} changePage={e=>pageNav(e)} /></PaginationBar>}
         {/*</List>*/}{loading && <Loader><Spinner></Spinner></Loader>}  
     </div>
     {/*:<div style={{background:backPrimary, color:textPrimary}}><Row>
