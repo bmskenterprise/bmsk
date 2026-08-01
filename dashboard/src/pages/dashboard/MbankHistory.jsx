@@ -24,7 +24,7 @@ export default () =>{
     const {socket} = useSocket()
     const {pendingCounts:{mbank},reducePendingCounts} = useNotification()
     const {thememode,themeData:{themeBackground}} = useTheme();
-    const [searchParams,] = useSearchParams();
+    const [searchParams,setSearchParams] = useSearchParams();
     const [status,user,recipient,gateway,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('recipient')||'',searchParams.get('gateway')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  ;
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
@@ -41,7 +41,7 @@ export default () =>{
     useEffect(()=>{
         //document.addEventListener('click',e=>{if(failedID){setFailedID(null)}})
         reducePendingCounts('mbank')
-        navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=1`)
+        setSearchParams(prev=>{prev.set('status',status);prev.set('imit',limit);prev.set('page','1');return prev},{replace:true})
     },[]);
     useEffect(()=>{
         if(admin) socket.emit('admin:mbank-history:seen', admin?.id);
@@ -82,11 +82,11 @@ export default () =>{
             
     const filter = e =>{
         e.preventDefault();let fd={status:e.target.status.value,recipient:e.target.recipient.value.trim(),gateway:e.target.gateway.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
-        navigate(`/dashboard/mbank/history?status=${fd.status}&gateway=${gateway}&recipient=${fd.recipient}&user=${fd.user}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)  //  
+        setSearchParams(prev=>{prev.set('gateway',fd.gateway);prev.set('recipient',fd.recipient);prev.set('user',fd.user);prev.set('from',fd.fromDate);prev.set('to',fd.toDate);prev.set('limit',fd.limit||'20');return prev})  //  
     }
-            
+      const handleStatusChange = e => setSearchPrams(prev=>{prev.set('status',status);return prev})
     const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/mbank/history?status=${status}&gateway=${gateway}&recipient=${recipient}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`);
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev});
                     {/*<FlexH x='space-between' y='center'>*/}
     const onSuccess = (id) => {
         if(!hasAccess) {toast.info(msg);return}
@@ -99,8 +99,8 @@ export default () =>{
     }
                       
                       
-    return !accesses?.includes('mbank-history')?<Center><p>don't have MBank permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
-        <h4 style={{marginBottom:'6rem'}}>MBank History</h4>
+    return !accesses?.includes('mbank-history')?<Center><p>don't have MBank permission</p></Center>:<div style={{width:'100%', height:'calc(100vh - 4rem)'}} onClick={e=>setFailedID(null)}>
+        <h4 style={{marginBottom:'4rem'}}>MBank History</h4>
             <form  onSubmit={filter}>
                 <FlexH x='space-between' y='center'>
                     <Field value={filterTerm.limit} name='limit' x='4' min='10' max='100' step='5' onChange={filterParams}/>
@@ -113,7 +113,7 @@ export default () =>{
                         <DatePicker value={filterTerm.toDate}  type='date' name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
                     <div>
-                        <Select name='status' value={filterTerm.status} onChange={filterParams}>
+                        <Select name='status' value={status} onChange={handleStatusChange}>
                             <option value='pending'>Pending</option>
                             <option value='success'>Success</option>
                             <option value='failed'>Failed</option>
@@ -122,8 +122,8 @@ export default () =>{
                     <button type='submit'>filter</button>
                 </FlexH>
             </form>
-            <ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
-                <ScrollViewH style={{width:'100%'}}>{data?.mbanks?.map(({_id,updatedAt,mbankType,recipient,amount,transactionType,user,status})=> <StripedList   key={_id} style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}}>
+            <ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem'}}>
+                <ScrollViewH style={{width:'100%',height:'100%'}}>{data?.mbanks?.map(({_id,updatedAt,mbankType,recipient,amount,transactionType,user,status})=> <StripedList   key={_id} style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}}>
                     <div style={{width:'20%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div style={{width:'20%'}}><TinyIcon src={mbankIcon[mbankType]}/> {transactionType}</div>
                     <div style={{width:'20%'}}>{recipient}</div>
