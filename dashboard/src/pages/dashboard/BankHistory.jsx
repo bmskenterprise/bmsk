@@ -24,9 +24,8 @@ export default () =>{
     const navigate = useNavigate()
     const {pendingCounts:{bank},reducePendingCounts} = useNotification()
     const {thememode,themeData:{themeBackground},modeData} = useTheme();
-    const [searchParams,] = useSearchParams();
+    const [searchParams,setSearchParams] = useSearchParams();
     const [status,user,ac,fromDate,toDate,limit,page] = [searchParams.get('status')||'pending',searchParams.get('user')||'',searchParams.get('ac')||'',searchParams.get('from')||'',searchParams.get('to')||'',searchParams.get('limit')||'20',searchParams.get('page')||'1']  
-         
     const [loading,setLoading] = useState(false);
     const [failedID,setFailedID] = useState(null);
     const [history,setHistory] = useState({banks:[],pagination:{totalPages:1,currentPage:1}});
@@ -39,7 +38,7 @@ export default () =>{
 
     useEffect(()=>{
         reducePendingCounts('bank')
-        navigate(`/dashboard/bank/history?status=${status}&user=${user}&ac=${ac}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)
+        setSearchParams(prev=>{prev.set('status',status);prev.set('limit',limit);prev.set('page',page);return prev},{replace:true})
     },[]);
     useEffect(()=>{
         if(admin) socket.emit('admin:bank-history:seen', admin?.id);
@@ -86,12 +85,12 @@ export default () =>{
 
         const filter = e =>{
             e.preventDefault();let fd={status:e.target.status.value,ac:e.target.ac.value.trim(),fromDate:e.target.fromDate.value,toDate:e.target.toDate.value,user:e.target.user.value.trim(),limit:e.target.limit.value.trim()}
-            navigate(`/dashboard/bank/history?status=${fd.status}&ac=${fd.ac}&user=${fd.user}&from=${fd.fromDate}&to=${fd.toDate}&limit=${fd.limit||'20'}&page=1`)  //  
+            setSearchParams(prev=>{prev.set('ac',fd.ac);prev.set('user',fd.user);prev.set('from',fd.fromDate);prev.set('to',fd.toDate);prev.set('limit',fd.limit||'20');return prev},{replace:true})  //  
         }
 
 
      const filterParams = e=> setFilterTerm(prev=>({...prev,[e.target.name]:e.target.value}))
-    const pageNav = p=> navigate(`/dashboard/bank/history?status=${status}&ac=${ac}&user=${user}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${p}`);
+    const pageNav = p=> setSearchParams(prev=>{prev.set('page',p);return prev});
 
     const onSuccess = (id) => {
         if(!hasAccess) {toast.info(msg);return}
@@ -103,13 +102,14 @@ export default () =>{
         AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
     }
                       
+    const handleStatusChange = e => setSearchParams(prev=>{prev.set('status',e.target.value);return prev})
                       
                           
                              
                              
                              
         
-    return !accesses?.includes('bank-history')?<Center><p>don't have bank history permission</p></Center>:<div style={{width:'100%', height:'100%'}} onClick={e=>setFailedID(null)}>
+    return !accesses?.includes('bank-history')?<Center><p>don't have bank history permission</p></Center>:<div style={{width:'100%', height:'calc(100vh - 4rem)'}} onClick={e=>setFailedID(null)}>
         <h4 style={{marginBottom:'6rem'}}>Bank History</h4>
         {/*<FlexH x='space-between' y='center'>*/}
             <form  onSubmit={filter}>
@@ -126,7 +126,7 @@ export default () =>{
                         {/*<label htmlFor="to">to</label><br/>*/} <DatePicker type='date' value={filterTerm.toDate} name='toDate' min={launchDate} max={getCurrentLocalDate()} onChange={filterParams}/>
                     </div>
                 <div>
-                    <Select name='status' value={filterTerm.status} onChange={filterParams} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBankHistory(e.target.value)}}*/ >
+                    <Select name='status' value={status} onChange={handleStatusChange} /*onChange={e=>{cache[e.target.value]?setHistory(cache[e.target.value]):fetchBankHistory(e.target.value)}}*/ >
                         <option value='pending'>Pending</option>
                         <option value='success'>Success</option>
                         <option value='failed'>Failed</option>
@@ -135,8 +135,8 @@ export default () =>{
                 <button type='submit'>filter</button>
                 </FlexH>
             </form>{/*</FlexH>*/}
-        {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'80%',marginTop:'4rem'}}>
-                <ScrollViewH style={{width:'100%'}}>
+        {/*<List collection={history}>*/}{/*loading?<Spinner animation="border" role="status"></Spinner>:*/}<ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem'}}>
+                <ScrollViewH style={{width:'100%',height:'100%'}}>
             {/*<FlexH x='flex-start' y='center'>{fields.map((f,i)=> <div key={i}>{f}</div>)}</FlexH>*/}
                     {data?.banks?.map(({_id,updatedAt,bank,acNumber,amount,acName,user,status})=> <StripedList /*x='flex-start' y='center'*/ key={_id} style={{width:'87rem',fontSize:'1.2rem'}}>
                         <div style={{width:'15%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
