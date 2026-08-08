@@ -70,7 +70,7 @@ export default  () =>{
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
         <h4>Modem Routing</h4><GapV x='2'/>
         <form onSubmit={saveRouting}>
-        {modemRouting?.map(({_id,operator,ip,slot})=> <FlexH x='space-between' y='center' style={{width:'100%',marginBottom:'1rem'}} key={_id}>
+        {modemRouting?.map(({telecomRef,operator,ip,slot})=> <FlexH x='space-between' y='center' style={{width:'100%',marginBottom:'1rem'}} key={telecomRef}>
             <div style={{width:'25%'}}><TinyIcon src={icons[operator]}/></div>
             <FlexH x='flex-end' style={{width:'72%'}}>
                 <Field x='10' name={`${operator}-ip`} value={ip} onChange={e=>changeIP(_id,e.target.value)}/>
