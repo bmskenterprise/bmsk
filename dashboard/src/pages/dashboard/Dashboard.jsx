@@ -1,27 +1,27 @@
 import { useEffect,useState, } from 'react'
 import {Navigate} from 'react-router-dom';
-import {Row,Col,} from 'react-bootstrap';
 import {toast} from 'react-toastify';
 //import { formatDistanceToNow } from 'date-fns';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTheme} from '../../contexts/ThemeContext';
 import {ScrollViewV,FlexH,GapV,Card,Loader,Spinner} from '../../components/styles/Admin.style';
 import url from '../../config/url';// from "../lib/url";
+import useFetch from '../../hooks/useFetch';
 
 export default  () =>{
     const {admin} = useAdminAuth()
     const [loading,setLoading]=useState(false);
-    const [telecomBalances, setTelecomBalances] = useState({});
     const {modeData:{backPrimary,backSecondary,glassmorph},} = useTheme();
          //
-    const [pays, setPays] = useState([]);
-    const [depositSummary, setDepositSummary] = useState({'Topup Deposit':undefined,'Drive Deposit':undefined,'Bank Deposit':undefined});
-    const [expenseSummary, setExpenseSummary] = useState({'Topup Expense':undefined,'Drive Expense':undefined,'Bank Expense':undefined});
-    const [balanceSummary, setBalanceSummary] = useState({'Topup Balance':undefined,'Drive Balance':undefined,'Bank Balance':undefined});
+    //const [pays, setPays] = useState([]);
+    //const [depositSummary, setDepositSummary] = useState({'Topup Deposit':undefined,'Drive Deposit':undefined,'Bank Deposit':undefined});
+    const  {data:telecomBalances} = useFetch(url.urlTelecomBalance);
+    const  {data:expenseSummary} = useFetch(url.urlTodayExpenseSummary,data=>({'Topup Expense':data.todayTopupExpense,'Drive Expense':data.todayDriveExpense,'MBank Expense':data.todayMBankExpense}));
+    const  {data:balanceSummary} = useFetch(url.urlBalanceSummary,data=>({'Main Balance':data.totalMainBalance,'Topup Balance':data.totalTopupBalance,'Drive Balance':data.totalDriveBalance,'MBank Balance':data.totalMBankBalance}));
 
     //if(!admin) <Navigate to='/login'/>// useRef(null);
-    useEffect(() =>{
-        fetchTodayDeposit();/*fetchTodayExpense();*/fetchBalance();fetchTelecomBalances()
+    /*useEffect(() =>{
+        fetchTodayDeposit();fetchTodayExpense();fetchBalance();fetchTelecomBalances()
         fetchData()    
         
         /*const handleOnline = () => toast.success('Internet Connected')
@@ -31,53 +31,53 @@ export default  () =>{
         return () => {
             window.removeEventListener("online", handleOnline);
             window.removeEventListener("offline", handleOffline);
-        };*/
+        };
     },[])
                 
         const fetchTodayDeposit = async ()=>{
             setLoading(true)
             try{
-                let res = await fetch(url.urlTodayDepositSummary,{credentials:'include'}/*"http://localhost:5000/api/dashboard"*/)
+                let res = await fetch(url.urlTodayDepositSummary,{credentials:'include'})
                 let data = await res.json();
                 if(!res.ok) throw new Error(data.error || 'Something went wrong');
                 setDepositSummary({'Topup Deposit':data.todayTopupDeposit,'Drive Deposit':data.todayDriveDeposit,'Bank Deposit':data.todayBankDeposit});
             }catch(err) {toast.error(err.message);}
             finally{setLoading(false)}    
-        }
+        }*/
 
-        const fetchTodayExpense = async ()=>{
-            setLoading(true)
-            try{
-                let res = await fetch(url.urlTodayExpenseSummary,{credentials:'include'}/*"http://localhost:5000/api/dashboard"*/)
-                let data = await res.json();
-                if(!res.ok) throw new Error(data.error || 'Something went wrong');
-                setExpenseSummary({'Topup Expense':data.todayTopupExpense,'Drive Expense':data.todayDriveExpense,'Bank Expense':data.todayBankExpense});
-            }catch(err) {toast.error(err.message);}
-            finally{setLoading(false)}
-        }
+            
+            
+            
+                    
+                    
+                       
+                   
+             
+            
         
-        const fetchBalance = async ()=>{
-            setLoading(true)
-            try{
-                let res = await fetch(url.urlBalanceSummary,{credentials:'include'}/*"http://localhost:5000/api/dashboard"*/)
-                let data = await res.json();
-                if(!res.ok) throw new Error(data.error || 'Something went wrong');
-                setBalanceSummary({'Topup Balance':data.totalTopupBalance,'Drive Balance':data.totalDriveBalance,'Bank Balance':data.totalBankBalance});
-            }catch(err) {toast.error(err.message);}
-            finally{setLoading(false)}
-        }
-    const fetchTelecomBalances = async () =>{
-        setLoading(true)
-        try{
-            let res = await fetch(url.urlTelecomBalance,{credentials:'include'})
-            let data = await res.json()
-            if(!res.ok) throw new Error(data.error || 'Something went wrong');
-            setTelecomBalances(data)
-        }catch(err) {toast.error(err.message);}
-        finally{setLoading(false)}
-    }    
+        
+            
+            
+            
+                    
+                    
+                       
+                   
+             
+            
+        
+         
+        
+        
+                
+                
+                   
+            
+         
+        
+        
 
-        const fetchData = async () => {
+        /*const fetchData = async () => {
             try {
                 let res = await fetch(url.urlDeposit,{credentials:'include'});
                 let data = await res.json();
@@ -85,7 +85,7 @@ export default  () =>{
                 setPays(data.transactions);
             }catch(err) {toast.error(err.message)}  
         }
-    /*useEffect(() =>{
+    useEffect(() =>{
         socket.on('pack-added', (data) => {
             setPendings([data.currentPack, ...pendings]);
             bellRef.current.click();
@@ -115,7 +115,7 @@ export default  () =>{
             <Card style={{minHeight:'24rem',padding:'1rem'}} /*md={3}*/   >
                 <h3 style={{background:backSecondary,borderRadius:'1rem 1rem 0 0'}}>Today's Report</h3><GapV x='2'/>
                 <div /*style={{padding:'1rem'}}*/>
-                    {Object.keys(depositSummary).map((f,i) => <div key={i} style={{marginTop:'1rem'}}>{f}<span style={{float:'right'}}>{depositSummary[f] && depositSummary[f]}</span></div>) }
+                    {/*Object.keys(depositSummary).map((f,i) => <div key={i} style={{marginTop:'1rem'}}>{f}<span style={{float:'right'}}>{depositSummary[f] && depositSummary[f]}</span></div>) */}
                     {Object.keys(expenseSummary).map((f,i) => <div key={i} style={{marginTop:'1rem'}}>{f}<span style={{float:'right'}}>{expenseSummary[f] && expenseSummary[f]}</span></div>) }
                 </div>
             </Card>
