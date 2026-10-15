@@ -2,7 +2,6 @@ import {useEffect,useState,} from 'react';
 import {useNavigate,useSearchParams,} from 'react-router-dom';
 import {toast} from 'react-toastify';
 import {formatDistanceToNow} from 'date-fns';
-import {FaCheck} from 'react-icons/fa';
 import {MdCancel} from 'react-icons/md';
 import {useMediaQuery} from 'react-responsive'
 import {balanceTypes} from '../../../Preferences.json'
@@ -10,6 +9,7 @@ import {useTheme} from '../../contexts/ThemeContext'
 import {useSocket} from '../../contexts/SocketContext'
 import {useNotification} from '../../contexts/NotificationContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
+import changeStatus from '../../utils/changeStatus';
 import {launchDate,getCurrentLocalDate,getLocalDateTimeFromUTC} from '../../utils/date';
 import {ScrollViewV,ScrollViewH,FlexH,GapH,GapV,StripedList,Field,DatePicker,Select,TinyIcon,ApproveButton,RejectButton,PaginationBar,Center,Loader,Spinner} from '../../components/styles/Admin.style';
 import useObjectFetch from '../../hooks/useFetch'
@@ -47,7 +47,7 @@ export default  () =>{
         else{setSelected(prev=> [...prev,String(id)]);}
     };*/
     //const {start,clear} = useLongPress(check)//if(data.length)cache[status]=data;
-    const {data} = useObjectFetch(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
+    const {data,loading} = useObjectFetch(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`)  ;
 
     useEffect(()=>{
         reducePendingCounts('deposit')
@@ -62,31 +62,31 @@ export default  () =>{
     },[status,user,txn,gateway,/*type,*/fromDate,toDate,limit]);
     
     const fetchDepositHistory = async (/*{page}*/) =>{ 
-            setLoading(true)
+            //setLoading(true)
             try {
                 let res = await fetch(`${url.urlDepositHistory}?status=${status.toUpperCase()}&user=${user}&txn=${txn}&gateway=${gateway}&type=${type}&from=${fromDate}&to=${toDate}&limit=${limit}&page=${page}`,{credentials:'include'});
                 let data = await res.json();
                 if(!res.ok) throw new Error(data.error||'failed to fetch history');
                 setDepositHistory(data/*.filter(d=>d.status==statusRef.current.value)*/);
             }catch(e) {toast.error(e.message)}
-            finally { setLoading(false); }
+            //finally { setLoading(false); }
         }
-    const changeStatus = async ({id,status,feedback},pin)=>{
+        
         //if(!accesses?.includes('modify-deposit-history')) {toast.info('you don\'t have deposit modify permission');return}  //
-        setLoading(true)
-        try{
-            let res = await fetch(`${url.urlDeposit}/${id}`,{
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {'Content-Type':'application/json','x-admin-pin':pin},
-                body: JSON.stringify({status,feedback})
-            })
-            let data = await res.json()
-            if(!res.ok) throw new Error(data.error||'failed to change status')
-            toast.success(data.message);//fetchDepositHistory()
-        }catch(e) {toast.error(e.message)}
-        finally{setLoading(false)}
-    }
+        
+        
+                
+                 
+                 
+                 
+                 
+            
+                
+                  
+            
+         
+        
+    
     /*deleteTXN    setLoading(true)
         try{//res.json())
                         let res= await fetch(
@@ -106,12 +106,12 @@ export default  () =>{
                       
     const onSuccess = (id) => {
         if(!hasAccess) {toast.info(msg);return}
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'SUCCESS'}},'OK');
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{url:`${url.urlDeposit}/${id}`,status:'SUCCESS'}},'OK');
     }
     const onFailed = (id,feedback) => {
         setFailedId(null);
         if(!hasAccess) {toast.info(msg);return}
-        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{id,status:'FAILED',feedback}},'REJECT')
+        AdminPIN([thememode,themeBackground],{cb:changeStatus,data:{url:`${url.urlDeposit}/${id}`,status:'FAILED',feedback}},'REJECT')
     }
                           
     const filter = (e) =>{e.preventDefault()
@@ -128,13 +128,13 @@ export default  () =>{
                       
     return !accesses?.includes('deposit-history')?<Center><p>Don't have deposit history permission</p></Center>:<div style={{background:backPrimary,height:'calc(100vh - 4rem)'}} onClick={e=>setFailedId(null)}><h4 style={{marginBottom:'4rem'}}>Deposit History</h4>
                 {/*!init&&statusRef.current.value=='PENDING' && <div><Button onClick={e=>setInit(true)}>Add Tnx</Button></div>*/}
-                   <FlexH x='space-between'><Select value={status} style={{width:'10rem'}} onChange={handleStatusChange}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
+                   <FlexH x='space-between'><Select value={status} style={{width:'9rem'}} onChange={handleStatusChange}  /*onChange={e=>setStatus(e.target.value){cache[e.target.value]?setDepositHistory(cache[e.target.value]):fetchDepositHistory(e.target.value)}}*/ >
                             <option value='pending'>Pending</option>
                             <option value='success'>Success</option>
                             <option value='failed'>Failed</option>
                         </Select>
                 {/*{selected[0]?<button onClick={e=>deleteInit(selected,deleteTxn)}><FaTrash/></button> :*/}<form onSubmit={filter}>
-                <FlexH x='space-between' y='center'>
+                <FlexH x='space-between' style={{gap:'0 2rem'}}>
                     <Field value={filterTerm.limit} name='limit' min='10' max='100' x='5' onChange={filterParams}/>
                     <div style={{minWidth:'5rem',height:'auto'}}>
                     <Field x='8' value={filterTerm.user} name='user' placeholder='user' list='levels' onChange={filterParams}/>
@@ -176,7 +176,7 @@ export default  () =>{
             <ScrollViewV style={{width:'100%',height:'70%',marginTop:'4rem'}}>
             <ScrollViewH style={{width:'100%',height:'100%'}}>
                 {/*<thead><tr>{fields.map((f,i)=> <th key={i}>{f}</th>)}</tr></thead><tbody>*/}
-                {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:isMobile?'64rem':'87rem',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
+                {data?.deposits?.map(({_id,updatedAt,txn,screenshot,user,amount,extra,status,gateway})=> <StripedList style={{width:isMobile?'64rem':'100%',fontSize:'1.2rem'}} key={_id}/*onMouseDown={e=>start(_id)} onMouseUp={clear} onMouseLeave={clear} onTouchStart={e=>start(_id)} onTouchEnd={clear} onTouchCancel={clear} style={{marginBottom:'1rem'}}*/ >
                     <div style={{width:'25%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}): getLocalDateTimeFromUTC(updatedAt)}</div>
                     <div style={{width:'20%'}}>{user?.username}</div>
                     <FlexH y='center' style={{width:'30%'}}><TinyIcon src={mbankIcons[gateway]}/><GapH x='0.5'/>{txn||(screenshot&&<TinyIcon src={screenshot} onClick={e=>window.open(screenshot)}/>)}</FlexH>
@@ -184,7 +184,7 @@ export default  () =>{
                     <div style={{width:'15%'}}>&#2547;{amount} {/*<small>({extra})</small>*/}</div>
                     {/*<td>{billMonth}</td>
                     <td>{username}</td>*/}
-                    {status=='PENDING'&&<div style={{width:'10%',position:'relative'}}>
+                    {status=='PENDING'&&<div style={{marginLeft:'auto',width:'10%',position:'relative'}}>
                         <ApproveButton onClick={e=>onSuccess(_id)} disabled={!hasAccess}>OK</ApproveButton><RejectButton onClick={e=>{e.stopPropagation();setFailedId(_id)}} disabled={!hasAccess}>Reject</RejectButton>
                         {failedId==_id&&<Reject belong={{id:_id,user}} handleFailed={onFailed}/>}
                             
