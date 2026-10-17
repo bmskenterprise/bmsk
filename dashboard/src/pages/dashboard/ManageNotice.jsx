@@ -2,12 +2,12 @@ import {useEffect,useState} from 'react'
 import {useNavigate} from 'react-router-dom';
 import {formatDistanceToNow} from 'date-fns';
 import {FaPen,FaTrash} from 'react-icons/fa';
+import {useMediaQuery} from 'react-responsive';
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {useMessage} from '../../contexts/MessageContext'
 import {ScrollViewH,ScrollViewV,FlexH,GapV,StripedList,ThemeButton,IconButton,Loader,Spinner} from '../../components/styles/Admin.style'
 import {getAheadLocalDateTime,renderLocalTimeFromUTC,getLocalDateTimeFromUTC} from '../../utils/date'
-import useLongPress from '../../hooks/longPress';
 import SwitchItem from '../../components/Switch'
 import deleteConfirm from '../../components/Confirmation'
 import useArrayFetch from '../../hooks/useArrayFetch'
@@ -18,7 +18,8 @@ export default  ({}) =>{
     const navigate = useNavigate()
     const formInit = {id:null,recipient:[],medium:[],noticeDuration:getAheadLocalDateTime(2),repeat:false,notice:{title:'',description:''}};
     const {thememode,modeData:{backSecondary,textPrimary}} = useTheme();
-     const {notices,addNotice,editNotice,toggleNoticeStatus,deleteNotice,loading} = useMessage();
+    const isMobile = useMediaQuery({maxWidth:768})
+    const {notices,addNotice,editNotice,toggleNoticeStatus,deleteNotice,loading} = useMessage();
     const [errors,setErrors] = useState({})
     const [selected,setSelected] = useState([]);
     const [hovered,setHovered] = useState(false);
@@ -90,9 +91,9 @@ export default  ({}) =>{
                             {/*<td style={{width:'5%'}}>{i+1}</td>*/}
                             {/*<td>{(n.createdAt).slice(0,10).split('-').reverse().join('-')}</td>*/}
                             <div style={{width:'15%'}} onMouseOver={e=>setHovered(true)} onMouseOut={e=>setHovered(false)}>{hovered?formatDistanceToNow(updatedAt,{addSuffix:true}):getLocalDateTimeFromUTC(updatedAt)}</div>
-                            <div style={{width:'75%'}}><b>{notice.title}</b> {notice.description}</div>
-                            <div style={{width:'5%'}}><SwitchItem  check={active} handleChange={e=>toggleNotice(_id,e.target.checked)}/></div>
-                            <div style={{width:'5%'}}>
+                            <div style={{width:isMobile?'70%':'75%'}}><b>{notice.title}</b> {notice.description}</div>
+                            <FlexH x='space-between' style={{width:isMobile?'15%':'10%'}}><SwitchItem check={active} handleChange={e=>toggleNotice(_id,e.target.checked)}/>
+                             
                                 <IconButton disabled={!hasAccess} onClick={e=>editInit(_id,notice,recipients,receiveMedium,duration,repeat)}><FaPen/></IconButton>
                                 <IconButton disabled={!hasAccess} onClick={e=>deleteInit(_id)}><FaTrash/></IconButton>
                             </div>
