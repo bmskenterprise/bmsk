@@ -7,50 +7,46 @@ import {toast} from 'react-toastify';
 import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext'
 import {ScrollViewV,Col,FlexH,GapV,GapH,InputField,Stack,ThemeButton,IconButton,Spinner} from '../styles/Admin.style'
+import {modifyAppResource,deleteResource} from '../../utils/resource'
 import fetchArray from '../../hooks/useArrayFetch';
 import url from '../../config/url';
 import Accordion from './Accordion';
 import SwitchItem from '../Switch'
+import AdminPIN from '../AdminPIN'
 
 export default  () =>{
     let init = {id:null,link:''}// }*/
     const isMobile = useMediaQuery({maxWidth:768});
     let location = useLocation();
-     const {modeData:{backSecondary,textSecondary}} = useTheme();
+     const {thememode,themeData:{themeBackground},modeData:{backSecondary,textSecondary}} = useTheme();
     const {admin} = useAdminAuth()
     const accesses = admin?.accesses
     let hasAccess = accesses?.includes('modify-setting')
+    const fd = new FormData()
     let [imagesRef,linkRef]=[useRef(null),useRef(null)];
     const [loading,setLoading] = useState(false); const [image,setImage] = useState(init);
-    const [linkError,setLinkError] = useState(''); const [editMode,setEditMode] = useState(false);
+    const [images,setImages] = useState([]); const [editMode,setEditMode] = useState(false);
     const [hover,setHover] = useState(false);
-    const {data:images} = fetchArray(url.urlImageSlider);
- 
- 
+     const msg = 'You don\'t have modify permission'
+    const {data} = fetchArray(url.urlImageSlider);
      
-     
-        
-        
+    useEffect(()=>{data&&setImages(data)}, [data])
                 
                 
                    
-     const msg = 'You don\'t have modify permission'
-         
     
       
     const selectImage = e =>{
-        let file = e.target.files[0]
+        let file = e.target.files?.[0]
         if(file && file.type.startsWith('image/')){
             let reader = new FileReader();
             reader.readAsDataURL(file)
-            reader.onloadend = e => setImage(prev=>({...prev,link:reader.result}))
+            reader.onloadend = e => fd.append('link',file)
         }
     }
-        //let [token, admin] = [localStorage.getItem('token'), localStorage.getItem('admin')]
+    //let [token, admin] = [localStorage.getItem('token'), localStorage.getItem('admin')]
             //if(validURL(linkText.trim()))return setLinkError('');
-    const addImage = async () =>{// =async e=>{
-        setLoading(true)
-        try{
+    /*const addImage = async () =>{// =async e=>{
             let res= await fetch(url.urlImageSlider, {
                 method: 'PATCH',
                 credentials: 'include',
@@ -63,11 +59,8 @@ export default  () =>{
             toast.success(data.message)
         }catch(e) {toast.error(e.message)}//   .catch(err => toast.error('failed to add image link'))
         finally{setLoading(false);setImage(init);setEditMode(false)}//    .finally(()=>setLoading(false))
-    };    
 
     const editImage = async (id,link,active) =>{// = {
-        setLoading(true)
-        try{
             let res= await fetch(`${url.urlImageSlider}/${id}`, {
                 method: 'PATCH',
                 credentials: 'include',
@@ -79,10 +72,9 @@ export default  () =>{
            toast.success(data.message||'Image edited')
         }catch(e) {toast.error(e.message)}//  .catch(err => toast.error('failed to update image link'))
         finally{setLoading(false);setImage(init);setEditMode(false)}//   .finally(()=>{setLoading(false);setEditMode(false)})
-    };
 
 
-        /*const toggleImageLink = async (status,linkText) => {
+        const toggleImageLink = async (status,linkText) => {
             try {
                 let res = await fetch(`sliderImagesURL/${admin}`, {
                     method: 'PATCH',
@@ -96,45 +88,59 @@ export default  () =>{
                 }
             }catch(err) {toast.error(err.message)}
                 toast.error(err.message || 'failed to update image link')
-        }*/
-        
 
     const deleteImage = async imageId =>{// = linkText=>{
         if(!hasAccess) {toast.info('You don\'t have modify permission');return}
             setLoading(true);
-        try{
-            let res= await fetch(`${url.urlImageSlider}/${imageId}`, {
+            let res= await fetch(, {
                 method: 'DELETE',
                 credentials: 'include'
                 //headers: { 'Content-Type':'application/json' },
             })
             let data = await res.json()
             if(!res.ok) throw new Error(data.error)
-            /*setImages(data.slides);*/toast.success(data.message||'Image deleted')
+            //setImages(data.slides);//toast.success(data.message||'Image deleted')
         }catch(e) {toast.error(e.message)}   
-        finally{setLoading(false)}
-    };
         const handleSubmit = e =>{//setLoading(true);
             //let link = e.target.url.value
-            e.preventDefault()
             if(!hasAccess) {toast.info(msg);return}
             //if(!validURL(image.link)) {setLinkError('enter a valid link');return}
             //if(images.some(l=>l.link==image.link))return setLinkError('link already exists');
             if(image.id) editImage(image.id,image.link)
-            else addImage()
-        }
+            else addImage()*/
 
+    const onSuccess = data =>{
+        setEditMode(false)
+        setImages(data)
+    };
+     const toggleImage = (id,status) =>{
+        setLoading(true)
+           fd.append('active',status)
+         modifyResource(`${url.urlImageSlider}/${id}`,fd)
+        setLoading(false)
+    };
+    const handleSubmit = e =>{
+        e.preventDefault()
+        setLoading(true)
+        image.id ? modifyAppResource(`${url.urlImageSlider}/${image.id}`,fd,onSuccess) : modifyAppResource(url.urlImageSlider,fd,onSuccess)
+        setLoading(false)
+    };
+    const deleteImage = id =>{
+        setLoading(true)
+        AdminPIN([thememode,themeBackground],{cb:deleteResource,data:{url:`${url.urlImageSlider}/${id}`,onSuccess},'DELETE')
+        setLoading(false)
+    };
         let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
             {/*Object.keys(permission).map((p) => {
                 permission[p].map((t,i)=> <div key={i}><input type='radio' name={key.split(' ')[0]} id={t} /><label htmlFor={t}>{t}</label></div>)
             })*/}
             {/*<div style={{background:backSecondary, color:textSecondary}}>*/}
                 <h4 style={{marginBottom:'2rem'}}>Image Slider</h4>
-                <ScrollViewV style={{maxHeight:'30rem'}}>{!editMode&&<FlexH x='space-between' y='center' ref={imagesRef}>
+                <ScrollViewV style={{maxHeight:'30rem'}}>{!editMode&&<FlexH x='space-between' style={{gap:'1rem 0'}}>
                     {images?.map(({_id,link,active}) => <Stack key={_id} onMouseOver={e=>setHover(true)} onMouseLeave={e=>setHover(false)} style={{aspectRatio:'4/3',width:'30%',background:`url(${link})`}}>
                         {(hover || !active) && <div onClick={e=>location.pathname=link}  ></div>}
                         {hover && <FlexH x='space-between' y='center' style={{position:'absolute',top:'0',left:'0',zIndex:'3',width:'100%',height:'40%'}}>
-                            <SwitchItem  check={active} handleChange={e=>editImage(_id,undefined,e.target.checked)} />
+                            <SwitchItem  check={active} handleChange={e=>toggleImage(_id,e.target.checked)} hold={loading}/>
                             <IconButton onClick={e=> {setEditMode(true);setImage({id:_id,link})}}><FaPen /></IconButton>
                             <IconButton onClick={e=>deleteImage(_id)}><FaTrash /></IconButton>
                         </FlexH>}
@@ -144,17 +150,14 @@ export default  () =>{
                 </FlexH>}
                 {editMode && <form onSubmit={handleSubmit}>
                     <div  >
-                        <div><InputField type='file' style={{width:'100%'}} accept='.jpg, .jpeg, .png, .webp'   onChange={selectImage}/><span style={{color:'red'}}>{linkError}</span></div><GapV x='2'/>
+                        <div><InputField type='file' style={{width:'100%'}} accept='.jpg, .jpeg, .png, .webp'   onChange={selectImage}/>{/*<span style={{color:'red'}}>{linkError}</span>*/}</div><GapV x='2'/>
                         <FlexH x='flex-end'><button type='button' onClick={e=>setEditMode(false)}>CANCEL</button><GapH x='1.5'/> <ThemeButton  type='submit' disabled={loading}>{loading?<Spinner  size='1'/>: 'SAVE'}</ThemeButton></FlexH>
                     </div>
                 </form>}</ScrollViewV>
             {/*</div>*/}
         </div>
 
-    return <>{isMobile ? (
-        <Col /*xs={12}*/>
-        <Accordion title='Image Slider' content={content}/>
-        </Col>
-      ) : <Col /*md={2} xl={4}*/>{content}</Col>}</>
+    return <>{isMobile ? <Col><Accordion title='ImageSlider' content={content}/></Col>
+       : <Col /*md={2} xl={4}*/>{content}</Col>}</>
 }
           
