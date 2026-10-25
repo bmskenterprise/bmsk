@@ -7,8 +7,8 @@ import {useTheme} from '../../contexts/ThemeContext';
 import {useAdminAuth} from '../../contexts/AdminAuthContext';
 import {useTelecom} from '../../contexts/TelecomContext'
 import {Col,FlexH,GapV,GapH,TelecomCard,TelecomLogo,TelecomOverlay,AddButton,InputField,ErrorText,ThemeButton,IconButton,Spinner} from '../styles/Admin.style';
-//import validURL from "../../utils/validURL";
-import {validateTelecom} from '../../utils/validate';
+import {modifyAppResource,deleteResource} from '../../utils/resource';
+import AdminPIN from '../AdminPIN;
 import Accordion from './Accordion'
 import url from '../../config/url'
 
@@ -16,7 +16,7 @@ export default  () =>{
    
     const init = {id:null,name:'',icon:''}; //const [telecoms, setTelecoms] = useState(JSON.parse(localStorage.getItem('telecoms')) || []);
     const isMobile = useMediaQuery({maxWidth:768})
-    const {modeData:{backSecondary,textSecondary}} = useTheme() 
+     const {thememode,themeData:{themeBackground},modeData:{backSecondary,textSecondary}} = useTheme()
     const {telecoms,fetchTelecoms} = useTelecom();
     const {admin} = useAdminAuth()
     const accesses = admin?.accesses
@@ -24,8 +24,6 @@ export default  () =>{
     const [modified,setModified] = useState(telecoms);
     const [initData,setInitData] = useState(init);
     const [loading,setLoading] = useState(false); const [formInit, setFormInit] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    let telecomData = {};  
        
     const selectLogo = e =>{
         const file = e.target.files[0];
@@ -44,8 +42,8 @@ export default  () =>{
            img.src = url
         }
     }
+    const msg = 'You don\'t have modify permission';const onBad = errors => setErrors(errors)
             /*const fetchTelecoms= async ()=>{
-                try{
                     setLoading(true)
                     let res = await fetch(telecomURL)
                     let data = await res.json();
@@ -62,13 +60,9 @@ export default  () =>{
                 credentials: 'include',
                 headers: {   'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
-            })
-        };*/
-        const addTelecom = /*[{name:'', code:''},*/async ({name,icon})=>{
              //const validationErrors = {};
             //let validationErrors= validateTelecom(telecoms, {name:initData.name, newName:telecomData.newName, icon:telecomData.icon})
             //if(Object.keys(validationErrors).length>0) {return setErrors(validationErrors);}
-            setLoading(true);
             try{
                 let res = await fetch(url.urlTelecom,{
                     method: 'PATCH',
@@ -79,34 +73,42 @@ export default  () =>{
              let data = await res.json();
                 if(!res.ok) throw new Error(data.error || 'failed to add telecom operator');
             toast.success('telecom added')
-            setModified(data.telecoms);fetchTelecoms()
             }catch(e){ toast.error(e.message)}
             finally{setLoading(false);setInitData(init);setFormInit(false)}
-        }//]
-        
-    const editTelecom = async (id,{name,icon})=>{
 //const {newName,icon} = telecomData;
         //let validationErrors=validateTelecom({telecoms,name:initData.name,newName,icon})
-        setLoading(true);
-        try{
             let res = await fetch(`${url.urlTelecom}/${id}`, {
                 method: 'PATCH',
                 credentials: 'include',
                 headers: {'Content-Type':'application/json'},//  },
-                body: JSON.stringify({name,icon})//JSON.stringify({name:initData.name,...telecomData/*newName,icon*/})
-            })
+                body: JSON.stringify({name,icon})//JSON.stringify({name:initData.name,...telecomDatanewName,icon})
             let data = await res.json();
             if(!res.ok) throw new Error(data.error ||'failed ');
+            toast.success(data.message);setModified(data.telecoms);  setTelecoms(data);fetchTelecoms()
+        }catch(e ){ toast.error('failed to update icon link')}*/
 
-            toast.success(data.message);setModified(data.telecoms);  /*setTelecoms(data);*/fetchTelecoms()
-        }catch(e ){ toast.error('failed to update icon link')}
-        finally{setLoading(false);setInitData(init);setFormInit(false)}
+    const onSuccess = data =>{
+        setFormInit(false)
+        setModified(data?.telecoms)
+        localStorage.clear();
     }
     const handleSubmit= e=>{
-        if(!accesses?.includes('modify-setting')) {toast.info('you don\'t have modify permission');return}
         e.preventDefault();
-        initData.id?editTelecom(initData.id,initData):addTelecom(initData)//config[1]({name:config[0].name, newName:e.target[0].value.trim(), icon:e.target[1].value.trim()})
-    }                    
+        if(!accesses?.includes('modify-setting')) {toast.info(msg);return}
+        let prevObj = modified.find(m=> m._id==initData.id)
+        Object.entries(initData).forEach(([key,value])=> {
+            if(key!='id'&&prevObj[key]!=value) fd.append(key,value)
+        })
+        setLoading(true);
+        initData.id?modifyAppResource(`${url.urlTelecom}/${initData.id}`,fd,onSuccess,onBad):modifyAppResource(url.urlTelecom,fd,onSuccess)//config[1]({name:config[0].name, newName:e.target[0].value.trim(), icon:e.target[1].value.trim()})
+        setLoading(false);
+                        
+    }
+        const deleteTelecom = /*[{name:'', code:''},*/id =>{
+            setLoading(true);
+            AdminPIN([thememode,themeBackground],{cb:deleteResource,data:{url:`${url.urlTelecom}/${id}`,onSuccess}}.'DELETE')
+            setLoading(false)
+    }
                                
                                
     let content = <div style={{background:backSecondary,color:textSecondary,padding:'0.5rem'}}>
