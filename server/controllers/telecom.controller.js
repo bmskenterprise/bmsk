@@ -5,9 +5,9 @@ import {v4 as uuidv4} from 'uuid'
 import dotenv from 'dotenv';dotenv.config()
 import {aggregatePipeSuperAdmin,aggregatePipeSubAdmin} from '../utils/aggregatePipe.js';
 import connectDB from '../config/db.js';
-import {uploadBase64URLToCloudinary} from '../utils/uploadToCloudinary.js'
+import {uploadFileToCloudinary} from '../utils/uploadToCloudinary.js'
 import socket from '../config/socket.js';
-//let io = socket.getIO()
+import cache from '../utils/socacheStore.js'
 let CACHE_TTL_MS = 24*1000*60*60;
 let routings = null
 let lastFetchedTime = 0
@@ -33,9 +33,6 @@ let Admin,User,Topup,Drive,DriveHit,Regular,SocketResponse
      
      
      
-     
-     
-        // { username: req.params.user },
 //call by admin ;
 const emitToDevice = (deviceId,event,payload) =>{
     let io = socket.getIO()
@@ -45,56 +42,80 @@ const emitToDevice = (deviceId,event,payload) =>{
     return {ok:true}
 }
 
+/*const getTelecomId = async telecomName =>{
+    const doc = await Admin.findOne({role:'admin','telecoms.name':telecomName},{projection:{telecoms:{$elemMatch:{name:telecomName.toLowerCase()}}}})
+    return doc?.telecoms?.[0]?._id ?? null
+    //}
+}
+const getTelecomName = async telecomId =>{
+    const id = new ObjectId(telecomId)
+    const doc = await Admin.findOne({role:'admin','telecoms._id':id},{projection:{telecoms:{$elemMatch:{_id:id}}}})
+    return doc?.telecoms?.[0]?.name ?? null
+}*/
+const getTelecomId = telecomName => cache.getCache('telecoms').find(t=>t.name==telecomName)._id
+const getTelecomName = telecomId => cache.getCache('telecoms').find(t=>t._id==telecomId).name
 export const getTelecoms = async (req,res,next)=>{
-    try {
-        const admin = await Admin.findOne({role:'admin'});
-        if(!admin ||!admin.telecoms) return res.status(404).json({error:'Not Found'})
+    try{
+        if(!cache.getCache('telecoms')) {
+            const admin = await Admin.findOne({role:'admin'});
+            if(!admin||!admin.telecoms) return res.status(404).json({error:'Not Found'});cache.setCache('telecoms',admin.telecoms)
+        }//console.error(error);
         /*const logos = {};
         for(const element of admin.telecom) logos[element.name] =element.icon*/
         //let telecoms = admin.telecoms.map(t=>({name:t.name,icon:t.icon,active:t.active}))
-        res.status(200).json(admin.telecoms);
+        res.status(200).json(cache.getCache('telecoms'));
     }catch(e) {next(e)}
 };
 
 
-export const addTelecom = async (req, res, next) => {
+export const addTelecom = async (req,res,next) =>{
     try {
-        const {name,icon} = req.body;
-        const response = await uploadBase64URLToCloudinary(icon)
-        const result = await Admin.findOneAndUpdate({role:'admin'},{$push:{telecoms:{_id:new ObjectId(),name,icon:response.secure_url,active:true},routing:{_id:new ObjectId(),operator:name.toLowerCase(),ip:'192.168',slot:'0'},topupAccess:name.toLowerCase(),regularAccess:name.toLowerCase(),driveAccess:name.toLowerCase()}},{returnDocument:'after'})
+        const {name,ref,dial} = req.body;
+        const response = await uploadFileToCloudinary(req.file,'app-asset')
+        let id = new ObjectId()
+         const result = await Admin.findOneAndUpdate({role:'admin'},{$pull:{telecoms:{_id:id,name,icon:response.secure_url,active:true},routing:{_id:new ObjectId(),telecom:id,ip:'192.168',slot:'0'},topupAccess:id.toString(),regularAccess:id.toString(),driveAccess:id.toString()}},{returnDocument:'after'})
         res.status(200).json({telecoms:result.telecoms,message:'telecom added'});
     }catch(e) {next(e)}
 }
 
 
 export const editTelecom = async (req,res,next) =>{
-    const {name,icon,active} = req.body
+    const {name,dial,ref} = req.body
     try{
         let updateFields ={}
         if(name!=undefined) updateFields['telecoms.$[elem].name'] = name
-        if(icon!=undefined) {
-            const response = await uploadBase64URLToCloudinary(icon)
-            updateFields['telecoms.$[elem].icon'] = response.secure_url
+        if(req.file) {
+            const resp = await uploadFileToCloudinary(req.file,'app-asset')
+            updateFields['telecoms.$[elem].icon'] = resp.secure_url
         }
-        if(active!=undefined) updateFields['telecoms.$[elem].active'] = active;
+        if(ref!=undefined) updateFields['telecoms.$[elem].ref'] = ref;
+        if(dial) updateField['telecoms.$[elem].dial'] = dial;
         let result = await Admin.findOneAndUpdate({role:'admin'},{$set:updateFields},{arrayFilters:[{'elem._id':new ObjectId(req.params.id)}],returnDocument:'after'}) 
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{optChanged:true}});
-        if(name){
-            await Drive.updateMany({operator:name},{$set:{operator:name}});
-            await Regular.updateMany({operator:name}, {$set:{operator:name}})  
-        }
+            /*await Drive.updateMany({operator:name},{$set:{operator:name}});
+            await Regular.updateMany({operator:name}, {$set:{operator:name}})  */
         socket.getIO().emit('telecoms',{telecoms:result.telecoms});
         res.status(200).json({telecoms:result.telecoms,message:'telecom edited'});
     }catch(e) {next(e)};
 }
 
-
+export const deleteTelecom = async (req,res,next) =>{
+    try{
+        let {id} = new ObjectId(req.params)
+        let modified = await Admin.findOneAndUpdate({role:'admin'},{$pull:{telecoms:{_id:id},routing:{telecom:id},topupAccess:id,driveAccess:id,regularAccess:id}},{returnDocument:'after'});
+        await Drive.deleteMany({'operator':id})
+        await Regular.deleteMany({'operator':id})
+        await Topup.deleteMany({'operator':id,'status':{$in:['SUCCESS','FAILED']}})
+        await DriveHit.deleteMany({'operator':id,'status':{$in:['SUCCESS','FAILED']}})
+        res.status(200).json({telecoms:modified.telecoms,message:'telecom deleted'})
+    }catch(e) {next(e)}
+}
 //call by user
-export const getTopupOpts =async (req, res,next) => {
+const getTopupOpts = async (req,res,next) =>{
     try{
         let admin = await Admin.findOne({role:'admin'});
-        if(!admin) throw new Error('server issue');
-        res.status(200).json(admin.topupAccess.sort())
+        let topupTelecoms = admin.topupAccess.map(id=> getTelecomName(id));
+        res.status(200).json(topupTelecoms.sort())
     }catch(e) {next(e)}
 }
 export const getTopupMethod = async (req,res,next) =>{
@@ -121,36 +142,32 @@ export const topup = async (req, res) => {
     let io = socket.getIO()
 
     try{
-            admin = await Admin.findOne({role:'admin'});
+        admin = await Admin.findOne({role:'admin'});
         let user=await User.findOne({_id:new ObjectId(req.user.id)});
-        if(!user.accesses.includes('topup')) return res.status(401).json({error:'dont have topup permission',success:false})
+        if(!user.accesses.includes('topup')) return res.status(401).json({error:'Don\'t have topup permission',success:false})
         if(user.balance.topup<amount) return res.status(422).json({error:'Insufficient balance',success:false})
         if(admin.methods.topup=='retail'){
         /*const response = await fetch(url);
         if(!response.ok) return res.status(500).json({ error:"Failed to forward USSD request", success:false });
         let d=await response.json();*/
     const now = Date.now()
-    if(!routings|| (now - lastFetchedTime > CACHE_TTL_MS)) {
+    if(!routings || (now-lastFetchedTime > CACHE_TTL_MS)) {
         try{
             routings =admin.routing;
             lastFetchedTime = now;
         }catch(e) {return res.status(500).json({ error: 'MongoDB fetch error'+e,success:false});}
     }
-    const opKey = operator.toLowerCase();
-    const map = routings.find(r=> r.operator==opKey);
-    if(!map) return res.status(400).json({error:`Operator '${operator}' not supported`, success:false });
+    const opKey = getTelecomId(operator);
+    const map = routings.find(r=> r.telecom==opKey);
+      if(!map) return res.status(400).json({error:`Operator '${operator}' not supported`,success:false});
 
-    const ussds = {
-        airtel: `*123*${recipient}*${amount}#`,
-        banglalink: `*5000*1*1*${recipient}*${amount}#`,
-        grameenphone: `555*${recipient}*${amount}#`,
-        robi: `*123*${recipient}*${amount}#`,
-        teletalk: `*727*${recipient}*${amount}#`
-    };
+    const ussds = cache.getCache('telecoms').reduce((obj,t)=>{obj[t._id]=`${t.dial}${recipient}*${amount}#`;return obj},{});
+    //};
+    const optName = await getTelecomName(operator)
     const url = `http://${map.ip}:8080/ussd/send?ussd=${encodeURIComponent(ussds[opKey])}&sim=${map.slot}&token=ksmb@25112025`;
             await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.id,status:'SUCCESS'});//console.log(`d.data ${d.data}`);
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
-            return res.status(201).json({message:'topup success',success:true,operator,sim:map.slot,device:map.ip/*,gateway_response:d.data*/});
+            return res.status(201).json({message:'topup success',success:true,optName,sim:map.slot,device:map.ip/*,gateway_response:d.data*/});
         }else if(admin.methods.topup=='manual'){
             await Topup.insertOne({recipient,operator,amount:parseInt(amount),user:req.user.id,status:'PENDING',createdAt:new Date(),updatedAt:new Date()});
             await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$inc:{['balance.topup']:amount*(-1)}})
@@ -193,8 +210,8 @@ export const changeTopupStatus = async (req,res,next)=>{
 }
 
 export const updateTopupTelecomAccess = async (req, res,next) => {
-    try {
-        await Admin.findOneAndUpdate({role:'admin'},{$set:{topupAccess:req.body}})
+    try{
+        await Admin.findOneAndUpdate({role:'admin'},{$set:{topupAccess:JSON.parse(req.body.modified)}})
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{topupOptChanged:true}});
         res.status(200).json({message:'updated successfully'})
     }catch(e) {next(e)}
@@ -235,7 +252,7 @@ export const updateModemRouting = async (req,res,next) =>{
             const updateFields = {}
             if(r.ip!=undefined) updateFields['routing.$.ip'] = r.ip
             if(r.slot!=undefined) updateFields['routing.$.slot'] = r.slot
-            return {updateOne:{filter:{'routing._id':new ObjectId(r._id)}, update:{$set:updateFields}}}
+             return {updateOne:{filter:{'routing._id':new ObjectId(r._id)},update:{$set:updateFields}}}
         })
         await Admin.bulkWrite(bulkOps)
         const admin = await Admin.findOne({role:'admin'})
@@ -248,7 +265,6 @@ export const updateModemRouting = async (req,res,next) =>{
     try {
         const updateField = {};
         if(airtel) updateField['routing.airtel']=airtel;
-        if(banglalink) updateField['routing.banglalink'] = banglalink;
         if(gp) updateField['routing.gp'] = gp;
         if(robi) updateField['routing.robi'] = robi;
         if(teletalk) updateField['routing.teletalk'] = teletalk;
@@ -333,8 +349,8 @@ export const getAllOptDriveSummary/*Count*/ = async (req, res, next) => {
         //let driveOpts=admin.drive.optAccess.filter(op=>op.access).map(op=>op.opt)
         //const counts = await Drive.aggregate([{$group: {_id:'$operator', count:{$sum:1}}}])
         //let summary=admin.driveAccess.map(op=>({...op,driveCount:counts.find(opt=>opt._id==op.opt).count || 0}))/*counts.filter(opt=>driveOpts.includes(opt.optName))*/
-        let opts=['airtel','banglalink','grameenphone','robi','teletalk']//admin.driveAccess.map(op=>op.opt)
-        const counts = await Drive.aggregate([{$match:{operator:{$in:opts}}},{$group: {_id:'$operator', count:{$sum:1}}}]).toArray()
+        let opts=admin.telecoms.map(op=>op._id)
+          const counts = await Drive.aggregate([{$match:{operator:{$in:opts}}},{$group:{_id:'$operator',count:{$sum:1}}}]).toArray()
         let summary=opts.map(op=>{
             const found=counts.find(opt=>opt._id==op)
             return {opt:op,active:admin.driveAccess.includes(op), driveCount:found?found.count:0}
@@ -347,10 +363,10 @@ export const getAllOptDriveSummary/*Count*/ = async (req, res, next) => {
 export const getDriveOpts =async (req, res,next) => {
     try{
         let admin = await Admin.findOne({role:'admin'});
-        if(!admin) throw new Error('server issue');
+        let driveTelecoms = admin.driveAccess.map(id=> getTelecomName(id));
         //const driveOpts = admin.drive.optAccess.filter(op=>op.access).map(op=>({name:op.name,icon:admin.telecoms.find(t=>t.name==op.name).icon}));
-        const driveOpts = admin.driveAccess.sort()//.filter(op=>op.active).map(op=>op.opt);
-        res.status(200).json(driveOpts)
+        //const driveOpts = admin.driveAccess.sort()//.filter(op=>op.active).map(op=>op.opt);
+        res.status(200).json(driveTelecoms.sort())
     }catch(e) {next(e)}
 }
 
@@ -359,7 +375,7 @@ export const hitDrive = async (req, res, next) => {
     const io = socket.getIO();
     let errors = validationResult(req).formatWith(err=>err.msg)
     if(!errors.isEmpty()) return res.status(400).json({error:'required', success:false});
-    const {drive, recipient, price, } = req.body;
+    const {drive,recipient,price} = req.body;
     try{
         let user= await User.findOne({_id:new ObjectId(req.user.id)})
         if(user.balance.drive<price) return res.status(422).json({error:'insufficient balance',success:false})
@@ -391,10 +407,10 @@ export const getDriveHistoryByUser = async (req,res,next) =>{
 //call by user
 export const getDrivesByUser = async (req,res,next)=>{
     const {category,search,page} = req.query
-    const filter={operator:req.params.opt,category,active:true}
+    const filter={operator:getTelecomId(req.params.opt),category,active:true}
     if(search) filter.title = {$regex:new RegExp(search,'i')}
-    if(req.params.opt) filter.operator=req.params.opt
-    filter.active=true
+    ///if(req.params.opt) filter.operator=req.params.opt
+    //filter.active=true
     const currentPage = parseInt(page) || 1;
     const queryLimit = 20;
     try{
@@ -402,7 +418,7 @@ export const getDrivesByUser = async (req,res,next)=>{
         let total = await Drive.countDocuments(filter);
         if(!user.accesses.includes('drive')) return res.status(401).json({error:'Access Denied',success:false}) 
         const drives = await Drive.find(filter,{projection:{active:0,sold:0,expireDate:0,createdAt:0,updatedAt:0,__v:0}}).skip(queryLimit*(currentPage-1)).limit(queryLimit).sort({updatedAt:-1}).toArray();
-        if(!drives) return res.status(404).json({error:'drives not found', success:false});
+         if(!drives) return res.status(404).json({error:'drives not found',success:false});
         res.status(200).json({drives,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}});
     }catch(e) {next(e)}// (e) {
 };
@@ -450,21 +466,20 @@ export const getDrivesByAdmin = async (req, res, next) => {
 
 
 //call by admin
-export const addDrive = async (req, res, next) => {
+   export const addDrive = async (req,res,next) =>{
     const errors = validationResult(req);
-     if(!errors.isEmpty()) return res.status(400).json({ error: errors.formatWith(err=>err.msg).mapped() });
-    //}
+    if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=>err.msg).mapped()});
+     const {operator,category,title,price,commission,expireDate} = req.body
     try{
-        const {operator,category,title, price, commission, expireDate} = req.body;
+              
         const exist = await Drive.findOne({operator,title})// real-time via socket.io
         if(exist) return res.status(400).json({error:'drive already exist'});
         let id = Math.trunc(new Date().getTime() / 1000).toString(16).toUpperCase();
         //const drive = new Drive({id,operator:operator.toLowerCase(),title, price:parseInt(price), commission:parseInt(commission)/*, expireDate*/});
-        const currentPack= await Drive.insertOne({id,operator:operator.toLowerCase(),category,title, price:parseInt(price), commission:parseInt(commission),sold:0,active:true, expireDate,createdAt:new Date(),updatedAt:new Date()});
-        res.status(201).json({message:'Drive added successfully', drive:currentPack});
+         const currentPack = await Drive.insertOne({_id:new ObjectId(),operator,category,title,price:parseInt(price),commission:parseInt(commission),sold:0,active:true,expireDate,createdAt:new Date(),updatedAt:new Date()});
+          res.status(201).json({message:'Drive Added',drive:currentPack});
     }catch(e) {next(e)}// (error) {
 }
-    //}
 
 
 
@@ -472,7 +487,6 @@ export const addDrive = async (req, res, next) => {
 export const editDrive = async (req, res, next) => {
     let errors = validationResult(req);
     if(!errors.isEmpty()) return res.status(400).json({ error: errors.formatWith(err=>err.msg).mapped()});// });
-        //return res.status(400).json({ error: errors.formatWith(err=>err.msg).mapped() });
     //}
     try{
         const {id} = req.params;
@@ -609,8 +623,8 @@ export const getAllOptRegularSummary/*Count*/ = async (req, res, next) => {
         //let regularOpts=admin.regular.optAccess.filter(op=>op.access).map(op=>op.opt)
         //const counts = await Regular.aggregate([{$group: {_id:'$operator', count:{$sum:1}}}])
         //let summary=admin.regularAccess.map(op=>({...op,regularCount:counts.find(opt=>opt._id==op.opt)?.count || 0}))//counts.filter(opt=>regularOpts.includes(opt.optName))
-        let opts=['airtel','banglalink','grameenphone','robi','teletalk']//admin.regularAccess.map(op=>op.opt)
-        const counts = await Regular.aggregate([{$match:{operator:{$in:opts}}},{$group: {_id:'$operator', count:{$sum:1}}}]).toArray()
+        let opts=admin.telecoms.map(op=>op._id)
+          const counts = await Regular.aggregate([{$match:{operator:{$in:opts}}},{$group:{_id:'$operator',count:{$sum:1}}}]).toArray()
         let summary=opts.map(op=>{
             const found= counts.find(opt=>opt._id==op)
             return {opt:op,active:admin.regularAccess.includes(op),regularCount:found?found.count : 0}
@@ -620,20 +634,20 @@ export const getAllOptRegularSummary/*Count*/ = async (req, res, next) => {
 }
 
 //call by user
-export const getRegularOpts =async (req, res,next) => {
+ export const getRegularOpts = async (req,res,next) =>{
   try{
     let admin = await Admin.findOne({role:'admin'});
-    if(!admin) throw new Error('server issue');
+    let regularTelecoms = admin.regularAccess.map(id=> getTelecomName(id));
     //const driveOpts = admin.drive.optAccess.filter(op=>op.access).map(op=>({name:op.name,icon:admin.telecoms.find(t=>t.name==op.name).icon}));
-    const regularOpts = admin.regularAccess.sort()//.filter(op=>op.active).map(op=>op.opt);
-    res.status(200).json(regularOpts)
-  }catch(e) {next(e);}  
+    //const regularOpts = admin.regularAccess.sort()//.filter(op=>op.active).map(op=>op.opt);
+    res.status(200).json(regularTelecoms.sort())
+  }catch(e) {next(e)}  
 }
 
 //call by user
 export const getRegularsByUser = async (req,res,next)=>{
     const {category,search,page} = req.query
-    let filter = {operator:req.params.opt,category,active:true}
+    let filter = {operator:getTelecomId(req.params.opt),category,active:true}
     if(search) filter.title = {$regex:new RegExp(search,'i')};
     const currentPage = parseInt(page)||1;
     const queryLimit = 20;
@@ -691,21 +705,20 @@ export const getRegularsByAdmin = async (req, res, next) => {
 
 
 //call by admin
-export const addRegular = async (req, res, next) => {
+export const addRegular = async (req,res,next) =>{
     let errors = validationResult(req);
-     if(!errors.isEmpty()) return res.status(400).json({ error: errors.formatWith(err=>err.msg).mapped() });
+        if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=>err.msg).mapped()});
     //}
     try {
-        const {operator,category,title, price, expireDate} = req.body;
+          const {operator,category,title,price,expireDate} = req.body;
         const exist = await Regular.findOne({operator,title})// real-time via socket.io
         if(exist) return res.status(400).json({error:'regular already exist'});
-        let id = Math.trunc(new Date().getTime() / 1000).toString(16).toUpperCase();
+        //let id = Math.trunc(new Date().getTime() / 1000).toString(16).toUpperCase();
         //const regular = new Regular({id,operator:operator.toLowerCase(),title, price:parseInt(price)/*, expireDate*/, });
-        const currentPack= await Regular.insertOne({id,operator:operator.toLowerCase(),category,title, price:parseInt(price),sold:0,active:true,expireDate,createdAt:new Date(),updatedAt:new Date()});
-        res.status(201).json({message:'Regular created successfully', regular:currentPack});
+        const currentPack= await Regular.insertOne({_id:new ObjectId(),operator,category,title,price:parseInt(price),sold:0,active:true,expireDate,createdAt:new Date(),updatedAt:new Date()});
+          res.status(201).json({message:'Regular Added',regular:currentPack});
     }catch(e) {next(e)}// (error) {
 }
-        //console.error(error);
     //}
 
 
@@ -763,7 +776,7 @@ export const getFailedRegularCount = async (req, res, next) => {
 }
 export const updateDriveTelecomAccess = async (req, res,next) => {
     try {
-        await Admin.findOneAndUpdate({role:'admin'},{$set:{driveAccess:req.body}})
+        await Admin.findOneAndUpdate({role:'admin'},{$set:{driveAccess:JSON.parse(req.body.modified)}})
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{driveOptChanged:true}})
         res.status(200).json({message:'drive opt access updated'})
     }catch(e) {next(e)}
@@ -771,7 +784,7 @@ export const updateDriveTelecomAccess = async (req, res,next) => {
 
 export const updateRegularTelecomAccess = async (req,res,next) =>{
     try{
-        await Admin.findOneAndUpdate({role:'admin'},{$set:{regularAccess:req.body}})
+        await Admin.findOneAndUpdate({role:'admin'},{$set:{regularAccess:JSON.parse(req.body.modified)}})
         await SocketResponse.updateMany({user:{$exists:true}},{$set:{regularOptChanged:true}})  //
         res.status(200).json({message:'regular opt access updated'})
     }catch(e) {next(e)}
@@ -811,8 +824,7 @@ export const deleteTelecomCategory = async (req, res, next) => {
     }catch(e) {next(e)}
 }
 
-/*const seenFailedDriveCount = async (req, res, next) => {
-    try{
+    /*try{
         usersSocketConnected[req.userId].failed[2] = 0;
     }catch (e) {
         userSocketConnected[req.userId].failed[2] = 0;
