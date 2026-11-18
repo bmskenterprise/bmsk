@@ -2,22 +2,44 @@ import {ObjectId} from 'mongodb';
 import {validationResult} from 'express-validator';
 import {v4 as uuidv4} from 'uuid'
 import dotenv from 'dotenv';dotenv.config()
-import connectDB from '../config/db.js';
 import socket from '../config/socket.js'; 
 import {aggregatePipeSuperAdmin,aggregatePipeSubAdmin} from '../utils/aggregatePipe.js';
+import {dateRange} from '../utils/range.js';
 const devices =new Map()
+/*(async ()=>{
 let Admin,User,Bank,Bill,SocketResponse,Transaction;
-(async ()=>{
     try{
+    let fromDate,toDate
+    if(from) {
+        fromDate=new Date(`${from}T00:00:00.000+06:00`)
+        filter.updatedAt={$gte:fromDate}
+    }
+    if(to) {
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
+        filter.updatedAt={$lte:toDate}
+    }
+    if (from&&to) filter.updatedAt = {$gte:fromDate,$lte:toDate}
+    let fromDate,toDate
+    if(from) {
+        fromDate=new Date(`${from}T00:00:00.000+06:00`)
+        filter.updatedAt={$gte:fromDate}
+    }
+    if(to) {
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
+        filter.updatedAt={$lte:toDate}
+    if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
+    let fromDate,toDate
+    if(from) {
+        fromDate= new Date(`${from}T00:00:00.000+06:00`)
+        filter.updatedAt = {$gte:fromDate};
+    if(to) {
+        toDate=new Date(`${to}T23:59:59.999+06:00`)
+        filter.updatedAt = {$lte:toDate};
+    if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
         let db = await connectDB()
-        Admin =db.collection('admins');
-        User = db.collection('users')
-        Bank = db.collection('banks')
-        Bill = db.collection('bills')
-        SocketResponse = db.collection('socketresponses')
         Transaction = db.collection('transactions')
     }catch(e){console.error('db failed');}
-})()
+})()*/
 
 
 const deductMainBalance = (balanceMain,amount) =>{
@@ -39,6 +61,7 @@ export const getBankHistoryByUser = async (req, res, next) => {
     const s = new RegExp(search,'i')
     const currentPage = parseInt(page)||1;
     let filter = {user:req.user.id,status,$or:[{bank:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{updatedAt:{$regex:s}}]};
+    const {User,Bank} = req.app.get('collections')
     try {
         const total = await Bank.countDocuments(filter)
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{latsActiveAt:new Date()}})
@@ -54,22 +77,13 @@ export const getBankRequestByAdmin = async (req, res, next) => {
     if(status) filter.status = status ?? 'PENDING';
     if(user) filter.user = user;
     if(ac) filter.acNumber = ac;
-    let fromDate,toDate
-    if(from) {
-        fromDate=new Date(`${from}T00:00:00.000+06:00`)
-        filter.updatedAt={$gte:fromDate}
-    }
-    if(to) {
-        toDate=new Date(`${to}T23:59:59.999+06:00`)
-        filter.updatedAt={$lte:toDate}
-    }
-    if (from&&to) filter.updatedAt = {$gte:fromDate,$lte:toDate}
+    dateRange(filter,from,to)
     let queryLimit=parseInt(limit) || 20
     const currentPage = parseInt(page) ||1
     let skip = queryLimit*(currentPage-1)
     try{
         let pipe = req.admin.role=='admin' ? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit);
-        const [result] = await Bank.aggregate(pipe).toArray();
+        const [result] = await req.app.get('collections').Bank.aggregate(pipe).toArray();
         const banks = result.data
         const total = result.metadata[0]?.total ?? 0
         if(!banks){return res.status(404).json({error:'bank history not found'})}
@@ -84,6 +98,7 @@ export const addBankRequest = async (req, res, next) => {
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})
     const io = socket.getIO();
     const {bank,acNumber,acHolder,amount} = req.body;
+    const {User,Bank,SocketResponse} =req.app.get('collections');
     try{
         let user =await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
         if(!user.accesses.includes('bank')) return res.status(403).json({error:'No Permission at this moment'})
@@ -104,16 +119,16 @@ export const addBankRequest = async (req, res, next) => {
 export const changeBankRequestStatus = async (req, res, next) => {
     /*const errors = validationResult(req)
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})*/
-    //const {id} = req.params;
-    const {status,feedback} = req.body;console.log(req.params.id,status,feedback)
+    const {status,feedback} = req.body;
     let io=socket.getIO();
+    const {User,Bank,SocketResponse} = req.app.get('collections');
     try{
         if(!req.admin.accesses?.includes('modify-bank-history')) return res.status(403).json({error:'You don\'t have modify permission'})
-        let {acNumber,amount,user} = await Bank.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}},{returnDocument:'after'})
+        let {acNumber,amount,user} = await Bank.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',modifiedBy:req.admin.id,updatedAt:new Date()}},{returnDocument:'after'})
         let {socketId} = await SocketResponse.findOne({user})
         if(status==='FAILED') {
-            await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.bank']:1}});console.log('s')
-            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}});console.log('u')
+            await SocketResponse.findOneAndUpdate({user},{$inc:{['failed.bank']:1}});
+            await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}});
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', 'bank')
         if(socketId) io.to(socketId).emit('user:status-changed', {title:`Bank Request ${status}`,body:` AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/bank/history`})
@@ -124,7 +139,7 @@ export const changeBankRequestStatus = async (req, res, next) => {
 
 export const getFailedBankCount = async (req, res, next) => {
     try{
-        let {failed} =await /*usersSocketConnected[req.userId].failed[1]*/SocketResponse.findOne({user:req.user.username});
+        let {failed} =await /*usersSocketConnected[req.userId].failed[1]*/req.app.get('collections').SocketResponse.findOne({user:req.user.username});
         let failedCount = failed?.bank;
         if(failedCount>0) res.status(200).json({ failedCount });
         else res.status(200).json({ failedCount: 0 });
@@ -146,6 +161,7 @@ export const getBillHistoryByUser = async (req, res, next) => {
     const s = new RegExp(search,'i')
     let filter = {user:req.user.id,status,$or:[{billType:{$regex:s}},{acNumber:{$regex:s}},{amount:{$regex:s}},{expireDate:{$regex:s}},{updatedAt:{$regex:s}}]};
     const currentPage = parseInt(page)||1;
+    const {User,Bill} = req.app.get('collections')
     try{
         await User.findOneAndUpdate({_id:new ObjectId(req.user.id)}, {$set:{lastActiveAt:new Date()}})
         const total = await Bill.countDocuments(filter);
@@ -160,27 +176,18 @@ export const getBillHistoryByUser = async (req, res, next) => {
 export const getBillRequestByAdmin = async (req, res, next) => {
     const {status,txn,ac,user,type,from,to,limit,page} = req.query;
     const filter = {};
-    let fromDate,toDate
     if(ac) filter.acNumber=ac
     if(status) filter.status=status ?? 'PENDING'
     if(txn) filter.txn=txn
     if(user) filter.user=user
     if(type) filter.billType=type
-    if(from) {
-        fromDate=new Date(`${from}T00:00:00.000+06:00`)
-        filter.updatedAt={$gte:fromDate}
-    }
-    if(to) {
-        toDate=new Date(`${to}T23:59:59.999+06:00`)
-        filter.updatedAt={$lte:toDate}
-    }
-    if(from&&to) filter.updatedAt={$gte:fromDate,$lte:toDate}
+    dateRange(filter,from,to)
     let queryLimit=parseInt(limit) || 20
     const currentPage = parseInt(page) ||1
     let skip = queryLimit*(currentPage-1)
     try{
         let pipe = req.admin.role=='admin' ? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)
-        const [result] = await Bill.aggregate(pipe).toArray();
+        const [result] = await req.app.get('collections').Bill.aggregate(pipe).toArray();
         const bills = result.data
         const total = result.metadata[0]?.total ??0
         if(!bills){return res.status(404).json({error:'bill history not found'})}
@@ -195,6 +202,7 @@ export const addBillRequest = async (req, res, next) => {
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})
     const io = socket.getIO();
     const {billType,acNumber,amount,expire} = req.body;
+    const {User,Bill,SocketResponse} = req.app.get('collections')
     try{
         const user = await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
         if(!user.accesses.includes('bill')) return req.status(403).json({error:'No Permission at this moment'})
@@ -218,10 +226,11 @@ export const addBillRequest = async (req, res, next) => {
     let io = socket.getIO()
     //const {id} = req.params;
     const {status,feedback} = req.body;
+    const {User,Bill,SocketResponse} = req.app.get('collections')
     try{
         if(!req.admin.accesses?.includes('modify-bill-history')) return res.status(403).json({error:'You don\'t have modify permission'})
         //await Bill.findOneAndUpdate({_id:new ObjectId(id)},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
-        let {acNumber,amount,user} = await Bill.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}},{returnDocument:'after'})
+        let {acNumber,amount,user} = await Bill.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',modifiedBy:req.admin.id,updatedAt:new Date()}},{returnDocument:'after'})
         let {socketId} =await SocketResponse.findOne({user});
         if(  status==='FAILED'){
             await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.main.bkash']:Number(amount.bkash),['balance.main.dbbl']:Number(amount.dbbl),['balance.main.nagad']:Number(amount.nagad),['balance.main.upay']:Number(amount.upay)}})
@@ -236,7 +245,7 @@ export const addBillRequest = async (req, res, next) => {
 
 export const getFailedBillCount = async (req, res, next) => {
     try{
-        let {failed} =await /*usersSocketConnected[req.userId]*/SocketResponse.findOne({user:req.userId});
+        let {failed} =await /*usersSocketConnected[req.userId]*/req.app.get('collections').SocketResponse.findOne({user:req.userId});
         let failedCount=failed?.bill;
         if(failedCount>0) res.status(200).json({ failedCount });
         else res.status(200).json({ failedCount: 0 });
@@ -254,7 +263,7 @@ export const sendMoney = async (req,res,next) =>{
     const {deviceId,provider,to,amount} = req.body
     if(!deviceId||!to||!amount) return res.status(400).json({error:'missing deviceId or to or amount'});
     try{
-        let admin = await Admin.find({role:'admin'})
+        let admin = await req.app.get('collections').Admin.find({role:'admin'})
         let slotIndex = admin.mbankRouting.find(r=> r.name==provider).slot
         const r = emitToDevice(deviceId,'command-send-money',{id,provider,to,amount,slotIndex})
         if(!r.ok) return res.status(400).json({error:r.error})
@@ -265,7 +274,7 @@ export const cashin = async (req,res,next) =>{
     const {provider,recipient,amount} = req.body
     let id=uuidv4()
     try{
-        let admin=await Admin.find({role:'admin'})
+        let admin=await req.app.get('collections').Admin.find({role:'admin'})
         let slotIndex=admin.mbankRouting.find(r=>r.name==provider).slot
         const r=emitToDevice('command-cash-in',{id,provider,recipient,amount,slotIndex});
         if(!r.ok) return res.status(400).json({error:r.error})
@@ -276,7 +285,7 @@ export const payBill = async (req,res,next) =>{
     const id = uuidv4()
     const {deviceId,billerCode,ac,amount,} = req.body
     try{
-        let admin = await Admin.find({role:'admin'})
+        let admin = await req.app.get('collections').Admin.find({role:'admin'})
         let slotIndex = admin.mbankRouting.find(r=> r.name=='bkash').slot
         const r = emitToDevice(deviceId,'command-pay-bill',{id,billerCode,ac,amount,slotIndex})
         if(!r.ok) return res.status(400).json({error:r.error})      
@@ -289,6 +298,7 @@ export const getBkashHistory = async (req,res,next)=>{
     let s = {regex:new RegExp(search,'i')}
     if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{updatedAt:s}]
     let currentPage = parseInt(page) || 1
+    const {Transaction} = req.app.get('collections')
     try{
         let total = await Transaction.countDocuments(filter)
         let history = await Transaction.find(filter).sort({updatedAt:-1}).skip((currentPage-1)*20).limit(20)
@@ -301,6 +311,7 @@ export const getDBBLHistory = async (req,res,next)=>{
     let s = {regex:new RegExp(search,'i')}
     if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{updatedAt:s}]
     let currentPage = parseInt(page) || 1
+    const {Transaction} = req.app.get('collections')
     try{
         let total = await Transaction.countDocuments(filter)
         let history = await Transaction.find(filter).sort({updatedAt:-1}).skip((currentPage-1)*20).limit(20)
@@ -313,6 +324,7 @@ export const getNagadHistory = async (req,res,next)=>{
     let s= {regex:new RegExp(search,'i')}
     if(search) filter.$or = [{recipient:s},{transactionType:s},{amount:s},{updatedAt:s}]
     let currentPage = parseInt(page) || 1
+    const {Transaction} = req.app.get('collections')
     try{
         let total = await Transaction.countDocuments(filter)
         let history = await Transaction.find(filter).sort({updatedAt:-1}).skip((currentPage-1)*20).limit(20)
@@ -325,6 +337,7 @@ export const requestMbankTransaction = async (req,res,next)=>{
     if(!errors.isEmpty()) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})
     const {recipient,amount,mbankType,transactionType} = req.body
     let io = socket.getIO();
+    const {User,Transaction,SocketResponse} = req.app.get('collections')
     try{
         const user = await User.findOneAndUpdate({_id:new ObjectId(req.user.id)},{$set:{lastActiveAt:new Date()}})
         if(user.balance.mbank<parseInt(amount)) return res.status(422).json({error:'insufficient balance'})
@@ -340,26 +353,17 @@ export const requestMbankTransaction = async (req,res,next)=>{
 export const getMbankHistoryByAdmin = async (req,res,next)=>{
     const {status,recipient,mbankType,transactionType,from,to,limit,page} = req.query
     let filter = {}
-    let fromDate,toDate
     filter.status = status ?? 'PENDING'
     if(recipient) filter.recipient = recipient;
     if(mbankType) filter.mbankType = mbankType;
     if(transactionType) filter.transactionType = transactionType;
     let queryLimit=parseInt(limit)||20
     let currentPage = parseInt(page)||1
-    if(from) {
-        fromDate= new Date(`${from}T00:00:00.000+06:00`)
-        filter.updatedAt = {$gte:fromDate};
-    }
-    if(to) {
-        toDate=new Date(`${to}T23:59:59.999+06:00`)
-        filter.updatedAt = {$lte:toDate};
-    }
-    if(from&&to) filter.updatedAt = {$gte:fromDate, $lte:toDate};
+    dateRange(filter,from,to)
     let skip = queryLimit*(currentPage-1)
     try{
         let pipe = req.admin.role=='admin' ? aggregatePipeSuperAdmin(filter,skip,queryLimit) : aggregatePipeSubAdmin(filter,req.admin.id,skip,queryLimit)
-        let [result] = await Transaction.aggregate(pipe).toArray();
+        let [result] = await req.app.get('collections').Transaction.aggregate(pipe).toArray();
         let total = result.metadata[0]?.total ?? 0
         res.status(200).json({mbanks:result.data,pagination:{totalPage:Math.ceil(total/queryLimit),currentPage}})
     }catch(e) {next(e)}
@@ -370,6 +374,7 @@ export const getMbankHistoryByUser = async (req,res,next)=>{
     let currentPage = parseInt(page) || 1
     const s = new RegExp(search,'i')
     let filter = {user:req.user.id,mbankType:req.params.type,status,$or:[{recipient:{$regex:s}},{transactionType:{$regex:s}},{amount:{$regex:s}},{updatedAt:{$regex:s}}]};
+    const {Transaction} = req.app.get('collections')
     try{
         let total = await Transaction.countDocuments(filter)
         let history = await Transaction.find(filter,{projection:{user:0,__v:0}}).skip(20*(currentPage-1)).limit(20).sort({updatedAt:-1}).toArray();
@@ -380,18 +385,18 @@ export const changeMbankRequestStatus = async (req,res,next) =>{
     /*const errors = validationResult(req)
     if(!errors) return res.status(400).json({error:errors.formatWith(err=> err.msg).mapped()})*/
     let io = socket.getIO()
-    const {id} = req.params;
     const {status,feedback} = req.body;
+    const {User,Transaction,SocketResponse} = req.app.get('collections');
     try{
         if(!req.admin.accesses?.includes('modify-mbank-history')) return res.status(403).json({error:'You don\'t have modify permission'})
-        let {acNumber,mbankType,recipient,amount,user} = await Transaction.findOneAndUpdate({_id:new ObjectId(id),status:'PENDING'},{$set:{status,feedback:feedback||'',updatedAt:new Date()}})
+        let {acNumber,mbankType,recipient,amount,user} = await Transaction.findOneAndUpdate({_id:new ObjectId(req.params.id),status:'PENDING'},{$set:{status,feedback:feedback||'',modifiedBy:req.admin.id,updatedAt:new Date()}},{returnDocument:'after'})
         let {socketId} =await SocketResponse.findOne({user});
         if(  status==='FAILED'){
             await User.findOneAndUpdate({_id:new ObjectId(user)},{$inc:{['balance.mbank']:parseInt(amount)}})
             await SocketResponse.findOneAndUpdate({user},{$inc:{[`failed.${mbankType}`]:1}})
         }
         if(socketId&&status==='FAILED') io.to(socketId).emit('user:status-failed', mbankType)
-        if(socketId) io.to(socketId).emit('user:status-changed', {title:`M Bank Request ${status}`,body:`Recipient:${recipient} AC:${acNumber} Amount:${amount}`,url:`${process.env.CLIENT_URL}/mbank/${mbankType}/history`})
+        if(socketId) io.to(socketId).emit('user:status-changed', {title:`M Bank Request ${status}`,body:`Recipient:${recipient} AC:${acNumber??''} Amount:${amount}`,url:`${process.env.CLIENT_URL}/mbank/${mbankType}/history`})
         res.status(200).json({message:'status updated'})
     }catch(e) {next(e)}
 }
